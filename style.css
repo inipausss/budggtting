@@ -1,0 +1,624 @@
+  :root {
+    --bg-main: #f8fafc;
+    --app-bg: #ffffff;
+    --card-bg: #ffffff;
+    --card-dark: #121417;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --primary: #ccff00;
+    --primary-hover: #b8e600;
+    --border-color: #e2e8f0;
+    --danger: #f43f5e;
+    --success: #10b981;
+    --circle-bg: #f8fafc;
+    --circle-icon: #334155;
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+  }
+
+  /* Mode Gelap (Pure Dark Theme) */
+  body.dark-mode {
+    --bg-main: #0a0b0d;
+    --app-bg: #0f1115;
+    --card-bg: #181b20;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #242933;
+    --circle-bg: #181b20;
+    --circle-icon: #f1f5f9;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.25s, border-color 0.25s, color 0.2s;
+  }
+
+  html, body {
+    overflow-x: hidden !important;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--app-bg);
+    min-height: 100vh;
+    padding: 20px 20px 100px 20px;
+    padding-top: env(safe-area-inset-top, 20px);
+    position: relative;
+    overflow-x: hidden !important;
+    box-shadow: 0 0 40px rgba(0,0,0,0.05);
+    margin: 0 auto;
+  }
+
+  /* CLASS HIDDEN TUNGGAL & BERSIH (Aman untuk Modal, Halaman, & Input) */
+  .hidden {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Header Bar */
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+    color: var(--text-main);
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #000;
+  }
+
+  .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
+  .icon-btn:hover {
+    color: var(--text-main);
+  }
+
+  /* Dashboard Header */
+  .greeting-section {
+    margin-bottom: 20px;
+  }
+
+  .greeting-section h1 {
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text-main);
+  }
+
+  .greeting-section p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  #dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  /* Dark Card Summary */
+  .main-card {
+    background: linear-gradient(145deg, #1e2229, #101216);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    color: #ffffff;
+    position: relative;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    margin-bottom: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .card-top-tag {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .tag-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #cbd5e1;
+  }
+
+  .tag-pill i {
+    color: var(--primary);
+  }
+
+  .balance-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .balance-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .balance-subtext {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin: 6px 0 20px 0;
+  }
+
+  .flow-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .flow-col p {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+
+  .flow-col h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .flow-col.income h4 {
+    color: var(--primary);
+  }
+
+  .flow-col.expense h4 {
+    color: #f472b6;
+  }
+
+  /* Grid Menu Utama */
+  .section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .menu-grid {
+    display: flex;
+    justify-content: flex-start !important;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    gap: 8px;
+  }
+
+  .menu-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--circle-bg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--circle-icon);
+  }
+
+  .menu-item:hover .menu-circle,
+  .menu-item:active .menu-circle {
+    background: var(--primary);
+    color: #000;
+    transform: scale(0.96);
+  }
+
+  .menu-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  /* Cards & Lists */
+  .list-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .trx-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .trx-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .trx-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .trx-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--circle-bg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--circle-icon);
+  }
+
+  .trx-nominal {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 440px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    border-radius: 30px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 16px;
+    z-index: 100;
+  }
+
+  .nav-tab {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px 12px;
+  }
+
+  .nav-tab.active {
+    color: var(--primary);
+  }
+
+  .nav-add-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: none;
+    color: #000;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(204, 255, 0, 0.4);
+    margin-top: -24px;
+  }
+
+  .nav-add-btn:active {
+    transform: scale(0.92);
+  }
+
+  /* Modals & Inputs */
+  .modal { 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0,0,0,0.6); 
+    display: flex; 
+    align-items: flex-end; 
+    justify-content: center; 
+    z-index: 9999; 
+  }
+
+  .modal-content {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 480px;
+    border-radius: 28px 28px 0 0;
+    padding: 24px;
+    border: 1px solid var(--border-color);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--circle-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    color: var(--text-main);
+    margin-bottom: 12px;
+    outline: none;
+  }
+
+  .input-field:focus {
+    border-color: var(--primary);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: #000000;
+    font-weight: 800;
+    font-size: 1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .btn-sec {
+    width: 100%;
+    padding: 14px;
+    background: var(--circle-bg);
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  /* Styling untuk Progress Bar Kategori */
+  .category-bar-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .category-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .category-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--circle-bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .category-bar-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  /* Kalender Finansial Bulanan */
+  .calendar-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    margin-bottom: 28px;
+    width: 100%;
+  }
+
+  .cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+  }
+
+  .cal-day-name {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding-bottom: 6px;
+  }
+
+  .cal-cell {
+    background: var(--circle-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-height: 52px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+  }
+
+  .cal-cell.has-trx {
+    background: rgba(204, 255, 0, 0.08);
+    border-color: rgba(204, 255, 0, 0.3);
+  }
+
+  .cal-cell.active-today {
+    border: 2px solid var(--primary);
+  }
+
+  .cal-date-num {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    align-self: flex-start;
+    padding-left: 2px;
+  }
+
+  .cal-nominal {
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: #f43f5e;
+    word-break: break-all;
+    line-height: 1;
+  }
+
+  .cal-nominal.income {
+    color: var(--primary);
+  }
+
+  /* Styling Kartu Rekening dengan Dropdown Animasi */
+  .acc-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .acc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .acc-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+
+  .acc-card.open .acc-details {
+    max-height: 150px;
+    padding-top: 12px;
+  }
+
+  .acc-card.open .fa-chevron-down {
+    transform: rotate(180deg);
+  }
+
+  .fa-chevron-down {
+    transition: transform 0.3s ease;
+  }
+
+  /* Styling Kartu Transaksi dengan Dropdown */
+  .trx-card-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .trx-card-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .trx-details-dropdown {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+
+  .trx-card-item.open .trx-details-dropdown {
+    max-height: 250px;
+    padding-top: 14px;
+    margin-top: 12px;
+    border-top: 1px solid var(--border-color);
+  }
