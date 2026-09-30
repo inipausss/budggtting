@@ -1,40 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <base target="_top">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>Budggt.</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <?!= include("Style"); ?>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0f172a">
-
-  <!-- Injeksi Manifest PWA Standalone -->
-  <script>
-    const pwaManifest = {
-      "name": "Budggt.",
-      "short_name": "Budggt",
-      "start_url": window.location.href,
-      "display": "standalone",
-      "background_color": "#0f172a",
-      "theme_color": "#0f172a",
-      "orientation": "portrait"
-    };
-    const stringManifest = JSON.stringify(pwaManifest);
-    const blob = new Blob([stringManifest], {type: 'application/json'});
-    const manifestURL = URL.createObjectURL(blob);
-    const manifestLink = document.createElement('link');
-    manifestLink.rel = 'manifest';
-    manifestLink.href = manifestURL;
-    document.head.appendChild(manifestLink);
-  </script>
 </head>
 <body>
 
 <div class="app-container">
-  <!-- Top Bar -->
   <header class="top-bar">
     <div class="brand-logo">
       <div class="logo-icon">b.</div>
@@ -43,21 +25,18 @@
     <div class="top-actions">
       <button class="icon-btn" title="Histori Transaksi" onclick="openPage('analytics')"><i class="fa fa-book-open"></i></button>
       <button class="icon-btn" title="Notifikasi"><i class="fa fa-paper-plane"></i></button>
-      <!-- Tombol Dark Mode Toggle -->
       <button class="icon-btn" title="Ganti Mode" onclick="toggleDarkMode()" id="themeToggle">
         <i id="themeIcon" class="fa fa-moon"></i>
       </button>
     </div>
   </header>
 
-  <!-- Halaman: Dashboard -->
   <main id="dashboard" class="page">
     <div class="greeting-section">
       <h1>Dashboard</h1>
       <p id="userDisplay">Halo, Memuat... 🌙</p>
     </div>
 
-    <!-- Main Dark Card -->
     <div class="main-card">
       <div class="card-top-tag">
         <span class="tag-pill"><i class="fa fa-bolt"></i> Sekilas Hari Ini</span>
@@ -69,7 +48,6 @@
         <h2 class="balance-value" id="sumSaldo">Rp 0</h2>
       </div>
       <p class="balance-subtext">👇 total saldo tersimpan</p>
-
       <div class="flow-row">
         <div class="flow-col income">
           <p>Pemasukan</p>
@@ -82,33 +60,25 @@
       </div>
     </div>
 
-    <!-- Menu Utama Grid (Rata Kiri Mutlak) -->
     <div class="section-title-row">
       <h3 class="section-title">Menu Utama</h3>
     </div>
     <div style="display: flex; justify-content: flex-start; gap: 16px; margin-bottom: 28px;">
-      
-      <!-- AI Advisor -->
       <button class="menu-item" onclick="alert('Fitur AI Advisor segera hadir!')">
         <div class="menu-circle"><i class="fa fa-robot"></i></div>
         <span class="menu-label">AI Advisor</span>
       </button>
-
-      <!-- Laporan -->
       <button class="menu-item" onclick="openPage('analytics')">
         <div class="menu-circle"><i class="fa fa-chart-simple"></i></div>
         <span class="menu-label">Laporan</span>
       </button>
-
     </div>
 
-    <!-- Kalender Aktivitas Bulanan -->
     <div class="calendar-card">
       <div class="cal-header">
         <h3 class="section-title" id="calMonthTitle">BULAN INI</h3>
         <i class="fa fa-calendar-days" style="color: var(--text-muted);"></i>
       </div>
-      
       <div class="cal-grid" id="calDayNames">
         <div class="cal-day-name">SN</div>
         <div class="cal-day-name">SL</div>
@@ -118,13 +88,9 @@
         <div class="cal-day-name">SB</div>
         <div class="cal-day-name">MG</div>
       </div>
-
-      <div class="cal-grid" id="calendarGridContainer" style="margin-top: 6px;">
-        <!-- Tanggal kalender otomatis -->
-      </div>
+      <div class="cal-grid" id="calendarGridContainer" style="margin-top: 6px;"></div>
     </div>
 
-    <!-- KARTU TOTAL PEMASUKAN -->
     <div class="list-card" style="padding: 24px;">
       <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">Total Pemasukan</p>
       <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px;" id="dashTotalIncome">Rp 0</h2>
@@ -133,7 +99,6 @@
       </div>
     </div>
 
-    <!-- KARTU TOTAL PENGELUARAN -->
     <div class="list-card" style="padding: 24px;">
       <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">Total Pengeluaran</p>
       <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px; color: #f43f5e;" id="dashTotalExpense">Rp 0</h2>
@@ -142,14 +107,12 @@
       </div>
     </div>
 
-    <!-- Aktivitas Terakhir -->
     <div class="section-title-row">
       <h3 class="section-title">Aktivitas Terakhir</h3>
     </div>
     <div class="list-card" id="trxTable"></div>
   </main>
 
-  <!-- Halaman: Rekening / Aset -->
   <main id="accounts" class="page hidden">
     <div class="section-title-row" style="margin-bottom: 20px;">
       <h2 style="font-size: 1.4rem; font-weight: 800;">Rekening Saya</h2>
@@ -158,35 +121,24 @@
     <div id="accountGrid"></div>
   </main>
 
-  <!-- Halaman: Transaksi Lengkap -->
   <main id="transactions" class="page hidden">
     <div class="section-title-row" style="margin-bottom: 20px;">
       <h2 style="font-size: 1.4rem; font-weight: 800;">Semua Transaksi</h2>
     </div>
-    <div class="list-card" id="fullTrxContainer">
-      <!-- Daftar semua transaksi -->
-    </div>
+    <div class="list-card" id="fullTrxContainer"></div>
   </main>
 
-  <!-- Halaman: Analytics / Laporan -->
   <main id="analytics" class="page hidden">
     <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;">Analisis Pengeluaran</h2>
-    
-    <!-- Kartu Chart Doughnut -->
     <div class="list-card" style="height: 260px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
       <canvas id="chartFlow"></canvas>
     </div>
-
-    <!-- Wadah Progress Bar Kategori Pengeluaran -->
     <div class="section-title-row" style="margin-bottom: 12px;">
       <h3 class="section-title">Rincian Per Kategori</h3>
     </div>
-    <div id="categoryBarsContainer">
-      <!-- Bar kategori otomatis -->
-    </div>
+    <div id="categoryBarsContainer"></div>
   </main>
 
-  <!-- Halaman: Profil & Preferensi -->
   <main id="profile" class="page hidden">
     <div class="section-title-row" style="margin-bottom: 20px;">
       <h2 style="font-size: 1.4rem; font-weight: 800;">Preferensi</h2>
@@ -205,9 +157,22 @@
         </button>
       </form>
     </div>
+
+    <!-- Backup ke Google Sheets -->
+    <div class="list-card" style="padding: 24px;">
+      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">URL Web App Backup</label>
+      <input type="text" id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec" class="input-field">
+      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Token Rahasia</label>
+      <input type="password" id="cfgToken" placeholder="Token" class="input-field">
+      <button type="button" class="btn-primary" onclick="saveCfg()">Simpan Pengaturan</button>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button type="button" class="btn-sec" onclick="backupNow()"><i class="fa fa-cloud-arrow-up"></i> Backup</button>
+        <button type="button" class="btn-sec" onclick="restoreNow()"><i class="fa fa-cloud-arrow-down"></i> Restore</button>
+      </div>
+      <p id="backupInfo" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;"></p>
+    </div>
   </main>
 
-  <!-- Floating Bottom Navigation -->
   <nav class="bottom-nav">
     <button class="nav-tab active" id="btn-dashboard" onclick="openPage('dashboard')"><i class="fa fa-table-cells-large"></i></button>
     <button class="nav-tab" id="btn-accounts" onclick="openPage('accounts')"><i class="fa fa-wallet"></i></button>
@@ -216,22 +181,15 @@
     <button class="nav-tab" id="btn-profile" onclick="openPage('profile')"><i class="fa fa-user"></i></button>
   </nav>
 
-  <!-- Modal Tambah Transaksi -->
   <div id="modalTrx" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3 style="font-size: 1.25rem; font-weight: 800;">Catat Transaksi</h3>
         <button onclick="toggleModal('modalTrx')" style="background:none; border:none; font-size: 1.4rem; cursor: pointer;">&times;</button>
       </div>
-      
-      <!-- Opsi Tambahan Scanner dengan ID Unik -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-        <button type="button" class="btn-sec" id="btnCam" onclick="document.getElementById('scanCamera').click()">
-          <i class="fa fa-camera"></i> Kamera
-        </button>
-        <button type="button" class="btn-sec" id="btnGal" onclick="document.getElementById('scanGallery').click()">
-          <i class="fa fa-image"></i> Galeri
-        </button>
+        <button type="button" class="btn-sec" id="btnCam" onclick="document.getElementById('scanCamera').click()"><i class="fa fa-camera"></i> Kamera</button>
+        <button type="button" class="btn-sec" id="btnGal" onclick="document.getElementById('scanGallery').click()"><i class="fa fa-image"></i> Galeri</button>
       </div>
       <p style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 15px;">— ATAU MANUAL —</p>
 
@@ -242,8 +200,6 @@
           <option value="Pemasukan">Pemasukan</option>
         </select>
         <input type="date" id="tanggal" class="input-field" required>
-        
-        <!-- DROPDOWN KATEGORI -->
         <input list="kategoriList" id="kategori" placeholder="Pilih atau Ketik Kategori..." class="input-field" required>
         <datalist id="kategoriList">
           <option value="Makanan">
@@ -255,17 +211,13 @@
           <option value="Investasi">
           <option value="Lainnya">
         </datalist>
-
-        <!-- KOLOM KETERANGAN TAMBAHAN -->
         <input type="text" id="keterangan" placeholder="Keterangan / Catatan (Opsional)" class="input-field">
-
         <input type="text" id="jumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)" required>
         <button type="submit" class="btn-primary">Simpan Transaksi</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal Tambah Rekening -->
   <div id="modalAccount" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -287,14 +239,12 @@
     </div>
   </div>
 
-  <!-- Modal Edit Transaksi -->
   <div id="modalEditTrx" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3 style="font-size: 1.25rem; font-weight: 800;">Ubah Transaksi</h3>
         <button onclick="toggleModal('modalEditTrx')" style="background:none; border:none; font-size: 1.4rem; cursor: pointer;">&times;</button>
       </div>
-
       <form id="editTrxForm">
         <input type="hidden" id="editId">
         <select id="editRekening" class="input-field" required></select>
@@ -303,23 +253,21 @@
           <option value="Pemasukan">Pemasukan</option>
         </select>
         <input type="date" id="editTanggal" class="input-field" required>
-        
         <input list="kategoriList" id="editKategori" placeholder="Kategori" class="input-field" required>
         <input type="text" id="editKeterangan" placeholder="Keterangan / Catatan" class="input-field">
         <input type="text" id="editJumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)" required>
-        
         <button type="submit" class="btn-primary" style="margin-top: 10px;">Simpan Perubahan</button>
       </form>
     </div>
   </div>
 
-  <!-- Input Tersembunyi buat Scanner -->
   <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleReceipt(event)" id="scanCamera">
   <input type="file" accept="image/*" class="hidden" onchange="handleReceipt(event)" id="scanGallery">
   <input type="file" accept="image/*" class="hidden" onchange="handleReceipt(event)" id="scanInput">
+</div>
 
-</div> <!-- Penutup .app-container -->
-
-<?!= include("Script"); ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="gas-shim.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
