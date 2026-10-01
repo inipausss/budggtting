@@ -110,7 +110,7 @@ function openPage(id) {
   if (activeBtn) activeBtn.classList.add("active");
   
   if (id === 'analytics') renderFlowChart();
-  if (id === 'transactions') { viewMonth = currentMonthKey(); renderFullTransactions();
+  if (id === 'transactions') { viewMonth = currentMonthKey(); renderFullTransactions();}
 }
 
 // RENDER SELURUH UI DARI DATA LOKAL
