@@ -1,28 +1,26 @@
-
-Script · JS
 // Cache data lokal agar saat aplikasi dibuka langsung muncul seketika tanpa loading putih
 let globalData = JSON.parse(localStorage.getItem('budggt_local_cache')) || { accounts: [], accountSummary: [], transactions: [] };
 let flowChart;
 let isBalanceHidden = false;
 let rawSummary = { saldo: 0, income: 0, expense: 0 };
- 
+
 const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
- 
+
 function currentMonthKey() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
 let viewMonth = currentMonthKey();
- 
+
 function inMonth(list, key) {
   return (list || []).filter(t => (t.tanggal || '').slice(0, 7) === key);
 }
- 
+
 function monthLabel(key) {
   const [y, m] = key.split('-');
   return BULAN[Number(m) - 1] + ' ' + y;
 }
- 
+
 function shiftMonth(delta) {
   const [y, m] = viewMonth.split('-').map(Number);
   const d = new Date(y, m - 1 + delta, 1);
@@ -31,10 +29,10 @@ function shiftMonth(delta) {
   viewMonth = key;
   renderFullTransactions();
 }
- 
+
 // ===== REKAPAN BULANAN =====
 let recapMonth = currentMonthKey();
- 
+
 function shiftRecap(delta) {
   const [y, m] = recapMonth.split('-').map(Number);
   const d = new Date(y, m - 1 + delta, 1);
@@ -43,13 +41,13 @@ function shiftRecap(delta) {
   recapMonth = key;
   renderRecap();
 }
- 
+
 function selectRecap(key) {
   recapMonth = key;
   renderRecap();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
- 
+
 function monthTotals(key) {
   let inc = 0, exp = 0, count = 0;
   inMonth(globalData.transactions, key).forEach(t => {
@@ -59,19 +57,19 @@ function monthTotals(key) {
   });
   return { inc, exp, count, net: inc - exp };
 }
- 
+
 function renderRecap() {
   const label = document.getElementById('recapMonthLabel');
   if (label) label.innerText = monthLabel(recapMonth);
   const nextBtn = document.getElementById('recapNextBtn');
   if (nextBtn) nextBtn.style.opacity = recapMonth >= currentMonthKey() ? 0.3 : 1;
- 
+
   const s = monthTotals(recapMonth);
   const cap = 'font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;';
   const val = 'font-size: 1.05rem; font-weight: 900; letter-spacing: -0.3px;';
   const netColor = s.net >= 0 ? '#84cc16' : '#f43f5e';
   const netText = (s.net >= 0 ? '+ ' : '- ') + format(Math.abs(s.net));
- 
+
   const sum = document.getElementById('recapSummary');
   if (sum) sum.innerHTML = `
     <div class="list-card" style="margin: 0; padding: 14px;">
@@ -90,24 +88,24 @@ function renderRecap() {
       <p style="${cap}">Transaksi</p>
       <h3 style="${val}">${s.count}</h3>
     </div>`;
- 
+
   renderFlowChart();
   renderRecapHistory();
 }
- 
+
 function renderRecapHistory() {
   const box = document.getElementById('recapHistory');
   if (!box) return;
- 
+
   const keys = [...new Set((globalData.transactions || [])
     .map(t => (t.tanggal || '').slice(0, 7))
     .filter(k => /^\d{4}-\d{2}$/.test(k)))].sort().reverse();
- 
+
   if (keys.length === 0) {
     box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 15px 0; font-size: 0.85rem;">Belum ada riwayat</p>`;
     return;
   }
- 
+
   box.innerHTML = keys.map(k => {
     const s = monthTotals(k);
     const active = k === recapMonth ? 'border-color: var(--primary);' : '';
@@ -124,33 +122,33 @@ function renderRecapHistory() {
       </div>`;
   }).join('');
 }
- 
+
 window.onload = () => { 
   const elTgl = document.getElementById("tanggal");
   if (elTgl) elTgl.valueAsDate = new Date();
- 
+
   // Load tema
   if (localStorage.getItem('theme') === 'dark') {
     document.body.classList.add('dark-mode');
     const icon = document.getElementById('themeIcon');
     if (icon) icon.className = 'fa fa-sun';
   }
- 
+
   // 1. Tampilkan data dari cache lokal secara instan (0 detik)
   renderAllLocalUI();
- 
+
   // 2. Tarik sinkronisasi data terbaru dari Google Sheets di latar belakang
   loadData();
   
   initFormListeners();
 };
- 
+
 // TOGGLE DARK MODE
 function toggleDarkMode() {
   const body = document.body;
   const icon = document.getElementById('themeIcon');
   body.classList.toggle('dark-mode');
- 
+
   if (body.classList.contains('dark-mode')) {
     if (icon) icon.className = 'fa fa-sun';
     localStorage.setItem('theme', 'dark');
@@ -159,21 +157,21 @@ function toggleDarkMode() {
     localStorage.setItem('theme', 'light');
   }
 }
- 
+
 // TOGGLE LOCK / HIDE BALANCE
 function toggleBalanceVisibility() {
   isBalanceHidden = !isBalanceHidden;
   renderBalanceDisplay();
 }
- 
+
 function renderBalanceDisplay() {
   const elSaldo = document.getElementById("sumSaldo");
   const elIncome = document.getElementById("sumIncome");
   const elExpense = document.getElementById("sumExpense");
   const lockIcon = document.getElementById("lockIcon");
- 
+
   if (!elSaldo) return;
- 
+
   if (isBalanceHidden) {
     elSaldo.innerText = "Rp •••••••";
     if (elIncome) elIncome.innerText = "Rp •••••••";
@@ -192,7 +190,7 @@ function renderBalanceDisplay() {
     }
   }
 }
- 
+
 // NAVIGASI HALAMAN
 function openPage(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
@@ -207,18 +205,18 @@ function openPage(id) {
   if (id === 'analytics') { recapMonth = currentMonthKey(); renderRecap(); }
   if (id === 'transactions') { viewMonth = currentMonthKey(); renderFullTransactions(); }
 }
- 
+
 // RENDER SELURUH UI DARI DATA LOKAL
 function renderAllLocalUI() {
   const defaultName = (globalData.user || "Pengguna").split('@')[0];
   const savedName = localStorage.getItem('user_display_name') || defaultName;
   updateGreeting(savedName);
- 
+
   const prefNameInput = document.getElementById("prefDisplayName");
   const prefEmailInput = document.getElementById("prefEmail");
   if (prefNameInput) prefNameInput.value = savedName;
   if (prefEmailInput) prefEmailInput.value = globalData.user || "-";
- 
+
   renderAccounts(globalData.accountSummary || []);
   renderTransactions(globalData.transactions || []);
   renderCalendar(globalData.transactions || []);
@@ -226,7 +224,7 @@ function renderAllLocalUI() {
   populateDropdown(globalData.accounts || []);
   renderFullTransactions();
 }
- 
+
 // AMBIL DATA DARI SPREADSHEET (BACKGROUND SYNC)
 function loadData() {
   google.script.run
@@ -241,19 +239,19 @@ function loadData() {
     })
     .getFullData();
 }
- 
+
 function updateGreeting(name) {
   const userEl = document.getElementById("userDisplay");
   if (userEl) userEl.innerHTML = `Halo, ${name} 🌙`;
 }
- 
+
 function populateDropdown(accounts) {
   let el = document.getElementById("rekening");
   if (el && accounts) {
     el.innerHTML = accounts.map(a => `<option value="${a.id}">${a.nama}</option>`).join("");
   }
 }
- 
+
 // UPDATE DASHBOARD RINGKASAN
 function updateDashboard(res) {
   let inc = 0, exp = 0, sal = 0;
@@ -263,22 +261,22 @@ function updateDashboard(res) {
     else exp += amt;
   });
   (res.accountSummary || []).forEach(a => { sal += Number(a.saldoAkhir) || 0; });
- 
+
   rawSummary = { saldo: sal, income: inc, expense: exp };
   renderBalanceDisplay();
- 
+
   const incEl = document.getElementById("dashTotalIncome");
   const expEl = document.getElementById("dashTotalExpense");
   if (incEl) incEl.innerText = format(inc);
   if (expEl) expEl.innerText = format(exp);
 }
- 
+
 function getAccountName(rekeningId) {
   if (!globalData || !globalData.accounts) return 'Dompet Utama';
   let acc = globalData.accounts.find(a => a.id === rekeningId);
   return acc ? acc.nama : 'Dompet Utama';
 }
- 
+
 // RENDER REKENING / DOMPET
 function renderAccounts(list) {
   let grid = document.getElementById("accountGrid");
@@ -291,7 +289,7 @@ function renderAccounts(list) {
   grid.innerHTML = list.map((a, index) => {
     let labelNomor = a.jenis === 'Bank' ? 'NOMOR REKENING' : 'NOMOR HP';
     let nomorVal = (a.nomor && a.nomor !== '-' && a.nomor !== 'undefined') ? a.nomor : '-';
- 
+
     return `
       <div class="acc-card" id="acc-card-${index}">
         <div class="acc-header" onclick="toggleAccDropdown(${index})">
@@ -310,7 +308,7 @@ function renderAccounts(list) {
             <i class="fa fa-chevron-down" style="font-size: 0.8rem; color: var(--text-muted);"></i>
           </div>
         </div>
- 
+
         <div class="acc-details">
           ${nomorVal !== '-' ? `
             <div style="background: var(--circle-bg); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
@@ -323,7 +321,7 @@ function renderAccounts(list) {
               </button>
             </div>
           ` : '<p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Tidak ada nomor tercatat</p>'}
- 
+
           <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
             <button type="button" onclick="openEditAcc('${a.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
               <i class="fa fa-pen"></i> Ubah
@@ -337,12 +335,12 @@ function renderAccounts(list) {
     `;
   }).join("");
 }
- 
+
 function toggleAccDropdown(index) {
   const card = document.getElementById(`acc-card-${index}`);
   if (card) card.classList.toggle('open');
 }
- 
+
 function copyToClipboard(text, btn) {
   navigator.clipboard.writeText(text).then(() => {
     const originalHTML = btn.innerHTML;
@@ -352,7 +350,7 @@ function copyToClipboard(text, btn) {
     alert("Gagal menyalin");
   });
 }
- 
+
 // RENDER TRANSAKSI (5 TERBARU DI DASHBOARD)
 function renderTransactions(data) {
   let container = document.getElementById("trxTable");
@@ -364,35 +362,35 @@ function renderTransactions(data) {
   }
   container.innerHTML = list.slice(0, 5).map((t, index) => renderTrxHtml(t, index, 'dash')).join("");
 }
- 
+
 // RENDER FULL TRANSAKSI
 function renderFullTransactions() {
   const container = document.getElementById("fullTrxContainer");
   if (!container) return;
- 
+
   const label = document.getElementById("trxMonthLabel");
   if (label) label.innerText = monthLabel(viewMonth);
   const nextBtn = document.getElementById("trxNextBtn");
   if (nextBtn) nextBtn.style.opacity = viewMonth >= currentMonthKey() ? 0.3 : 1;
- 
+
   const list = inMonth(globalData.transactions, viewMonth);
   let inc = 0, exp = 0;
   list.forEach(t => { (t.jenis === "Pemasukan") ? inc += Number(t.jumlah) || 0 : exp += Number(t.jumlah) || 0; });
   const sum = document.getElementById("trxMonthSummary");
   if (sum) sum.innerHTML = `<span style="color: var(--primary);">+ ${format(inc)}</span> &nbsp;|&nbsp; <span style="color: #f472b6;">- ${format(exp)}</span>`;
- 
+
   if (list.length === 0) {
     container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Tidak ada transaksi di bulan ini</p>`;
     return;
   }
   container.innerHTML = list.map((t, index) => renderTrxHtml(t, index, 'full')).join("");
 }
- 
+
 function renderTrxHtml(t, index, prefix) {
   let jumlahNum = Number(t.jumlah) || 0;
   let mainTitle = t.keterangan ? t.keterangan : t.kategori;
   let subTitle = t.keterangan ? t.kategori : '';
- 
+
   return `
     <div class="trx-card-item" id="${prefix}-trx-${index}">
       <div class="trx-card-main" onclick="document.getElementById('${prefix}-trx-${index}').classList.toggle('open')">
@@ -406,7 +404,7 @@ function renderTrxHtml(t, index, prefix) {
             <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 1px;">${t.tanggal}</p>
           </div>
         </div>
- 
+
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="font-weight: 800; font-size: 0.95rem; color: ${t.jenis === 'Pemasukan' ? 'var(--primary)' : '#f472b6'};">
             ${t.jenis === 'Pemasukan' ? '+' : '-'} ${format(jumlahNum)}
@@ -414,7 +412,7 @@ function renderTrxHtml(t, index, prefix) {
           <i class="fa fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
         </div>
       </div>
- 
+
       <div class="trx-details-dropdown">
         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
           <span style="color: var(--text-muted); font-weight: 600;">DARI / DOMPET</span>
@@ -428,7 +426,7 @@ function renderTrxHtml(t, index, prefix) {
           <span style="color: var(--text-muted); font-weight: 600;">TANGGAL</span>
           <span style="font-weight: 700; color: var(--text-main);">${t.tanggal}</span>
         </div>
- 
+
         <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
           <button type="button" onclick="openEditTrx('${t.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa fa-pen"></i> Ubah
@@ -441,7 +439,7 @@ function renderTrxHtml(t, index, prefix) {
     </div>
   `;
 }
- 
+
 // FORM LISTENERS INSTAN (OPTIMISTIC UI - ANTI FREEZE)
 function initFormListeners() {
   const trxForm = document.getElementById("trxForm");
@@ -460,7 +458,7 @@ function initFormListeners() {
         jumlah: rawJumlah,
         rekeningId: document.getElementById("rekening").value
       };
- 
+
       // 1. Update UI Detik ini juga (Instant)
       if (!globalData.transactions) globalData.transactions = [];
       globalData.transactions.unshift(newTrx);
@@ -477,7 +475,7 @@ function initFormListeners() {
       toggleModal('modalTrx');
       e.target.reset();
       document.getElementById("tanggal").valueAsDate = new Date();
- 
+
       // 2. Eksekusi simpan ke Google Sheets di background
       google.script.run
         .withSuccessHandler(() => { loadData(); })
@@ -492,7 +490,7 @@ function initFormListeners() {
         });
     };
   }
- 
+
   const editTrxForm = document.getElementById("editTrxForm");
   if (editTrxForm) {
     editTrxForm.onsubmit = (e) => {
@@ -508,7 +506,7 @@ function initFormListeners() {
         jumlah: rawJumlah,
         rekeningId: document.getElementById("editRekening").value
       };
- 
+
       // Instant Update
       let idx = (globalData.transactions || []).findIndex(x => x.id === updatedTrx.id);
       if (idx !== -1) globalData.transactions[idx] = updatedTrx;
@@ -516,7 +514,7 @@ function initFormListeners() {
       localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
       renderAllLocalUI();
       toggleModal('modalEditTrx');
- 
+
       // Sync background
       google.script.run
         .withSuccessHandler(() => { loadData(); })
@@ -533,43 +531,43 @@ function initFormListeners() {
     };
   }
 }
- 
+
 function openEditTrx(id) {
   let t = (globalData.transactions || []).find(trx => trx.id === id);
   if (!t) return;
- 
+
   document.getElementById("editId").value = t.id;
   document.getElementById("editJenis").value = t.jenis;
   document.getElementById("editTanggal").value = t.tanggal;
   document.getElementById("editKategori").value = t.kategori;
   document.getElementById("editKeterangan").value = t.keterangan || "";
   document.getElementById("editJumlah").value = formatRupiahInput(t.jumlah);
- 
+
   let el = document.getElementById("editRekening");
   if (el && globalData.accounts) {
     el.innerHTML = globalData.accounts.map(a => `<option value="${a.id}" ${a.id === t.rekeningId ? 'selected' : ''}>${a.nama}</option>`).join("");
   }
- 
+
   toggleModal('modalEditTrx');
 }
- 
+
 // FORM TAMBAH REKENING BEBAS FREEZE
 function submitAccount() {
   const elNama = document.getElementById("accNama");
   const elJenis = document.getElementById("accJenis");
   const elNomor = document.getElementById("accNomor");
   const elSaldo = document.getElementById("accSaldo");
- 
+
   const nama = elNama ? elNama.value.trim() : "";
   const jenis = elJenis ? elJenis.value : "Bank";
   const nomor = elNomor ? elNomor.value.trim() : "";
   const rawSaldo = elSaldo ? Number(elSaldo.value.replace(/\./g, '')) || 0 : 0;
- 
+
   if (!nama) {
     alert("Nama bank atau e-wallet harus diisi!");
     return;
   }
- 
+
   const newAcc = {
     id: "acc_" + Date.now(),
     nama: nama,
@@ -577,7 +575,7 @@ function submitAccount() {
     nomor: nomor,
     saldoAwal: rawSaldo
   };
- 
+
   // 1. Update data lokal langsung
   if (!globalData.accounts) globalData.accounts = [];
   if (!globalData.accountSummary) globalData.accountSummary = [];
@@ -598,10 +596,10 @@ function submitAccount() {
   if (elNama) elNama.value = "";
   if (elNomor) elNomor.value = "";
   if (elSaldo) elSaldo.value = "";
- 
+
   // 3. Render ulang UI
   renderAllLocalUI();
- 
+
   // 4. Sinkronisasi ke server Google Sheets di latar belakang
   google.script.run
     .withSuccessHandler(() => {
@@ -617,7 +615,7 @@ function submitAccount() {
       saldoAwal: String(rawSaldo)
     });
 }
- 
+
 function updateAccountLabel(jenis) {
   const inputNomor = document.getElementById("accNomor");
   if (!inputNomor) return;
@@ -629,8 +627,8 @@ function updateAccountLabel(jenis) {
     inputNomor.placeholder = "Keterangan Tambahan / Opsional";
   }
 }
- 
- 
+
+
 // EDIT REKENING / DOMPET
 function accountNet(id) {
   let net = 0;
@@ -639,7 +637,7 @@ function accountNet(id) {
   });
   return net;
 }
- 
+
 function openEditAcc(id) {
   const a = (globalData.accounts || []).find(x => x.id === id);
   if (!a) return;
@@ -650,36 +648,36 @@ function openEditAcc(id) {
   document.getElementById('editAccSaldo').value = formatRupiahInput(Math.max(0, (Number(a.saldoAwal) || 0) + accountNet(id)));
   toggleModal('modalEditAccount');
 }
- 
+
 function submitEditAccount() {
   const id = document.getElementById('editAccId').value;
   const nama = document.getElementById('editAccNama').value.trim();
   const jenis = document.getElementById('editAccJenis').value;
   const nomor = document.getElementById('editAccNomor').value.trim();
   const saldoSekarang = Number(document.getElementById('editAccSaldo').value.replace(/\./g, '')) || 0;
- 
+
   if (!nama) { alert('Nama bank atau e-wallet harus diisi!'); return; }
- 
+
   const a = (globalData.accounts || []).find(x => x.id === id);
   if (!a) return;
- 
+
   // saldo awal dihitung mundur supaya saldo akhir = angka yang diketik
   const saldoAwal = saldoSekarang - accountNet(id);
   a.nama = nama; a.jenis = jenis; a.nomor = nomor; a.saldoAwal = saldoAwal;
- 
+
   const sm = (globalData.accountSummary || []).find(x => x.id === id);
   if (sm) { sm.nama = nama; sm.jenis = jenis; sm.nomor = nomor; sm.saldoAkhir = saldoSekarang; }
- 
+
   localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
   toggleModal('modalEditAccount');
   renderAllLocalUI();
- 
+
   google.script.run
     .withSuccessHandler(() => { loadData(); })
     .withFailureHandler(err => { console.warn('Gagal update rekening: ' + err.message); })
     .updateAccount({ id: id, nama: nama, jenis: jenis, nomor: nomor, saldoAwal: String(saldoAwal) });
 }
- 
+
 // HAPUS DATA INSTAN
 function confirmDeleteAcc(id, nama) {
   if (confirm(`Hapus rekening "${nama}"? Semua transaksi di rekening ini juga akan dihapus!`)) {
@@ -688,25 +686,25 @@ function confirmDeleteAcc(id, nama) {
     globalData.transactions = (globalData.transactions || []).filter(t => t.rekeningId !== id);
     localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
     renderAllLocalUI();
- 
+
     google.script.run
       .withSuccessHandler(() => { loadData(); })
       .deleteAccount(id);
   }
 }
- 
+
 function confirmDeleteTrx(id, kategori) {
   if (confirm(`Hapus transaksi "${kategori}" ini?`)) {
     globalData.transactions = (globalData.transactions || []).filter(t => t.id !== id);
     localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
     renderAllLocalUI();
- 
+
     google.script.run
       .withSuccessHandler(() => { loadData(); })
       .deleteTransaction(id);
   }
 }
- 
+
 // SCANNER STRUK AI
 function handleReceipt(e) {
   const file = e.target.files[0];
@@ -721,7 +719,7 @@ function handleReceipt(e) {
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Memproses...';
     btn.disabled = true;
   }
- 
+
   const reader = new FileReader();
   reader.onload = function(evt) {
     const img = new Image();
@@ -736,7 +734,7 @@ function handleReceipt(e) {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
       const base64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
- 
+
       google.script.run
         .withSuccessHandler(res => {
           if (btn) {
@@ -762,18 +760,18 @@ function handleReceipt(e) {
   };
   reader.readAsDataURL(file);
 }
- 
+
 // SIMPAN PREFERENSI PROFIL
 function saveProfile(e) {
   e.preventDefault();
   const newName = document.getElementById("prefDisplayName").value.trim();
   if (!newName) return;
- 
+
   localStorage.setItem('user_display_name', newName);
   updateGreeting(newName);
   alert("Nama tampilan berhasil diperbarui!");
 }
- 
+
 // RENDER CHART & LAPORAN
 function renderFlowChart() {
   const canvasEl = document.getElementById('chartFlow');
@@ -781,7 +779,7 @@ function renderFlowChart() {
   const ctx = canvasEl.getContext('2d');
   let inc = 0, exp = 0;
   let categoryMap = {};
- 
+
   inMonth(globalData.transactions, recapMonth).forEach(t => {
     let jml = Number(t.jumlah) || 0;
     if (t.jenis === "Pemasukan") {
@@ -792,7 +790,7 @@ function renderFlowChart() {
       categoryMap[kat] = (categoryMap[kat] || 0) + jml;
     }
   });
- 
+
   if (flowChart) flowChart.destroy();
   flowChart = new Chart(ctx, {
     type: 'doughnut',
@@ -802,22 +800,22 @@ function renderFlowChart() {
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
- 
+
   const container = document.getElementById('categoryBarsContainer');
   if (!container) return;
   const categories = Object.keys(categoryMap);
- 
+
   if (categories.length === 0 || exp === 0) {
     container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 15px 0; font-size: 0.85rem;">Belum ada data pengeluaran kategori</p>`;
     return;
   }
- 
+
   categories.sort((a, b) => categoryMap[b] - categoryMap[a]);
- 
+
   container.innerHTML = categories.map(kat => {
     let nominal = categoryMap[kat];
     let percentage = exp > 0 ? ((nominal / exp) * 100).toFixed(1) : 0;
- 
+
     return `
       <div class="category-bar-item" style="margin-bottom: 10px;">
         <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">
@@ -831,7 +829,7 @@ function renderFlowChart() {
     `;
   }).join('');
 }
- 
+
 // RENDER KALENDER
 function renderCalendar(transactions) {
   const container = document.getElementById('calendarGridContainer');
@@ -844,7 +842,7 @@ function renderCalendar(transactions) {
   
   const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
   titleEl.innerText = `${monthNames[month]} ${year}`;
- 
+
   let dailyMap = {};
   (transactions || []).forEach(t => {
     let jml = Number(t.jumlah) || 0;
@@ -857,30 +855,30 @@ function renderCalendar(transactions) {
       dailyMap[t.tanggal].expense += jml;
     }
   });
- 
+
   const firstDayIndex = new Date(year, month, 1).getDay();
   let adjustedFirstDay = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
   const totalDays = new Date(year, month + 1, 0).getDate();
   const todayDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
- 
+
   let html = '';
   for (let i = 0; i < adjustedFirstDay; i++) {
     html += `<div class="cal-cell" style="opacity: 0.2; border:none; background:none;"></div>`;
   }
- 
+
   for (let day = 1; day <= totalDays; day++) {
     let dayStr = String(day).padStart(2, '0');
     let monthStr = String(month + 1).padStart(2, '0');
     let fullDateStr = `${year}-${monthStr}-${dayStr}`;
- 
+
     let trx = dailyMap[fullDateStr];
     let hasTrx = trx && (trx.expense > 0 || trx.income > 0);
     let isToday = fullDateStr === todayDateStr;
- 
+
     let cellClass = "cal-cell";
     if (hasTrx) cellClass += " has-trx";
     if (isToday) cellClass += " active-today";
- 
+
     let nominalHtml = '';
     if (trx) {
       if (trx.expense > 0) {
@@ -890,7 +888,7 @@ function renderCalendar(transactions) {
         nominalHtml += `<span class="cal-nominal income">+${formatShort(trx.income)}</span>`;
       }
     }
- 
+
     html += `
       <div class="${cellClass}">
         <span class="cal-date-num">${day}</span>
@@ -898,23 +896,23 @@ function renderCalendar(transactions) {
       </div>
     `;
   }
- 
+
   container.innerHTML = html;
 }
- 
+
 // UTILITIES
 function formatShort(num) {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'JT';
   if (num >= 1000) return Math.round(num / 1000) + 'RB';
   return num;
 }
- 
+
 function formatRupiahInput(value) {
   if (!value) return "";
   let number_string = value.toString().replace(/[^0-9]/g, '');
   return number_string.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
- 
+
 // FUNGSI MODAL AMAN
 function toggleModal(id) { 
   const el = document.getElementById(id);
@@ -928,26 +926,7 @@ function toggleModal(id) {
     el.style.display = 'none';
   }
 }
- 
+
 function format(num) { 
   return "Rp " + Number(num || 0).toLocaleString('id-ID'); 
 }
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
