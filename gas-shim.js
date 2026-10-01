@@ -41,7 +41,16 @@
     deleteAccount(id) {
       const d = load();
       d.accounts = d.accounts.filter(a => a.id !== id);
+      d.transactions = d.transactions.filter(t => t.rekeningId !== id);
       save(d);
+    },
+    updateAccount(a) {
+      const d = load();
+      const i = d.accounts.findIndex(x => x.id === a.id);
+      if (i > -1) {
+        d.accounts[i] = { id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAwal: Number(a.saldoAwal) || 0 };
+        save(d);
+      }
     },
     addTransaction(t) {
       const d = load();
