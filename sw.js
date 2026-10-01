@@ -1,4 +1,4 @@
-const C = 'budggt-v2'; // naikkan (v2, v3...) kalau mau paksa refresh semua cache
+const C = 'budggt-v3'; // naikkan (v2, v3...) kalau mau paksa refresh semua cache
 const F = ['./', './index.html', './style.css', './script.js', './gas-shim.js', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
