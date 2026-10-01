@@ -262,6 +262,29 @@
     </div>
   </div>
 
+<div id="modalEditAccount" class="modal hidden">
+  <div class="modal-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 1.15rem; font-weight: 800;">Ubah Rekening / Dompet</h3>
+      <button onclick="toggleModal('modalEditAccount')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+    </div>
+    <input type="hidden" id="editAccId">
+    <input id="editAccNama" placeholder="Nama Bank / E-Wallet" class="input-field">
+    <select id="editAccJenis" class="input-field">
+      <option value="Bank">Bank</option>
+      <option value="Dompet Digital">Dompet Digital (E-Wallet)</option>
+      <option value="Dompet Tunai">Dompet Tunai (Cash)</option>
+    </select>
+    <input type="text" id="editAccNomor" placeholder="Nomor Rekening / No HP" class="input-field">
+    <input type="text" id="editAccSaldo" placeholder="Saldo Saat Ini (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+    <p style="font-size: 0.75rem; color: var(--text-muted); margin: -4px 0 12px;">Isi dengan saldo yang benar sekarang. Aplikasi menyesuaikan saldo awal otomatis, jadi transaksimu tidak berubah.</p>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="toggleModal('modalEditAccount')" class="btn-sec">Batal</button>
+      <button onclick="submitEditAccount()" class="btn-primary">Simpan</button>
+    </div>
+  </div>
+</div>
+  
   <div id="modalEditTrx" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
