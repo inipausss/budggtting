@@ -30,6 +30,98 @@ function shiftMonth(delta) {
   renderFullTransactions();
 }
 
+let recapMonth = currentMonthKey();
+
+function shiftRecap(delta) {
+  const [y, m] = recapMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  if (key > currentMonthKey()) return;
+  recapMonth = key;
+  renderRecap();
+}
+
+function selectRecap(key) {
+  recapMonth = key;
+  renderRecap();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function monthTotals(key) {
+  let inc = 0, exp = 0, count = 0;
+  inMonth(globalData.transactions, key).forEach(t => {
+    const n = Number(t.jumlah) || 0;
+    if (t.jenis === 'Pemasukan') inc += n; else exp += n;
+    count++;
+  });
+  return { inc, exp, count, net: inc - exp };
+}
+
+function renderRecap() {
+  const label = document.getElementById('recapMonthLabel');
+  if (label) label.innerText = monthLabel(recapMonth);
+  const nextBtn = document.getElementById('recapNextBtn');
+  if (nextBtn) nextBtn.style.opacity = recapMonth >= currentMonthKey() ? 0.3 : 1;
+
+  const s = monthTotals(recapMonth);
+  const cap = 'font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;';
+  const val = 'font-size: 1.05rem; font-weight: 900; letter-spacing: -0.3px;';
+  const netColor = s.net >= 0 ? '#84cc16' : '#f43f5e';
+  const netText = (s.net >= 0 ? '+ ' : '- ') + format(Math.abs(s.net));
+
+  const sum = document.getElementById('recapSummary');
+  if (sum) sum.innerHTML = `
+    <div class="list-card" style="margin: 0; padding: 14px;">
+      <p style="${cap}">Pemasukan</p>
+      <h3 style="${val} color: #84cc16;">${format(s.inc)}</h3>
+    </div>
+    <div class="list-card" style="margin: 0; padding: 14px;">
+      <p style="${cap}">Pengeluaran</p>
+      <h3 style="${val} color: #f43f5e;">${format(s.exp)}</h3>
+    </div>
+    <div class="list-card" style="margin: 0; padding: 14px;">
+      <p style="${cap}">${s.net >= 0 ? 'Hemat' : 'Defisit'}</p>
+      <h3 style="${val} color: ${netColor};">${netText}</h3>
+    </div>
+    <div class="list-card" style="margin: 0; padding: 14px;">
+      <p style="${cap}">Transaksi</p>
+      <h3 style="${val}">${s.count}</h3>
+    </div>`;
+
+  renderFlowChart();
+  renderRecapHistory();
+}
+
+function renderRecapHistory() {
+  const box = document.getElementById('recapHistory');
+  if (!box) return;
+
+  const keys = [...new Set((globalData.transactions || [])
+    .map(t => (t.tanggal || '').slice(0, 7))
+    .filter(k => /^\d{4}-\d{2}$/.test(k)))].sort().reverse();
+
+  if (keys.length === 0) {
+    box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 15px 0; font-size: 0.85rem;">Belum ada riwayat</p>`;
+    return;
+  }
+
+  box.innerHTML = keys.map(k => {
+    const s = monthTotals(k);
+    const active = k === recapMonth ? 'border-color: var(--primary);' : '';
+    return `
+      <div class="list-card" onclick="selectRecap('${k}')" style="cursor: pointer; padding: 14px 16px; ${active}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <strong style="font-size: 0.95rem;">${monthLabel(k)}</strong>
+          <span style="font-size: 0.8rem; font-weight: 800; color: ${s.net >= 0 ? '#84cc16' : '#f43f5e'};">${s.net >= 0 ? '+' : '-'} ${format(Math.abs(s.net))}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
+          <span>Masuk ${format(s.inc)}</span>
+          <span>Keluar ${format(s.exp)}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 window.onload = () => { 
   const elTgl = document.getElementById("tanggal");
   if (elTgl) elTgl.valueAsDate = new Date();
@@ -110,7 +202,7 @@ function openPage(id) {
   if (activeBtn) activeBtn.classList.add("active");
   
   if (id === 'analytics') renderFlowChart();
-  if (id === 'transactions') { viewMonth = currentMonthKey(); renderFullTransactions();}
+  if (id === 'analytics') { recapMonth = currentMonthKey(); renderRecap(); }
 }
 
 // RENDER SELURUH UI DARI DATA LOKAL
