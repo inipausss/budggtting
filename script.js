@@ -4,6 +4,32 @@ let flowChart;
 let isBalanceHidden = false;
 let rawSummary = { saldo: 0, income: 0, expense: 0 };
 
+const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+function currentMonthKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+let viewMonth = currentMonthKey();
+
+function inMonth(list, key) {
+  return (list || []).filter(t => (t.tanggal || '').slice(0, 7) === key);
+}
+
+function monthLabel(key) {
+  const [y, m] = key.split('-');
+  return BULAN[Number(m) - 1] + ' ' + y;
+}
+
+function shiftMonth(delta) {
+  const [y, m] = viewMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  if (key > currentMonthKey()) return; // tidak bisa ke bulan depan
+  viewMonth = key;
+  renderFullTransactions();
+}
+
 window.onload = () => { 
   const elTgl = document.getElementById("tanggal");
   if (elTgl) elTgl.valueAsDate = new Date();
@@ -84,7 +110,7 @@ function openPage(id) {
   if (activeBtn) activeBtn.classList.add("active");
   
   if (id === 'analytics') renderFlowChart();
-  if (id === 'transactions') renderFullTransactions(globalData.transactions || []);
+  if (id === 'transactions') { viewMonth = currentMonthKey(); renderFullTransactions();
 }
 
 // RENDER SELURUH UI DARI DATA LOKAL
@@ -103,6 +129,7 @@ function renderAllLocalUI() {
   renderCalendar(globalData.transactions || []);
   updateDashboard(globalData);
   populateDropdown(globalData.accounts || []);
+  renderFullTransactions();
 }
 
 // AMBIL DATA DARI SPREADSHEET (BACKGROUND SYNC)
@@ -135,13 +162,13 @@ function populateDropdown(accounts) {
 // UPDATE DASHBOARD RINGKASAN
 function updateDashboard(res) {
   let inc = 0, exp = 0, sal = 0;
-  (res.transactions || []).forEach(t => {
+  inMonth(res.transactions, currentMonthKey()).forEach(t => {
     let amt = Number(t.jumlah) || 0;
-    if (t.jenis === "Pemasukan") inc += amt; 
+    if (t.jenis === "Pemasukan") inc += amt;
     else exp += amt;
   });
   (res.accountSummary || []).forEach(a => { sal += Number(a.saldoAkhir) || 0; });
-  
+
   rawSummary = { saldo: sal, income: inc, expense: exp };
   renderBalanceDisplay();
 
@@ -232,22 +259,35 @@ function copyToClipboard(text, btn) {
 function renderTransactions(data) {
   let container = document.getElementById("trxTable");
   if (!container) return;
-  if (!data || data.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada aktivitas transaksi</p>`;
+  const list = inMonth(data, currentMonthKey());
+  if (list.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada aktivitas bulan ini</p>`;
     return;
   }
-  container.innerHTML = data.slice(0, 5).map((t, index) => renderTrxHtml(t, index, 'dash')).join("");
+  container.innerHTML = list.slice(0, 5).map((t, index) => renderTrxHtml(t, index, 'dash')).join("");
 }
 
 // RENDER FULL TRANSAKSI
-function renderFullTransactions(data) {
-  let container = document.getElementById("fullTrxContainer");
+function renderFullTransactions() {
+  const container = document.getElementById("fullTrxContainer");
   if (!container) return;
-  if (!data || data.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada riwayat transaksi</p>`;
+
+  const label = document.getElementById("trxMonthLabel");
+  if (label) label.innerText = monthLabel(viewMonth);
+  const nextBtn = document.getElementById("trxNextBtn");
+  if (nextBtn) nextBtn.style.opacity = viewMonth >= currentMonthKey() ? 0.3 : 1;
+
+  const list = inMonth(globalData.transactions, viewMonth);
+  let inc = 0, exp = 0;
+  list.forEach(t => { (t.jenis === "Pemasukan") ? inc += Number(t.jumlah) || 0 : exp += Number(t.jumlah) || 0; });
+  const sum = document.getElementById("trxMonthSummary");
+  if (sum) sum.innerHTML = `<span style="color: var(--primary);">+ ${format(inc)}</span> &nbsp;|&nbsp; <span style="color: #f472b6;">- ${format(exp)}</span>`;
+
+  if (list.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Tidak ada transaksi di bulan ini</p>`;
     return;
   }
-  container.innerHTML = data.map((t, index) => renderTrxHtml(t, index, 'full')).join("");
+  container.innerHTML = list.map((t, index) => renderTrxHtml(t, index, 'full')).join("");
 }
 
 function renderTrxHtml(t, index, prefix) {
@@ -593,7 +633,7 @@ function renderFlowChart() {
   let inc = 0, exp = 0;
   let categoryMap = {};
 
-  (globalData.transactions || []).forEach(t => {
+  inMonth(globalData.transactions, currentMonthKey()).forEach(t => {
     let jml = Number(t.jumlah) || 0;
     if (t.jenis === "Pemasukan") {
       inc += jml; 
