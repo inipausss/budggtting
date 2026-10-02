@@ -96,7 +96,7 @@
       save(d);
     },
     
-    async parseReceiptWithGemini(img) { return (await remote('scan', { image: img })).data; } // butuh internet
+      async parseReceiptWithGemini(img, kategori) { return (await remote('scan', { image: img, kategori })).data; } // butuh internet
   };
 
   function runner(ok, fail) {
