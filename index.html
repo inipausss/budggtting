@@ -220,11 +220,13 @@
       <p style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 15px;">— ATAU MANUAL —</p>
 
       <form id="trxForm">
-        <select id="rekening" class="input-field" required></select>
-        <select id="jenis" class="input-field">
-          <option value="Pengeluaran">Pengeluaran</option>
-          <option value="Pemasukan">Pemasukan</option>
-        </select>
+        <select id="rekening" class="input-field" required onchange="onJenisChange()"></select>
+  <select id="jenis" class="input-field" onchange="onJenisChange()">
+  <option value="Pengeluaran">Pengeluaran</option>
+  <option value="Pemasukan">Pemasukan</option>
+  <option value="Transfer">Pindah Saldo</option>
+</select>
+<select id="rekeningTujuan" class="input-field hidden"></select>
         <input type="date" id="tanggal" class="input-field" required>
         <input list="kategoriList" id="kategori" placeholder="Pilih atau Ketik Kategori..." class="input-field" required>
         <datalist id="kategoriList">
@@ -261,26 +263,6 @@
       <div style="display: flex; gap: 10px; margin-top: 10px;">
         <button onclick="toggleModal('modalAccount')" class="btn-sec">Batal</button>
         <button onclick="submitAccount()" class="btn-primary">Simpan</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="modalTransfer" class="modal hidden">
-    <div class="modal-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 1.15rem; font-weight: 800;">Pindah Saldo</h3>
-        <button onclick="toggleModal('modalTransfer')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
-      </div>
-      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">Dari</label>
-      <select id="trfDari" class="input-field"></select>
-      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">Ke</label>
-      <select id="trfKe" class="input-field"></select>
-      <input type="text" id="trfJumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
-      <input type="date" id="trfTanggal" class="input-field">
-      <input type="text" id="trfCatatan" placeholder="Catatan (Opsional)" class="input-field">
-      <div style="display: flex; gap: 10px;">
-        <button onclick="toggleModal('modalTransfer')" class="btn-sec">Batal</button>
-        <button onclick="submitTransfer()" class="btn-primary">Pindahkan</button>
       </div>
     </div>
   </div>
