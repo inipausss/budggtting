@@ -834,7 +834,7 @@ function handleReceipt(e) {
   if (!file) return;
   
   let activeBtnId = e.target.id === 'scanCamera' ? 'btnCam' : 'btnGal';
-  const btn = document.getElementById("kategori").value = matchKategori(res.kategori);
+  const btn = document.getElementById(activeBtnId);
   
   let originalHTML = '';
   if (btn) {
@@ -878,7 +878,7 @@ function handleReceipt(e) {
           }
           alert("Gagal memproses struk: " + err.message);
         })
-        .parseReceiptWithGemini(base64);
+        .parseReceiptWithGemini(base64, daftarKategori());
     };
     img.src = evt.target.result;
   };
@@ -1161,6 +1161,17 @@ function warnBudget(kategori, lvBefore) {
 }
 
 // UTILITIES
+
+// Semua kategori yang dikenal app, dikirim ke Gemini supaya dia memilih dari sini
+function daftarKategori() {
+  const set = new Map();
+  const add = k => { k = (k || '').trim(); if (k && !set.has(k.toLowerCase())) set.set(k.toLowerCase(), k); };
+  document.querySelectorAll('#kategoriList option').forEach(o => add(o.value));
+  budgetList().forEach(b => add(b.kategori));
+  (globalData.transactions || []).forEach(t => { if (!netral(t)) add(t.kategori); });
+  return [...set.values()];
+}
+
 // Cocokkan kategori hasil scan ke kategori yang sudah dikenal (datalist, budget, transaksi)
 function matchKategori(raw) {
   const r = (raw || '').trim().toLowerCase();
