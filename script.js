@@ -228,6 +228,7 @@ function renderAllLocalUI() {
   updateDashboard(globalData);
   populateDropdown(globalData.accounts || []);
   renderFullTransactions();
+  renderBudgets();
 }
 
 // AMBIL DATA DARI SPREADSHEET (BACKGROUND SYNC)
@@ -491,6 +492,8 @@ function initFormListeners() {
 
       // 1. Update UI Detik ini juga (Instant)
       if (!globalData.transactions) globalData.transactions = [];
+      const bdg = newTrx.jenis === 'Pengeluaran' ? findBudget(newTrx.kategori) : null;
+      const lvBefore = bdg ? budgetLevel(budgetPct(bdg)) : 0;
       globalData.transactions.unshift(newTrx);
       
       let targetAcc = (globalData.accountSummary || []).find(a => a.id === newTrx.rekeningId);
@@ -501,6 +504,7 @@ function initFormListeners() {
       
       localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
       renderAllLocalUI();
+      if (bdg) warnBudget(newTrx.kategori, lvBefore);
       
       toggleModal('modalTrx');
       e.target.reset();
@@ -1020,6 +1024,142 @@ function renderCalendar(transactions) {
   container.innerHTML = html;
 }
 
+// ===== BUDGET PER KATEGORI =====
+const BUDGET_KUNING = 50;  // % mulai kuning
+const BUDGET_MERAH = 80;   // % mulai merah
+const BUDGET_WARNA = ['#84cc16', '#eab308', '#f43f5e']; // hijau, kuning, merah
+const BUDGET_STATUS = ['Aman', 'Hati-hati', 'Hampir habis'];
+
+function budgetList() { return globalData.budgets || []; }
+
+function findBudget(kategori) {
+  const k = (kategori || '').trim().toLowerCase();
+  return budgetList().find(b => b.kategori.trim().toLowerCase() === k);
+}
+
+function spentFor(kategori) {
+  const k = (kategori || '').trim().toLowerCase();
+  return inMonth(globalData.transactions, currentMonthKey())
+    .filter(t => !netral(t) && t.jenis === 'Pengeluaran' && (t.kategori || '').trim().toLowerCase() === k)
+    .reduce((s, t) => s + (Number(t.jumlah) || 0), 0);
+}
+
+function budgetPct(b) { return b.batas > 0 ? (spentFor(b.kategori) / b.batas) * 100 : 0; }
+function budgetLevel(pct) { return pct >= BUDGET_MERAH ? 2 : (pct >= BUDGET_KUNING ? 1 : 0); }
+
+function renderBudgets() {
+  const box = document.getElementById('budgetContainer');
+  if (!box) return;
+  const list = budgetList();
+  if (list.length === 0) {
+    box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 12px 0; font-size: 0.85rem;">Belum ada budget. Tap "Atur" untuk membuat.</p>`;
+    return;
+  }
+  box.innerHTML = list.map(b => {
+    const spent = spentFor(b.kategori);
+    const pct = budgetPct(b);
+    const lv = budgetLevel(pct);
+    const warna = BUDGET_WARNA[lv];
+    const sisa = b.batas - spent;
+    const status = pct >= 100 ? 'Melebihi budget' : BUDGET_STATUS[lv];
+    return `
+      <div class="list-card" style="padding: 16px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <strong style="font-size: 0.95rem;">${b.kategori}</strong>
+          <span style="font-size: 0.7rem; font-weight: 800; color: ${warna}; text-transform: uppercase;">${status} · ${Math.round(pct)}%</span>
+        </div>
+        <div class="budget-track"><div class="budget-fill" style="width: ${Math.min(pct, 100)}%; background: ${warna};"></div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-top: 8px;">
+          <span>${format(spent)} / ${format(b.batas)}</span>
+          <span>${sisa >= 0 ? 'Sisa ' + format(sisa) : 'Lebih ' + format(-sisa)}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderBudgetManager() {
+  const box = document.getElementById('budgetManager');
+  if (!box) return;
+  const list = budgetList();
+  if (list.length === 0) { box.innerHTML = ''; return; }
+  box.innerHTML = list.map((b, i) => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--border-color);">
+      <div onclick="editBudget(${i})" style="cursor: pointer; flex: 1;">
+        <strong style="font-size: 0.9rem;">${b.kategori}</strong>
+        <p style="font-size: 0.75rem; color: var(--text-muted);">${format(b.batas)} / bulan</p>
+      </div>
+      <button type="button" onclick="removeBudget(${i})" style="background: rgba(244,63,94,0.12); color: #f43f5e; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+        <i class="fa fa-trash"></i> Hapus
+      </button>
+    </div>`).join('');
+}
+
+function editBudget(i) {
+  const b = budgetList()[i];
+  if (!b) return;
+  document.getElementById('budKategori').value = b.kategori;
+  document.getElementById('budBatas').value = formatRupiahInput(b.batas);
+}
+
+function submitBudget() {
+  const kategori = document.getElementById('budKategori').value.trim();
+  const batas = Number(document.getElementById('budBatas').value.replace(/\./g, '')) || 0;
+  if (!kategori) { alert('Isi kategori yang mau di-budget'); return; }
+  if (batas <= 0) { alert('Isi batas budget lebih dari 0'); return; }
+
+  if (!globalData.budgets) globalData.budgets = [];
+  const ada = findBudget(kategori);
+  if (ada) { ada.kategori = kategori; ada.batas = batas; }
+  else globalData.budgets.push({ kategori, batas });
+
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  document.getElementById('budKategori').value = '';
+  document.getElementById('budBatas').value = '';
+  renderBudgets();
+  renderBudgetManager();
+
+  google.script.run
+    .withFailureHandler(err => alert('Gagal simpan budget: ' + err.message))
+    .setBudget({ kategori, batas });
+}
+
+function removeBudget(i) {
+  const b = budgetList()[i];
+  if (!b) return;
+  if (!confirm(`Hapus budget "${b.kategori}"?`)) return;
+  globalData.budgets.splice(i, 1);
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  renderBudgets();
+  renderBudgetManager();
+  google.script.run
+    .withFailureHandler(err => alert('Gagal hapus budget: ' + err.message))
+    .deleteBudget(b.kategori);
+}
+
+function showToast(msg, lv) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.background = BUDGET_WARNA[lv] || BUDGET_WARNA[2];
+  if (lv === 1) el.style.color = '#000';
+  el.innerText = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// Dipanggil setelah pengeluaran disimpan; lvBefore = level sebelum transaksi
+function warnBudget(kategori, lvBefore) {
+  const b = findBudget(kategori);
+  if (!b) return;
+  const pct = budgetPct(b);
+  const lv = budgetLevel(pct);
+  if (lv > lvBefore || (pct >= 100 && lv === 2 && lvBefore === 2 && false)) {
+    const teks = pct >= 100
+      ? `⚠️ Budget ${b.kategori} sudah melebihi batas (${Math.round(pct)}%)!`
+      : `Budget ${b.kategori} sudah terpakai ${Math.round(pct)}%`;
+    showToast(teks, lv);
+  }
+}
+
 // UTILITIES
 function formatShort(num) {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'JT';
@@ -1044,6 +1184,7 @@ function toggleModal(id) {
   if (!el) return;
 
   if (el.classList.contains('hidden')) {
+    if (id === 'modalBudget') renderBudgetManager();
     el.classList.remove('hidden');
     el.style.display = 'flex';
     if (id === 'modalTrx') document.getElementById('tanggal').value = todayStr();
