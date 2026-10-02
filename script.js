@@ -50,7 +50,7 @@ function selectRecap(key) {
 
 function monthTotals(key) {
   let inc = 0, exp = 0, count = 0;
-  inMonth(globalData.transactions, key).forEach(t => {
+  inMonth(globalData.transactions, key).filter(t => !netral(t)).forEach(t => {
     const n = Number(t.jumlah) || 0;
     if (t.jenis === 'Pemasukan') inc += n; else exp += n;
     count++;
@@ -123,9 +123,14 @@ function renderRecapHistory() {
   }).join('');
 }
 
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 window.onload = () => { 
   const elTgl = document.getElementById("tanggal");
-  if (elTgl) elTgl.valueAsDate = new Date();
+  if (elTgl) elTgl.value = todayStr();
 
   // Load tema
   if (localStorage.getItem('theme') === 'dark') {
@@ -255,7 +260,7 @@ function populateDropdown(accounts) {
 // UPDATE DASHBOARD RINGKASAN
 function updateDashboard(res) {
   let inc = 0, exp = 0, sal = 0;
-  inMonth(res.transactions, currentMonthKey()).forEach(t => {
+  inMonth(res.transactions, currentMonthKey()).filter(t => !netral(t)).forEach(t => {
     let amt = Number(t.jumlah) || 0;
     if (t.jenis === "Pemasukan") inc += amt;
     else exp += amt;
@@ -375,7 +380,7 @@ function renderFullTransactions() {
 
   const list = inMonth(globalData.transactions, viewMonth);
   let inc = 0, exp = 0;
-  list.forEach(t => { (t.jenis === "Pemasukan") ? inc += Number(t.jumlah) || 0 : exp += Number(t.jumlah) || 0; });
+  list.filter(t => !netral(t)).forEach(t => { (t.jenis === "Pemasukan") ? inc += Number(t.jumlah) || 0 : exp += Number(t.jumlah) || 0; });
   const sum = document.getElementById("trxMonthSummary");
   if (sum) sum.innerHTML = `<span style="color: var(--primary);">+ ${format(inc)}</span> &nbsp;|&nbsp; <span style="color: #f472b6;">- ${format(exp)}</span>`;
 
@@ -396,7 +401,7 @@ function renderTrxHtml(t, index, prefix) {
       <div class="trx-card-main" onclick="document.getElementById('${prefix}-trx-${index}').classList.toggle('open')">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="width: 40px; height: 40px; border-radius: 12px; background: var(--circle-bg); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--circle-icon);">
-            <i class="fa ${t.jenis === 'Pemasukan' ? 'fa-arrow-down' : 'fa-basket-shopping'}"></i>
+            <i class="fa ${netral(t) ? 'fa-right-left' : (t.jenis === 'Pemasukan' ? 'fa-arrow-down' : 'fa-basket-shopping')}"></i>
           </div>
           <div>
             <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--text-main);">${mainTitle}</h4>
@@ -446,6 +451,7 @@ function initFormListeners() {
   if (trxForm) {
     trxForm.onsubmit = (e) => {
       e.preventDefault();
+  if (document.getElementById("jenis").value === "Transfer") { submitTransfer(); return; }
       
       const rawJumlah = Number(document.getElementById("jumlah").value.replace(/\./g, '')) || 0;
       const ketVal = document.getElementById("keterangan").value.trim();
@@ -474,7 +480,7 @@ function initFormListeners() {
       
       toggleModal('modalTrx');
       e.target.reset();
-      document.getElementById("tanggal").valueAsDate = new Date();
+      document.getElementById("tanggal").value = todayStr();
 
       // 2. Eksekusi simpan ke Google Sheets di background
       google.script.run
@@ -703,6 +709,70 @@ function submitEditAccount() {
     .updateAccount({ id: id, nama: nama, jenis: jenis, nomor: nomor, saldoAwal: String(a.saldoAwal) });
 }
 
+// ===== PINDAH SALDO (transfer antar rekening) =====
+const KATEGORI_NETRAL = ['Transfer']; // tidak dihitung sebagai pemasukan/pengeluaran
+function netral(t) { return KATEGORI_NETRAL.includes(t.kategori); }
+
+function onJenisChange() {
+  const isTrf = document.getElementById('jenis').value === 'Transfer';
+  const tujuan = document.getElementById('rekeningTujuan');
+  const kat = document.getElementById('kategori');
+  tujuan.classList.toggle('hidden', !isTrf);
+  kat.classList.toggle('hidden', isTrf);
+  if (isTrf) {
+    kat.value = 'Transfer';
+    const dari = document.getElementById('rekening').value;
+    tujuan.innerHTML = '<option value="">→ Ke rekening tujuan...</option>' +
+      (globalData.accounts || []).filter(a => a.id !== dari)
+        .map(a => `<option value="${a.id}">${a.nama}</option>`).join('');
+  } else if (kat.value === 'Transfer') {
+    kat.value = '';
+  }
+}
+
+function openTransfer() {
+  document.getElementById('jenis').value = 'Transfer';
+  onJenisChange();
+  toggleModal('modalTrx');
+}
+
+function submitTransfer() {
+  const dari = document.getElementById('rekening').value;
+  const ke = document.getElementById('rekeningTujuan').value;
+  const jumlah = Number(document.getElementById('jumlah').value.replace(/\./g, '')) || 0;
+  const tanggal = document.getElementById('tanggal').value;
+  const cat = document.getElementById('keterangan').value.trim();
+
+  if (!dari || !ke || dari === ke) { alert('Pilih rekening asal dan tujuan yang berbeda'); return; }
+  if (jumlah <= 0) { alert('Isi jumlah yang dipindah'); return; }
+
+  const extra = cat ? ' · ' + cat : '';
+  const keluar = { tanggal, jenis: 'Pengeluaran', kategori: 'Transfer', jumlah, rekeningId: dari, keterangan: 'Ke ' + getAccountName(ke) + extra };
+  const masuk = { tanggal, jenis: 'Pemasukan', kategori: 'Transfer', jumlah, rekeningId: ke, keterangan: 'Dari ' + getAccountName(dari) + extra };
+
+  // update instan
+  (globalData.transactions = globalData.transactions || []).unshift(
+    Object.assign({ id: 'temp_m' + Date.now() }, masuk),
+    Object.assign({ id: 'temp_k' + Date.now() }, keluar)
+  );
+  const sd = (globalData.accountSummary || []).find(a => a.id === dari);
+  const sk = (globalData.accountSummary || []).find(a => a.id === ke);
+  if (sd) sd.saldoAkhir -= jumlah;
+  if (sk) sk.saldoAkhir += jumlah;
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  renderAllLocalUI();
+
+  document.getElementById('trxForm').reset();
+  onJenisChange();
+  document.getElementById('tanggal').value = todayStr();
+  toggleModal('modalTrx');
+
+  google.script.run
+    .withSuccessHandler(() => loadData())
+    .withFailureHandler(err => alert('Gagal pindah saldo: ' + err.message))
+    .addTransfer({ masuk, keluar });
+}
+
 // HAPUS DATA INSTAN
 function confirmDeleteAcc(id, nama) {
   if (confirm(`Hapus rekening "${nama}"? Semua transaksi di rekening ini juga akan dihapus!`)) {
@@ -770,6 +840,7 @@ function handleReceipt(e) {
           document.getElementById("jumlah").value = res.jumlah ? formatRupiahInput(res.jumlah) : '';
           document.getElementById("kategori").value = res.kategori || '';
           document.getElementById("jenis").value = "Pengeluaran";
+                    onJenisChange();
           if (res.tanggal) document.getElementById("tanggal").value = res.tanggal;
         })
         .withFailureHandler(err => {
@@ -805,7 +876,7 @@ function renderFlowChart() {
   let inc = 0, exp = 0;
   let categoryMap = {};
 
-  inMonth(globalData.transactions, recapMonth).forEach(t => {
+  inMonth(globalData.transactions, recapMonth).filter(t => !netral(t)).forEach(t => {
     let jml = Number(t.jumlah) || 0;
     if (t.jenis === "Pemasukan") {
       inc += jml; 
@@ -869,7 +940,7 @@ function renderCalendar(transactions) {
   titleEl.innerText = `${monthNames[month]} ${year}`;
 
   let dailyMap = {};
-  (transactions || []).forEach(t => {
+  (transactions || []).filter(t => !netral(t)).forEach(t => {
     let jml = Number(t.jumlah) || 0;
     if (!dailyMap[t.tanggal]) {
       dailyMap[t.tanggal] = { expense: 0, income: 0 };
