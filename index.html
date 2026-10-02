@@ -92,7 +92,7 @@
     </div>
 
     <div class="list-card" style="padding: 24px;">
-      <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">Pemasukan Bulan Ini</p>
+      <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">Total Pemasukan</p>
       <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px;" id="dashTotalIncome">Rp 0</h2>
       <div style="display: inline-flex; align-items: center; background: rgba(204,255,0,0.15); color: #84cc16; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
         +100% vs periode lalu
@@ -100,7 +100,7 @@
     </div>
 
     <div class="list-card" style="padding: 24px;">
-      <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">Pengeluaran Bulan Ini</p>
+      <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">Total Pengeluaran</p>
       <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px; color: #f43f5e;" id="dashTotalExpense">Rp 0</h2>
       <div style="display: inline-flex; align-items: center; background: rgba(244,63,94,0.12); color: #f43f5e; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
         +100% vs periode lalu
@@ -114,54 +114,56 @@
   </main>
 
   <main id="accounts" class="page hidden">
-  <div class="section-title-row" style="margin-bottom: 20px;">
-  <h2 style="font-size: 1.4rem; font-weight: 800;">Rekening Saya</h2>
-  <div style="display: flex; gap: 8px;">
-    <button onclick="openTransfer()" class="btn-sec" style="width: auto; padding: 8px 14px; font-size: 0.85rem;"><i class="fa fa-right-left"></i> Pindah</button>
-    <button onclick="toggleModal('modalAccount')" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
-  </div>
-</div>
-
-<main id="transactions" class="page hidden">
-  <div class="section-title-row" style="margin-bottom: 12px;">
-    <h2 style="font-size: 1.4rem; font-weight: 800;">Semua Transaksi</h2>
-  </div>
-  <div class="list-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-    <button class="icon-btn" onclick="shiftMonth(-1)"><i class="fa fa-chevron-left"></i></button>
-    <div style="text-align: center;">
-      <strong id="trxMonthLabel" style="font-size: 1rem;"></strong>
-      <p id="trxMonthSummary" style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;"></p>
+    <div class="section-title-row" style="margin-bottom: 20px;">
+      <h2 style="font-size: 1.4rem; font-weight: 800;">Rekening Saya</h2>
+      <div style="display: flex; gap: 8px;">
+        <button onclick="openTransfer()" class="btn-sec" style="width: auto; padding: 8px 14px; font-size: 0.85rem;"><i class="fa fa-right-left"></i> Pindah</button>
+        <button onclick="toggleModal('modalAccount')" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
+      </div>
     </div>
-    <button class="icon-btn" id="trxNextBtn" onclick="shiftMonth(1)"><i class="fa fa-chevron-right"></i></button>
-  </div>
-  <div class="list-card" id="fullTrxContainer"></div>
-</main>
+    <div id="accountGrid"></div>
+  </main>
 
-<main id="analytics" class="page hidden">
-  <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 12px;">Rekapan Bulanan</h2>
+  <main id="transactions" class="page hidden">
+    <div class="section-title-row" style="margin-bottom: 12px;">
+      <h2 style="font-size: 1.4rem; font-weight: 800;">Semua Transaksi</h2>
+    </div>
+    <div class="list-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
+      <button class="icon-btn" onclick="shiftMonth(-1)"><i class="fa fa-chevron-left"></i></button>
+      <div style="text-align: center;">
+        <strong id="trxMonthLabel" style="font-size: 1rem;"></strong>
+        <p id="trxMonthSummary" style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;"></p>
+      </div>
+      <button class="icon-btn" id="trxNextBtn" onclick="shiftMonth(1)"><i class="fa fa-chevron-right"></i></button>
+    </div>
+    <div class="list-card" id="fullTrxContainer"></div>
+  </main>
 
-  <div class="list-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-    <button class="icon-btn" onclick="shiftRecap(-1)"><i class="fa fa-chevron-left"></i></button>
-    <strong id="recapMonthLabel" style="font-size: 1rem;"></strong>
-    <button class="icon-btn" id="recapNextBtn" onclick="shiftRecap(1)"><i class="fa fa-chevron-right"></i></button>
-  </div>
+  <main id="analytics" class="page hidden">
+    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 12px;">Rekapan Bulanan</h2>
 
-  <div id="recapSummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;"></div>
+    <div class="list-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
+      <button class="icon-btn" onclick="shiftRecap(-1)"><i class="fa fa-chevron-left"></i></button>
+      <strong id="recapMonthLabel" style="font-size: 1rem;"></strong>
+      <button class="icon-btn" id="recapNextBtn" onclick="shiftRecap(1)"><i class="fa fa-chevron-right"></i></button>
+    </div>
 
-  <div class="list-card" style="height: 260px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-    <canvas id="chartFlow"></canvas>
-  </div>
+    <div id="recapSummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;"></div>
 
-  <div class="section-title-row" style="margin-bottom: 12px;">
-    <h3 class="section-title">Rincian Per Kategori</h3>
-  </div>
-  <div id="categoryBarsContainer"></div>
+    <div class="list-card" style="height: 260px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+      <canvas id="chartFlow"></canvas>
+    </div>
 
-  <div class="section-title-row" style="margin: 24px 0 12px;">
-    <h3 class="section-title">Riwayat Per Bulan</h3>
-  </div>
-  <div id="recapHistory"></div>
-</main>
+    <div class="section-title-row" style="margin-bottom: 12px;">
+      <h3 class="section-title">Rincian Per Kategori</h3>
+    </div>
+    <div id="categoryBarsContainer"></div>
+
+    <div class="section-title-row" style="margin: 24px 0 12px;">
+      <h3 class="section-title">Riwayat Per Bulan</h3>
+    </div>
+    <div id="recapHistory"></div>
+  </main>
 
   <main id="profile" class="page hidden">
     <div class="section-title-row" style="margin-bottom: 20px;">
@@ -263,49 +265,49 @@
     </div>
   </div>
 
-<div id="modalTransfer" class="modal hidden">
-  <div class="modal-content">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h3 style="font-size: 1.15rem; font-weight: 800;">Pindah Saldo</h3>
-      <button onclick="toggleModal('modalTransfer')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
-    </div>
-    <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">Dari</label>
-    <select id="trfDari" class="input-field"></select>
-    <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">Ke</label>
-    <select id="trfKe" class="input-field"></select>
-    <input type="text" id="trfJumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
-    <input type="date" id="trfTanggal" class="input-field">
-    <input type="text" id="trfCatatan" placeholder="Catatan (Opsional)" class="input-field">
-    <div style="display: flex; gap: 10px;">
-      <button onclick="toggleModal('modalTransfer')" class="btn-sec">Batal</button>
-      <button onclick="submitTransfer()" class="btn-primary">Pindahkan</button>
-    </div>
-  </div>
-</div>
-    
-<div id="modalEditAccount" class="modal hidden">
-  <div class="modal-content">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h3 style="font-size: 1.15rem; font-weight: 800;">Ubah Rekening / Dompet</h3>
-      <button onclick="toggleModal('modalEditAccount')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
-    </div>
-    <input type="hidden" id="editAccId">
-    <input id="editAccNama" placeholder="Nama Bank / E-Wallet" class="input-field">
-    <select id="editAccJenis" class="input-field">
-      <option value="Bank">Bank</option>
-      <option value="Dompet Digital">Dompet Digital (E-Wallet)</option>
-      <option value="Dompet Tunai">Dompet Tunai (Cash)</option>
-    </select>
-    <input type="text" id="editAccNomor" placeholder="Nomor Rekening / No HP" class="input-field">
-    <input type="text" id="editAccSaldo" placeholder="Saldo Saat Ini (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
-    <p style="font-size: 0.75rem; color: var(--text-muted); margin: -4px 0 12px;"><p style="font-size: 0.75rem; color: var(--text-muted); margin: -4px 0 12px;">Kalau saldo diubah, selisihnya otomatis dicatat sebagai transaksi "Koreksi Saldo".</p></p>
-    <div style="display: flex; gap: 10px;">
-      <button onclick="toggleModal('modalEditAccount')" class="btn-sec">Batal</button>
-      <button onclick="submitEditAccount()" class="btn-primary">Simpan</button>
+  <div id="modalTransfer" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.15rem; font-weight: 800;">Pindah Saldo</h3>
+        <button onclick="toggleModal('modalTransfer')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">Dari</label>
+      <select id="trfDari" class="input-field"></select>
+      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">Ke</label>
+      <select id="trfKe" class="input-field"></select>
+      <input type="text" id="trfJumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <input type="date" id="trfTanggal" class="input-field">
+      <input type="text" id="trfCatatan" placeholder="Catatan (Opsional)" class="input-field">
+      <div style="display: flex; gap: 10px;">
+        <button onclick="toggleModal('modalTransfer')" class="btn-sec">Batal</button>
+        <button onclick="submitTransfer()" class="btn-primary">Pindahkan</button>
+      </div>
     </div>
   </div>
-</div>
-  
+
+  <div id="modalEditAccount" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.15rem; font-weight: 800;">Ubah Rekening / Dompet</h3>
+        <button onclick="toggleModal('modalEditAccount')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <input type="hidden" id="editAccId">
+      <input id="editAccNama" placeholder="Nama Bank / E-Wallet" class="input-field">
+      <select id="editAccJenis" class="input-field">
+        <option value="Bank">Bank</option>
+        <option value="Dompet Digital">Dompet Digital (E-Wallet)</option>
+        <option value="Dompet Tunai">Dompet Tunai (Cash)</option>
+      </select>
+      <input type="text" id="editAccNomor" placeholder="Nomor Rekening / No HP" class="input-field">
+      <input type="text" id="editAccSaldo" placeholder="Saldo Saat Ini (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin: -4px 0 12px;">Kalau saldo diubah, selisihnya otomatis dicatat sebagai transaksi "Koreksi Saldo".</p>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="toggleModal('modalEditAccount')" class="btn-sec">Batal</button>
+        <button onclick="submitEditAccount()" class="btn-primary">Simpan</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modalEditTrx" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
