@@ -734,7 +734,7 @@ function submitEditAccount() {
 }
 
 // ===== PINDAH SALDO (transfer antar rekening) =====
-const KATEGORI_NETRAL = ['Transfer']; // tidak dihitung sebagai pemasukan/pengeluaran
+const KATEGORI_NETRAL = ['Transfer', 'Koreksi Saldo']; // tidak dihitung sebagai pemasukan/pengeluaran
 function netral(t) { return KATEGORI_NETRAL.includes(t.kategori); }
 
 function onJenisChange() {
@@ -1027,6 +1027,11 @@ function formatShort(num) {
   return num;
 }
 
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 function formatRupiahInput(value) {
   if (!value) return "";
   let number_string = value.toString().replace(/[^0-9]/g, '');
@@ -1034,13 +1039,14 @@ function formatRupiahInput(value) {
 }
 
 // FUNGSI MODAL AMAN
-function toggleModal(id) { 
+function toggleModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
-  
+
   if (el.classList.contains('hidden')) {
     el.classList.remove('hidden');
     el.style.display = 'flex';
+    if (id === 'modalTrx') document.getElementById('tanggal').value = todayStr();
   } else {
     el.classList.add('hidden');
     el.style.display = 'none';
