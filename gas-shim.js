@@ -52,6 +52,16 @@
         save(d);
       }
     },
+
+    addTransfer(p) {
+      const d = load();
+      [p.masuk, p.keluar].forEach(t => d.transactions.unshift({
+        id: uid(), tanggal: t.tanggal, jenis: t.jenis, kategori: t.kategori,
+        keterangan: t.keterangan || '', jumlah: Number(t.jumlah) || 0, rekeningId: t.rekeningId
+      }));
+      save(d);
+    },
+    
     addTransaction(t) {
       const d = load();
       d.transactions.unshift({ id: uid(), tanggal: t.tanggal, jenis: t.jenis, kategori: t.kategori, keterangan: t.keterangan || '', jumlah: Number(t.jumlah) || 0, rekeningId: t.rekeningId });
