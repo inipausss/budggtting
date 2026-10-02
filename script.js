@@ -641,11 +641,14 @@ function accountNet(id) {
 function openEditAcc(id) {
   const a = (globalData.accounts || []).find(x => x.id === id);
   if (!a) return;
+  const now = Math.max(0, (Number(a.saldoAwal) || 0) + accountNet(id));
   document.getElementById('editAccId').value = a.id;
   document.getElementById('editAccNama').value = a.nama;
   document.getElementById('editAccJenis').value = a.jenis;
   document.getElementById('editAccNomor').value = a.nomor || '';
-  document.getElementById('editAccSaldo').value = formatRupiahInput(Math.max(0, (Number(a.saldoAwal) || 0) + accountNet(id)));
+  const s = document.getElementById('editAccSaldo');
+  s.value = formatRupiahInput(now);
+  s.dataset.awal = now; // untuk mendeteksi apakah saldo benar-benar diubah
   toggleModal('modalEditAccount');
 }
 
@@ -654,28 +657,50 @@ function submitEditAccount() {
   const nama = document.getElementById('editAccNama').value.trim();
   const jenis = document.getElementById('editAccJenis').value;
   const nomor = document.getElementById('editAccNomor').value.trim();
-  const saldoSekarang = Number(document.getElementById('editAccSaldo').value.replace(/\./g, '')) || 0;
+  const elSaldo = document.getElementById('editAccSaldo');
+  const saldoBaru = Number(elSaldo.value.replace(/\./g, '')) || 0;
 
   if (!nama) { alert('Nama bank atau e-wallet harus diisi!'); return; }
-
   const a = (globalData.accounts || []).find(x => x.id === id);
   if (!a) return;
 
-  // saldo awal dihitung mundur supaya saldo akhir = angka yang diketik
-  const saldoAwal = saldoSekarang - accountNet(id);
-  a.nama = nama; a.jenis = jenis; a.nomor = nomor; a.saldoAwal = saldoAwal;
+  // Saldo awal TIDAK diubah. Selisihnya dicatat sebagai transaksi "Koreksi Saldo".
+  const berubah = saldoBaru !== Number(elSaldo.dataset.awal);
+  const selisih = berubah ? saldoBaru - ((Number(a.saldoAwal) || 0) + accountNet(id)) : 0;
 
+  a.nama = nama; a.jenis = jenis; a.nomor = nomor;
   const sm = (globalData.accountSummary || []).find(x => x.id === id);
-  if (sm) { sm.nama = nama; sm.jenis = jenis; sm.nomor = nomor; sm.saldoAkhir = saldoSekarang; }
+  if (sm) { sm.nama = nama; sm.jenis = jenis; sm.nomor = nomor; }
+
+  let koreksi = null;
+  if (selisih !== 0) {
+    const d = new Date();
+    koreksi = {
+      tanggal: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'),
+      jenis: selisih > 0 ? 'Pemasukan' : 'Pengeluaran',
+      kategori: 'Koreksi Saldo',
+      keterangan: '',
+      jumlah: Math.abs(selisih),
+      rekeningId: id
+    };
+    (globalData.transactions = globalData.transactions || []).unshift(Object.assign({ id: 'temp_' + Date.now() }, koreksi));
+    if (sm) sm.saldoAkhir += selisih;
+  }
 
   localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
   toggleModal('modalEditAccount');
   renderAllLocalUI();
 
   google.script.run
-    .withSuccessHandler(() => { loadData(); })
-    .withFailureHandler(err => { console.warn('Gagal update rekening: ' + err.message); })
-    .updateAccount({ id: id, nama: nama, jenis: jenis, nomor: nomor, saldoAwal: String(saldoAwal) });
+    .withSuccessHandler(() => {
+      if (!koreksi) { loadData(); return; }
+      google.script.run
+        .withSuccessHandler(() => loadData())
+        .withFailureHandler(err => alert('Gagal mencatat koreksi: ' + err.message))
+        .addTransaction(Object.assign({}, koreksi, { jumlah: String(koreksi.jumlah) }));
+    })
+    .withFailureHandler(err => console.warn('Gagal update rekening: ' + err.message))
+    .updateAccount({ id: id, nama: nama, jenis: jenis, nomor: nomor, saldoAwal: String(a.saldoAwal) });
 }
 
 // HAPUS DATA INSTAN
