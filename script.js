@@ -834,7 +834,7 @@ function handleReceipt(e) {
   if (!file) return;
   
   let activeBtnId = e.target.id === 'scanCamera' ? 'btnCam' : 'btnGal';
-  const btn = document.getElementById(activeBtnId);
+  const btn = document.getElementById("kategori").value = matchKategori(res.kategori);
   
   let originalHTML = '';
   if (btn) {
@@ -1161,6 +1161,24 @@ function warnBudget(kategori, lvBefore) {
 }
 
 // UTILITIES
+// Cocokkan kategori hasil scan ke kategori yang sudah dikenal (datalist, budget, transaksi)
+function matchKategori(raw) {
+  const r = (raw || '').trim().toLowerCase();
+  if (!r) return '';
+  const known = new Set();
+  document.querySelectorAll('#kategoriList option').forEach(o => known.add(o.value));
+  budgetList().forEach(b => known.add(b.kategori));
+  (globalData.transactions || []).forEach(t => { if (t.kategori && !netral(t)) known.add(t.kategori); });
+
+  const list = [...known];
+  const exact = list.find(k => k.trim().toLowerCase() === r);
+  if (exact) return exact;
+  const part = list.find(k => {
+    const x = k.trim().toLowerCase();
+    return x.length > 2 && (r.includes(x) || x.includes(r));
+  });
+  return part || raw.trim();
+}
 function formatShort(num) {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'JT';
   if (num >= 1000) return Math.round(num / 1000) + 'RB';
