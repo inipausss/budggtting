@@ -14,7 +14,7 @@
     const r = await fetch(c.url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(Object.assign({ token: c.token, action }, extra))
+      body: JSON.stringify(Object.assign({ token: c.token, profil: c.profil || '', action }, extra))
     });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'Gagal');
@@ -121,6 +121,7 @@
     const c = cfg();
     c.url = $('cfgUrl').value.trim();
     c.token = $('cfgToken').value;
+    c.profil = ($('cfgProfil').value || '').trim().toLowerCase();
     localStorage.setItem(CFG, JSON.stringify(c));
     alert('Pengaturan backup tersimpan di HP ini');
   };
@@ -145,6 +146,7 @@
     $('cfgUrl').value = c.url || '';
     $('cfgToken').value = c.token || '';
     info();
+    $('cfgProfil').value = c.profil || '';
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
   });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
