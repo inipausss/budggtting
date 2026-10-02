@@ -257,6 +257,26 @@ function populateDropdown(accounts) {
   }
 }
 
+function prevMonthKey() {
+  const [y, m] = currentMonthKey().split('-').map(Number);
+  const d = new Date(y, m - 2, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function setDelta(el, cur, old, upIsGood) {
+  if (!el) return;
+  let text = 'Belum ada data bulan lalu', good = true;
+  if (old > 0) {
+    const pct = Math.round((cur - old) / old * 100);
+    text = (pct > 0 ? '+' : '') + pct + '% vs bulan lalu';
+    good = pct === 0 || (pct > 0) === upIsGood;
+  }
+  el.innerText = text;
+  el.style.background = good ? 'rgba(204,255,0,0.15)' : 'rgba(244,63,94,0.12)';
+  el.style.color = good ? '#84cc16' : '#f43f5e';
+}
+
+
 // UPDATE DASHBOARD RINGKASAN
 function updateDashboard(res) {
   let inc = 0, exp = 0, sal = 0;
@@ -274,6 +294,10 @@ function updateDashboard(res) {
   const expEl = document.getElementById("dashTotalExpense");
   if (incEl) incEl.innerText = format(inc);
   if (expEl) expEl.innerText = format(exp);
+
+  const prev = monthTotals(prevMonthKey());
+  setDelta(incEl && incEl.nextElementSibling, inc, prev.inc, true);
+  setDelta(expEl && expEl.nextElementSibling, exp, prev.exp, false);
 }
 
 function getAccountName(rekeningId) {
