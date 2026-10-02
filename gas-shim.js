@@ -2,7 +2,7 @@
 (function () {
   const DB = 'budggt_db', CFG = 'budggt_cfg';
   const $ = id => document.getElementById(id);
-  const empty = () => ({ accounts: [], transactions: [] });
+  const empty = () => ({ accounts: [], transactions: [], budgets: [] });
   const load = () => { try { return JSON.parse(localStorage.getItem(DB)) || empty(); } catch (e) { return empty(); } };
   const save = d => localStorage.setItem(DB, JSON.stringify(d));
   const cfg = () => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } };
@@ -31,7 +31,7 @@
         });
         return { id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAkhir: s };
       });
-      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions };
+      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: d.budgets || [] };
     },
     addAccount(a) {
       const d = load();
@@ -77,6 +77,25 @@
       d.transactions = d.transactions.filter(t => t.id !== id);
       save(d);
     },
+    
+    setBudget(b) {
+      const d = load();
+      d.budgets = d.budgets || [];
+      const nama = String(b.kategori || '').trim();
+      const key = nama.toLowerCase();
+      const batas = Number(b.batas) || 0;
+      const i = d.budgets.findIndex(x => x.kategori.trim().toLowerCase() === key);
+      if (i > -1) d.budgets[i] = { kategori: nama, batas };
+      else d.budgets.push({ kategori: nama, batas });
+      save(d);
+    },
+    deleteBudget(kategori) {
+      const d = load();
+      const key = String(kategori || '').trim().toLowerCase();
+      d.budgets = (d.budgets || []).filter(x => x.kategori.trim().toLowerCase() !== key);
+      save(d);
+    },
+    
     async parseReceiptWithGemini(img) { return (await remote('scan', { image: img })).data; } // butuh internet
   };
 
