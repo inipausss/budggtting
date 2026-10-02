@@ -74,6 +74,12 @@
       </button>
     </div>
 
+    <div class="section-title-row">
+      <h3 class="section-title">Budget Bulan Ini</h3>
+      <button onclick="toggleModal('modalBudget')" class="btn-primary" style="width: auto; padding: 6px 14px; font-size: 0.8rem;"><i class="fa fa-sliders"></i> Atur</button>
+    </div>
+    <div id="budgetContainer" style="margin-bottom: 28px;"></div>
+    
     <div class="calendar-card">
       <div class="cal-header">
         <h3 class="section-title" id="calMonthTitle">BULAN INI</h3>
@@ -312,6 +318,20 @@
     </div>
   </div>
 
+  <div id="modalBudget" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.15rem; font-weight: 800;">Atur Budget</h3>
+        <button onclick="toggleModal('modalBudget')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <input list="kategoriList" id="budKategori" placeholder="Kategori (cth: Makanan)" class="input-field">
+      <input type="text" id="budBatas" placeholder="Batas per bulan (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <button onclick="submitBudget()" class="btn-primary">Simpan Budget</button>
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 10px 0;">Kalau kategori sudah punya budget, nilainya akan diperbarui. Tap budget di bawah untuk mengubah.</p>
+      <div id="budgetManager"></div>
+    </div>
+  </div>
+  
   <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleReceipt(event)" id="scanCamera">
   <input type="file" accept="image/*" class="hidden" onchange="handleReceipt(event)" id="scanGallery">
   <input type="file" accept="image/*" class="hidden" onchange="handleReceipt(event)" id="scanInput">
