@@ -233,6 +233,17 @@
     <button class="nav-tab" id="btn-profile" onclick="openPage('profile')"><i class="fa fa-user"></i></button>
   </nav>
 
+  <div id="modalDay" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 id="dayTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
+        <button onclick="toggleModal('modalDay')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <div id="daySummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"></div>
+      <div id="dayList"></div>
+    </div>
+  </div>
+  
   <div id="modalTrx" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
