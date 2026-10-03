@@ -230,6 +230,8 @@ function renderAllLocalUI() {
   renderFullTransactions();
   renderBudgets();
   renderTagihan();
+    const dm = document.getElementById('modalDay');
+  if (dm && !dm.classList.contains('hidden')) renderDay();
 }
 
 // AMBIL DATA DARI SPREADSHEET (BACKGROUND SYNC)
@@ -1015,7 +1017,7 @@ function renderCalendar(transactions) {
     }
 
     html += `
-      <div class="${cellClass}">
+      <div class="${cellClass}" onclick="openDay('${fullDateStr}')" style="cursor: pointer;">
         <span class="cal-date-num">${day}</span>
         ${nominalHtml}
       </div>
@@ -1357,6 +1359,48 @@ function submitPayBill() {
     .withSuccessHandler(() => loadData())
     .withFailureHandler(err => alert('Gagal mencatat pembayaran: ' + err.message))
     .addTransaction(Object.assign({}, trx, { jumlah: String(jumlah) }));
+}
+
+// ===== DETAIL HARIAN (ketuk tanggal di kalender) =====
+const HARI = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+let dayKey = '';
+
+function openDay(key) {
+  dayKey = key;
+  renderDay();
+  const el = document.getElementById('modalDay');
+  if (el && el.classList.contains('hidden')) toggleModal('modalDay');
+}
+
+function renderDay() {
+  const box = document.getElementById('dayList');
+  if (!box || !dayKey) return;
+
+  const [y, m, d] = dayKey.split('-').map(Number);
+  document.getElementById('dayTitle').innerText = HARI[new Date(y, m - 1, d).getDay()] + ', ' + d + ' ' + BULAN[m - 1];
+
+  const list = (globalData.transactions || []).filter(t => t.tanggal === dayKey);
+  let inc = 0, exp = 0;
+  list.filter(t => !netral(t)).forEach(t => {
+    const n = Number(t.jumlah) || 0;
+    if (t.jenis === 'Pemasukan') inc += n; else exp += n;
+  });
+
+  const cap = 'font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;';
+  const val = 'font-size: 1.05rem; font-weight: 900; letter-spacing: -0.3px;';
+  document.getElementById('daySummary').innerHTML = `
+    <div class="list-card" style="margin: 0; padding: 14px;">
+      <p style="${cap}">Masuk</p>
+      <h3 style="${val} color: #84cc16;">${format(inc)}</h3>
+    </div>
+    <div class="list-card" style="margin: 0; padding: 14px;">
+      <p style="${cap}">Keluar</p>
+      <h3 style="${val} color: #f43f5e;">${format(exp)}</h3>
+    </div>`;
+
+  box.innerHTML = list.length
+    ? list.map((t, i) => renderTrxHtml(t, i, 'day')).join('')
+    : `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada transaksi di tanggal ini</p>`;
 }
 
 // UTILITIES
