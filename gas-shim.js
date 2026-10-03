@@ -2,7 +2,7 @@
 (function () {
   const DB = 'budggt_db', CFG = 'budggt_cfg';
   const $ = id => document.getElementById(id);
-  const empty = () => ({ accounts: [], transactions: [], budgets: [] });
+  const empty = () => ({ accounts: [], transactions: [], budgets: [], bills: [] });
   const load = () => { try { return JSON.parse(localStorage.getItem(DB)) || empty(); } catch (e) { return empty(); } };
   const save = d => localStorage.setItem(DB, JSON.stringify(d));
   const cfg = () => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } };
@@ -31,7 +31,7 @@
         });
         return { id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAkhir: s };
       });
-      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: d.budgets || [] };
+      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: d.budgets || [], bills: d.bills || [] };
     },
     addAccount(a) {
       const d = load();
@@ -93,6 +93,24 @@
       const d = load();
       const key = String(kategori || '').trim().toLowerCase();
       d.budgets = (d.budgets || []).filter(x => x.kategori.trim().toLowerCase() !== key);
+      save(d);
+    },
+
+    setBill(b) {
+      const d = load();
+      d.bills = d.bills || [];
+      const item = {
+        id: b.id || uid(), nama: String(b.nama || '').trim(), jumlah: Number(b.jumlah) || 0,
+        kategori: String(b.kategori || '').trim(), rekeningId: b.rekeningId || '',
+        tanggal: Math.min(31, Math.max(1, Number(b.tanggal) || 1)), lunas: b.lunas || ''
+      };
+      const i = d.bills.findIndex(x => x.id === item.id);
+      if (i > -1) d.bills[i] = item; else d.bills.push(item);
+      save(d);
+    },
+    deleteBill(id) {
+      const d = load();
+      d.bills = (d.bills || []).filter(x => x.id !== id);
       save(d);
     },
     
