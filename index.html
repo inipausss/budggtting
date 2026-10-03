@@ -241,10 +241,13 @@
   </nav>
 
   <div id="modalDay" class="modal hidden">
-    <div class="modal-content">
+        <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
         <h3 id="dayTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
-        <button onclick="toggleModal('modalDay')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="dayAddBtn" onclick="addForDay()" title="Tambah di tanggal ini" style="width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: #000; border: none; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fa fa-plus"></i></button>
+          <button onclick="toggleModal('modalDay')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
       </div>
       <div id="daySummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"></div>
       <div id="dayList"></div>
