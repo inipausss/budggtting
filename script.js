@@ -1033,6 +1033,15 @@ function renderCalendar(transactions) {
   const totalDays = new Date(year, month + 1, 0).getDate();
   const todayDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
+  // penanda tagihan: tanggal jatuh tempo bulan ini -> status paling mendesak
+  const billByDay = {};
+  const urutBill = { telat: 0, soon: 1, ok: 2, lunas: 3 };
+  billList().forEach(b => {
+    const s = billStatus(b);
+    const dd = s.due.getDate();
+    if (!billByDay[dd] || urutBill[s.lv] < urutBill[billByDay[dd].lv]) billByDay[dd] = s;
+  });
+  
   let html = '';
   for (let i = 0; i < adjustedFirstDay; i++) {
     html += `<div class="cal-cell" style="opacity: 0.2; border:none; background:none;"></div>`;
@@ -1061,8 +1070,12 @@ function renderCalendar(transactions) {
       }
     }
 
+    const bs = billByDay[day];
+    const billDot = bs ? `<span class="cal-bill" style="background: ${bs.warna};"></span>` : '';
+
     html += `
       <div class="${cellClass}" onclick="openDay('${fullDateStr}')" style="cursor: pointer;">
+        ${billDot}
         <span class="cal-date-num">${day}</span>
         ${nominalHtml}
       </div>
@@ -1443,12 +1456,33 @@ function renderDay() {
       <h3 style="${val} color: #f43f5e;">${format(exp)}</h3>
     </div>`;
 
-  box.innerHTML = list.length
-    ? list.map((t, i) => renderTrxHtml(t, i, 'day')).join('')
-    : `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada transaksi di tanggal ini</p>`;
+   // tagihan yang jatuh tempo di tanggal ini (kalender hanya bulan berjalan)
+  const dueBills = dayKey.slice(0, 7) === currentMonthKey()
+    ? billList().map(b => ({ b, s: billStatus(b) })).filter(x => x.s.due.getDate() === d)
+    : [];
+  const lbl = 'font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);';
 
-    const btn = document.getElementById('dayAddBtn');
-      if (btn) btn.style.display = dayKey > todayStr() ? 'none' : 'flex';
+  const billHtml = dueBills.length ? `
+    <p style="${lbl} margin-bottom: 8px;">Tagihan</p>
+    ${dueBills.map(({ b, s }) => `
+      <div class="list-card" style="padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+        <div>
+          <strong style="font-size: 0.9rem;">${b.nama}</strong>
+          <p style="font-size: 0.7rem; font-weight: 800; color: ${s.warna}; text-transform: uppercase; margin-top: 2px;">${s.label}</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-weight: 800; font-size: 0.9rem;">${format(b.jumlah)}</span>
+          ${s.lv !== 'lunas' ? `<button type="button" onclick="openPayBill('${b.id}')" style="background: var(--primary); color: #000; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; cursor: pointer;">Bayar</button>` : ''}
+        </div>
+      </div>`).join('')}
+    <p style="${lbl} margin: 14px 0 8px;">Transaksi</p>` : '';
+
+    box.innerHTML = billHtml + (list.length
+    ? list.map((t, i) => renderTrxHtml(t, i, 'day')).join('')
+    : `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada transaksi di tanggal ini</p>`);
+
+  const btn = document.getElementById('dayAddBtn');
+  if (btn) btn.style.display = dayKey > todayStr() ? 'none' : 'flex';
 }
 
 function addForDay() {
