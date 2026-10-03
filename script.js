@@ -1469,3 +1469,16 @@ function toggleModal(id) {
 function format(num) { 
   return "Rp " + Number(num || 0).toLocaleString('id-ID'); 
 }
+
+// TAP DI LUAR MODAL = TUTUP
+let pointerDownTarget = null;
+document.addEventListener('pointerdown', e => { pointerDownTarget = e.target; });
+document.addEventListener('click', e => {
+  const m = e.target;
+  // harus tepat di latar gelap, dan tekan + lepasnya sama-sama di latar (bukan drag dari dalam form)
+  if (!m.classList || !m.classList.contains('modal')) return;
+  if (pointerDownTarget !== m) return;
+  if (m.dataset.lock) return;   // modal yang diberi data-lock tidak ikut tertutup
+  toggleModal(m.id);
+});
+
