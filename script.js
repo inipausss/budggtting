@@ -229,6 +229,7 @@ function renderAllLocalUI() {
   populateDropdown(globalData.accounts || []);
   renderFullTransactions();
   renderBudgets();
+  renderTagihan();
 }
 
 // AMBIL DATA DARI SPREADSHEET (BACKGROUND SYNC)
@@ -1158,6 +1159,204 @@ function warnBudget(kategori, lvBefore) {
       : `Budget ${b.kategori} sudah terpakai ${Math.round(pct)}%`;
     showToast(teks, lv);
   }
+}
+
+// ===== TAGIHAN BULANAN =====
+const TAGIHAN_SOON = 3; // hari menjelang jatuh tempo yang ditandai kuning
+
+function billList() { return globalData.bills || []; }
+
+function billDueDate(b, key) {
+  const [y, m] = key.split('-').map(Number);
+  const last = new Date(y, m, 0).getDate(); // tanggal 31 di bulan 30 hari -> hari terakhir
+  return new Date(y, m - 1, Math.min(Number(b.tanggal) || 1, last));
+}
+
+function billStatus(b) {
+  const key = currentMonthKey();
+  const due = billDueDate(b, key);
+  if (b.lunas === key) return { lv: 'lunas', label: 'Lunas', warna: '#84cc16', due };
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.round((due - today) / 86400000);
+  if (diff < 0) return { lv: 'telat', label: 'Terlambat ' + (-diff) + ' hari', warna: '#f43f5e', due };
+  if (diff === 0) return { lv: 'soon', label: 'Jatuh tempo hari ini', warna: '#eab308', due };
+  if (diff <= TAGIHAN_SOON) return { lv: 'soon', label: diff + ' hari lagi', warna: '#eab308', due };
+  return { lv: 'ok', label: diff + ' hari lagi', warna: 'var(--text-muted)', due };
+}
+
+function renderTagihan() {
+  renderBills();
+  renderBillSummary();
+}
+
+function renderBills() {
+  const box = document.getElementById('billList');
+  if (!box) return;
+  const items = billList().map(b => ({ b, s: billStatus(b) }));
+  if (items.length === 0) {
+    box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada tagihan. Tap "Tambah" untuk membuat.</p>`;
+    return;
+  }
+  const urut = { telat: 0, soon: 1, ok: 2, lunas: 3 };
+  items.sort((x, y) => urut[x.s.lv] - urut[y.s.lv] || x.s.due - y.s.due);
+
+  box.innerHTML = items.map(({ b, s }) => `
+    <div class="list-card" style="padding: 16px; margin-bottom: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <strong style="font-size: 0.95rem;">${b.nama}</strong>
+        <span style="font-size: 0.7rem; font-weight: 800; color: ${s.warna}; text-transform: uppercase;">${s.label}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 12px;">
+        <span>Tiap tanggal ${b.tanggal} · ${b.kategori}</span>
+        <span style="color: var(--text-main); font-weight: 800;">${format(b.jumlah)}</span>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+        ${s.lv !== 'lunas' ? `<button type="button" onclick="openPayBill('${b.id}')" style="background: var(--primary); color: #000; border: none; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; cursor: pointer;"><i class="fa fa-check"></i> Bayar</button>` : ''}
+        <button type="button" onclick="openBill('${b.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="fa fa-pen"></i> Ubah</button>
+        <button type="button" onclick="removeBill('${b.id}')" style="background: rgba(244,63,94,0.12); color: #f43f5e; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="fa fa-trash"></i> Hapus</button>
+      </div>
+    </div>`).join('');
+}
+
+// Ringkasan di dashboard + titik merah di lonceng
+function renderBillSummary() {
+  const box = document.getElementById('billSummary');
+  const dot = document.getElementById('billDot');
+  const items = billList().map(b => ({ b, s: billStatus(b) }));
+  const urgent = items.filter(x => x.s.lv === 'telat' || x.s.lv === 'soon').sort((x, y) => x.s.due - y.s.due);
+  if (dot) dot.classList.toggle('hidden', urgent.length === 0);
+  if (!box) return;
+
+  const note = txt => `<p style="text-align: center; color: var(--text-muted); padding: 12px 0; font-size: 0.85rem;">${txt}</p>`;
+  if (items.length === 0) { box.innerHTML = note('Belum ada tagihan. Tap "Kelola" untuk menambah.'); return; }
+  if (urgent.length === 0) { box.innerHTML = note('Tidak ada tagihan yang dekat jatuh tempo 🎉'); return; }
+
+  box.innerHTML = urgent.slice(0, 3).map(({ b, s }) => `
+    <div class="list-card" onclick="openPage('bills')" style="cursor: pointer; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <strong style="font-size: 0.9rem;">${b.nama}</strong>
+        <p style="font-size: 0.7rem; font-weight: 800; color: ${s.warna}; text-transform: uppercase; margin-top: 2px;">${s.label}</p>
+      </div>
+      <span style="font-weight: 800; font-size: 0.9rem;">${format(b.jumlah)}</span>
+    </div>`).join('') +
+    (urgent.length > 3 ? note('+ ' + (urgent.length - 3) + ' tagihan lainnya') : '');
+}
+
+function accountOptions(selectedId) {
+  return (globalData.accounts || []).map(a =>
+    `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${a.nama}</option>`).join('');
+}
+
+function openBill(id) {
+  const b = id ? billList().find(x => x.id === id) : null;
+  if (id && !b) return;
+  if ((globalData.accounts || []).length === 0) { alert('Tambah rekening dulu di menu Rekening'); return; }
+  document.getElementById('billTitle').innerText = b ? 'Ubah Tagihan' : 'Tambah Tagihan';
+  document.getElementById('billId').value = b ? b.id : '';
+  document.getElementById('billNama').value = b ? b.nama : '';
+  document.getElementById('billJumlah').value = b ? formatRupiahInput(b.jumlah) : '';
+  document.getElementById('billTanggal').value = b ? b.tanggal : '';
+  document.getElementById('billKategori').value = b ? b.kategori : 'Tagihan';
+  document.getElementById('billRekening').innerHTML = accountOptions(b ? b.rekeningId : '');
+  toggleModal('modalBill');
+}
+
+function submitBill() {
+  const id = document.getElementById('billId').value;
+  const nama = document.getElementById('billNama').value.trim();
+  const jumlah = Number(document.getElementById('billJumlah').value.replace(/\./g, '')) || 0;
+  const tgl = parseInt(document.getElementById('billTanggal').value, 10);
+  const kategori = document.getElementById('billKategori').value.trim();
+  const rekeningId = document.getElementById('billRekening').value;
+
+  if (!nama) { alert('Isi nama tagihan'); return; }
+  if (jumlah <= 0) { alert('Isi nominal tagihan (perkiraan juga boleh)'); return; }
+  if (!(tgl >= 1 && tgl <= 31)) { alert('Tanggal jatuh tempo harus 1 sampai 31'); return; }
+  if (!kategori) { alert('Isi kategori'); return; }
+  if (!rekeningId) { alert('Pilih rekening'); return; }
+
+  if (!globalData.bills) globalData.bills = [];
+  let bill;
+  if (id) {
+    bill = billList().find(x => x.id === id);
+    if (!bill) return;
+    Object.assign(bill, { nama, jumlah, tanggal: tgl, kategori, rekeningId });
+  } else {
+    bill = { id: 'bill_' + Date.now(), nama, jumlah, tanggal: tgl, kategori, rekeningId, lunas: '' };
+    // tanggal bulan ini sudah lewat: tanya, supaya tidak langsung tampil "Terlambat"
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (billDueDate(bill, currentMonthKey()) < today &&
+        confirm('Jatuh tempo bulan ini sudah lewat. Tandai sudah dibayar untuk bulan ini?')) {
+      bill.lunas = currentMonthKey();
+    }
+    globalData.bills.push(bill);
+  }
+
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  toggleModal('modalBill');
+  renderTagihan();
+
+  google.script.run
+    .withFailureHandler(err => alert('Gagal simpan tagihan: ' + err.message))
+    .setBill(bill);
+}
+
+function removeBill(id) {
+  const b = billList().find(x => x.id === id);
+  if (!b) return;
+  if (!confirm(`Hapus tagihan "${b.nama}"? Transaksi yang sudah tercatat tidak ikut terhapus.`)) return;
+  globalData.bills = globalData.bills.filter(x => x.id !== id);
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  renderTagihan();
+  google.script.run
+    .withFailureHandler(err => alert('Gagal hapus tagihan: ' + err.message))
+    .deleteBill(id);
+}
+
+function openPayBill(id) {
+  const b = billList().find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('payBillId').value = b.id;
+  document.getElementById('payBillName').innerText = b.nama + ' · jatuh tempo tanggal ' + b.tanggal;
+  document.getElementById('payJumlah').value = formatRupiahInput(b.jumlah);
+  document.getElementById('payRekening').innerHTML = accountOptions(b.rekeningId);
+  toggleModal('modalPayBill');
+}
+
+function submitPayBill() {
+  const b = billList().find(x => x.id === document.getElementById('payBillId').value);
+  if (!b) return;
+  const jumlah = Number(document.getElementById('payJumlah').value.replace(/\./g, '')) || 0;
+  const rekeningId = document.getElementById('payRekening').value;
+  if (jumlah <= 0) { alert('Isi nominal yang dibayar'); return; }
+  if (!rekeningId) { alert('Pilih rekening'); return; }
+
+  const bdg = findBudget(b.kategori);
+  const lvBefore = bdg ? budgetLevel(budgetPct(bdg)) : 0;
+
+  const trx = { tanggal: todayStr(), jenis: 'Pengeluaran', kategori: b.kategori, keterangan: b.nama, jumlah, rekeningId };
+  (globalData.transactions = globalData.transactions || []).unshift(Object.assign({ id: 'temp_' + Date.now() }, trx));
+  const acc = (globalData.accountSummary || []).find(a => a.id === rekeningId);
+  if (acc) acc.saldoAkhir -= jumlah;
+
+  b.lunas = currentMonthKey();
+  b.jumlah = jumlah;          // nominal terakhir jadi isian awal bulan depan
+  b.rekeningId = rekeningId;
+
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  toggleModal('modalPayBill');
+  renderAllLocalUI();
+  if (bdg) warnBudget(b.kategori, lvBefore);
+
+  google.script.run
+    .withFailureHandler(err => alert('Gagal simpan status tagihan: ' + err.message))
+    .setBill(b);
+  google.script.run
+    .withSuccessHandler(() => loadData())
+    .withFailureHandler(err => alert('Gagal mencatat pembayaran: ' + err.message))
+    .addTransaction(Object.assign({}, trx, { jumlah: String(jumlah) }));
 }
 
 // UTILITIES
