@@ -90,6 +90,7 @@ function renderRecap() {
     </div>`;
 
   renderFlowChart();
+  renderTrend();
   renderRecapHistory();
 }
 
@@ -899,6 +900,7 @@ function saveProfile(e) {
   alert("Nama tampilan berhasil diperbarui!");
 }
 
+
 // RENDER CHART & LAPORAN
 function renderFlowChart() {
   const canvasEl = document.getElementById('chartFlow');
@@ -955,6 +957,49 @@ function renderFlowChart() {
       </div>
     `;
   }).join('');
+}
+
+// GRAFIK TREN 6 BULAN
+let trendChart;
+
+function renderTrend() {
+  const canvasEl = document.getElementById('chartTrend');
+  if (!canvasEl) return;
+
+  const [y, m] = recapMonth.split('-').map(Number);
+  const labels = [], inc = [], exp = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(y, m - 1 - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const s = monthTotals(key);
+    labels.push(BULAN[d.getMonth()].slice(0, 3) + ' ' + String(d.getFullYear()).slice(2));
+    inc.push(s.inc);
+    exp.push(s.exp);
+  }
+
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(canvasEl.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Masuk', data: inc, backgroundColor: '#ccff00', borderRadius: 4 },
+        { label: 'Keluar', data: exp, backgroundColor: '#f43f5e', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + format(c.parsed.y) } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => formatShort(v) } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
 }
 
 // RENDER KALENDER
