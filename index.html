@@ -24,7 +24,7 @@
     </div>
     <div class="top-actions">
       <button class="icon-btn" title="Histori Transaksi" onclick="openPage('analytics')"><i class="fa fa-book-open"></i></button>
-      <button class="icon-btn" title="Notifikasi"><i class="fa fa-paper-plane"></i></button>
+      <button class="icon-btn" title="Tagihan" onclick="openPage('bills')" style="position: relative;"><i class="fa fa-bell"></i><span id="billDot" class="bill-dot hidden"></span></button>
       <button class="icon-btn" title="Ganti Mode" onclick="toggleDarkMode()" id="themeToggle">
         <i id="themeIcon" class="fa fa-moon"></i>
       </button>
@@ -72,7 +72,17 @@
         <div class="menu-circle"><i class="fa fa-chart-simple"></i></div>
         <span class="menu-label">Laporan</span>
       </button>
+        <button class="menu-item" onclick="openPage('bills')">
+        <div class="menu-circle"><i class="fa fa-file-invoice-dollar"></i></div>
+        <span class="menu-label">Tagihan</span>
+      </button>
     </div>
+
+       <div class="section-title-row">
+      <h3 class="section-title">Tagihan</h3>
+      <button onclick="openPage('bills')" class="btn-sec" style="width: auto; padding: 6px 14px; font-size: 0.8rem;">Kelola</button>
+    </div>
+    <div id="billSummary" style="margin-bottom: 28px;"></div>
 
     <div class="section-title-row">
       <h3 class="section-title">Budget Bulan Ini</h3>
@@ -207,6 +217,14 @@
     </div>
   </main>
 
+  <main id="bills" class="page hidden">
+    <div class="section-title-row" style="margin-bottom: 20px;">
+      <h2 style="font-size: 1.4rem; font-weight: 800;">Tagihan Bulanan</h2>
+      <button onclick="openBill()" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
+    </div>
+    <div id="billList"></div>
+  </main>
+  
   <nav class="bottom-nav">
     <button class="nav-tab active" id="btn-dashboard" onclick="openPage('dashboard')"><i class="fa fa-table-cells-large"></i></button>
     <button class="nav-tab" id="btn-accounts" onclick="openPage('accounts')"><i class="fa fa-wallet"></i></button>
@@ -331,6 +349,36 @@
       <button onclick="submitBudget()" class="btn-primary">Simpan Budget</button>
       <p style="font-size: 0.75rem; color: var(--text-muted); margin: 10px 0;">Kalau kategori sudah punya budget, nilainya akan diperbarui. Tap budget di bawah untuk mengubah.</p>
       <div id="budgetManager"></div>
+    </div>
+  </div>
+
+  <div id="modalBill" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 id="billTitle" style="font-size: 1.15rem; font-weight: 800;">Tambah Tagihan</h3>
+        <button onclick="toggleModal('modalBill')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <input type="hidden" id="billId">
+      <input id="billNama" placeholder="Nama tagihan (cth: Listrik, Wifi, Cicilan HP)" class="input-field">
+      <input type="text" id="billJumlah" placeholder="Nominal (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <input type="number" id="billTanggal" min="1" max="31" placeholder="Jatuh tempo tiap tanggal (1-31)" class="input-field">
+      <input list="kategoriList" id="billKategori" placeholder="Kategori" class="input-field">
+      <select id="billRekening" class="input-field"></select>
+      <button onclick="submitBill()" class="btn-primary">Simpan Tagihan</button>
+    </div>
+  </div>
+
+  <div id="modalPayBill" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="font-size: 1.15rem; font-weight: 800;">Bayar Tagihan</h3>
+        <button onclick="toggleModal('modalPayBill')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <p id="payBillName" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;"></p>
+      <input type="hidden" id="payBillId">
+      <input type="text" id="payJumlah" placeholder="Nominal dibayar (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <select id="payRekening" class="input-field"></select>
+      <button onclick="submitPayBill()" class="btn-primary">Bayar &amp; Catat</button>
     </div>
   </div>
   
