@@ -1446,7 +1446,16 @@ function renderDay() {
   box.innerHTML = list.length
     ? list.map((t, i) => renderTrxHtml(t, i, 'day')).join('')
     : `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada transaksi di tanggal ini</p>`;
+
+    const btn = document.getElementById('dayAddBtn');
+      if (btn) btn.style.display = dayKey > todayStr() ? 'none' : 'flex';
 }
+
+function addForDay() {
+  toggleModal('modalTrx');
+  document.getElementById('tanggal').value = dayKey; // toggleModal mengisi hari ini, ditimpa di sini
+}
+
 
 // UTILITIES
 
