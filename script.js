@@ -999,64 +999,148 @@ function saveProfile(e) {
 }
 
 
-// RENDER CHART & LAPORAN
+// ===== DONUT PENGELUARAN PER KATEGORI =====
+const CAT_PALETTE = ['#ccff00', '#f43f5e', '#38bdf8', '#f59e0b', '#a855f7', '#22c55e', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#eab308'];
+const CAT_LAINNYA = '#64748b';
+const CAT_TOP = 5; // di halaman Laporan hanya 5 teratas, sisanya digabung
+
+function catData(key) {
+  const map = new Map();
+  let total = 0;
+  inMonth(globalData.transactions, key)
+    .filter(t => !netral(t) && t.jenis === 'Pengeluaran')
+    .forEach(t => {
+      const n = Number(t.jumlah) || 0;
+      const nama = (t.kategori || '').trim() || 'Lainnya';
+      const k = nama.toLowerCase();
+      if (!map.has(k)) map.set(k, { nama, jumlah: 0, n: 0 });
+      const c = map.get(k);
+      c.jumlah += n;
+      c.n++;
+      total += n;
+    });
+  const list = [...map.values()].sort((a, b) => b.jumlah - a.jumlah);
+  list.forEach((c, i) => {
+    c.warna = CAT_PALETTE[i % CAT_PALETTE.length];
+    c.pct = total > 0 ? c.jumlah / total * 100 : 0;
+  });
+  return { list, total };
+}
+
+function catRowHtml(c) {
+  const pct = c.pct >= 1 ? Math.round(c.pct) + '%' : '<1%';
+  return `
+    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
+      <span style="min-width: 46px; text-align: center; background: ${c.warna}; color: #000; font-size: 0.72rem; font-weight: 800; padding: 6px 0; border-radius: 6px;">${pct}</span>
+      <div style="flex: 1;">
+        <span style="font-size: 0.9rem; font-weight: 700;">${c.nama}</span>
+        ${c.n ? `<p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">${c.n} transaksi</p>` : ''}
+      </div>
+      <span style="font-size: 0.9rem; font-weight: 800;">${format(c.jumlah)}</span>
+    </div>`;
+}
+
+// donut di halaman Laporan: 5 teratas + "Lainnya"
 function renderFlowChart() {
   const canvasEl = document.getElementById('chartFlow');
   if (!canvasEl) return;
-  const ctx = canvasEl.getContext('2d');
-  let inc = 0, exp = 0;
-  let categoryMap = {};
 
-  inMonth(globalData.transactions, recapMonth).filter(t => !netral(t)).forEach(t => {
-    let jml = Number(t.jumlah) || 0;
-    if (t.jenis === "Pemasukan") {
-      inc += jml; 
-    } else {
-      exp += jml;
-      let kat = t.kategori ? t.kategori.trim() : 'Lainnya';
-      categoryMap[kat] = (categoryMap[kat] || 0) + jml;
-    }
-  });
+  const { list, total } = catData(recapMonth);
+  let rows = list;
+  if (list.length > CAT_TOP + 1) {
+    const rest = list.slice(CAT_TOP);
+    const jumlah = rest.reduce((s, c) => s + c.jumlah, 0);
+    rows = list.slice(0, CAT_TOP).concat([{
+      nama: 'Lainnya (' + rest.length + ' kategori)',
+      jumlah, warna: CAT_LAINNYA, pct: total > 0 ? jumlah / total * 100 : 0
+    }]);
+  }
 
-  if (flowChart) flowChart.destroy();
-  flowChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Masuk', 'Keluar'],
-      datasets: [{ data: [inc, exp], backgroundColor: ['#ccff00', '#f43f5e'], borderWidth: 0 }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-  });
+  const card = document.getElementById('catCard');
+  const btn = document.getElementById('catDetailBtn');
+  const legend = document.getElementById('catLegend');
+  const totalEl = document.getElementById('catTotal');
 
-  const container = document.getElementById('categoryBarsContainer');
-  if (!container) return;
-  const categories = Object.keys(categoryMap);
+  if (flowChart) { flowChart.destroy(); flowChart = null; }
 
-  if (categories.length === 0 || exp === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 15px 0; font-size: 0.85rem;">Belum ada data pengeluaran kategori</p>`;
+  if (total <= 0) {
+    if (card) card.style.display = 'none';
+    if (btn) btn.style.display = 'none';
+    if (legend) legend.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 15px 0; font-size: 0.85rem;">Belum ada data pengeluaran bulan ini</p>`;
     return;
   }
 
-  categories.sort((a, b) => categoryMap[b] - categoryMap[a]);
+  if (card) card.style.display = '';
+  if (btn) btn.style.display = '';
+  if (totalEl) totalEl.innerText = format(total);
+  if (legend) legend.innerHTML = rows.map(catRowHtml).join('');
 
-  container.innerHTML = categories.map(kat => {
-    let nominal = categoryMap[kat];
-    let percentage = exp > 0 ? ((nominal / exp) * 100).toFixed(1) : 0;
-
-    return `
-      <div class="category-bar-item" style="margin-bottom: 10px;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">
-          <span>${kat}</span>
-          <span style="color: var(--text-muted);">${format(nominal)} <strong style="color: var(--text-main); margin-left: 4px;">(${percentage}%)</strong></span>
-        </div>
-        <div style="height: 6px; background: var(--circle-bg); border-radius: 3px; overflow: hidden;">
-          <div style="width: ${percentage}%; height: 100%; background: #ccff00;"></div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  flowChart = new Chart(canvasEl.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: rows.map(c => c.nama),
+      datasets: [{ data: rows.map(c => c.jumlah), backgroundColor: rows.map(c => c.warna), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    }
+  });
 }
 
+// halaman detail: semua kategori
+let catDetailChart;
+
+function openCatDetail() {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.getElementById('analyticsDetail').classList.remove('hidden');
+  renderCatDetail();
+  window.scrollTo({ top: 0 });
+}
+
+function backToRecap() {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.getElementById('analytics').classList.remove('hidden');
+  window.scrollTo({ top: 0 });
+}
+
+function renderCatDetail() {
+  const { list, total } = catData(recapMonth);
+  const card = document.getElementById('catDetailCard');
+  const box = document.getElementById('catDetailList');
+  const canvasEl = document.getElementById('chartCatDetail');
+  document.getElementById('catDetailMonth').innerText = monthLabel(recapMonth);
+  document.getElementById('catDetailTotal').innerText = format(total);
+
+  if (catDetailChart) { catDetailChart.destroy(); catDetailChart = null; }
+
+  if (total <= 0) {
+    card.style.display = 'none';
+    box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada pengeluaran di bulan ini</p>`;
+    return;
+  }
+
+  card.style.display = '';
+  box.innerHTML = list.map(catRowHtml).join('');
+  catDetailChart = new Chart(canvasEl.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: list.map(c => c.nama),
+      datasets: [{ data: list.map(c => c.jumlah), backgroundColor: list.map(c => c.warna), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => c.label + ': ' + format(c.parsed) } }
+      }
+    }
+  });
+}
 // GRAFIK TREN 6 BULAN
 let trendChart;
 
