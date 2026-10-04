@@ -675,4 +675,19 @@
     height: 7px;
     border-radius: 50%;
   }
-
+  /* Pilihan rekening di kartu saldo */
+  .saldo-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 8px 0 20px 0;
+  }
+  .saldo-chip i:last-child { font-size: 0.65rem; }
