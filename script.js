@@ -375,17 +375,24 @@ function toggleSaldoAcc(id) {
 
 // UPDATE DASHBOARD RINGKASAN
 function updateDashboard(res) {
-  let inc = 0, exp = 0, sal = 0;
+  let inc = 0, exp = 0, sal = 0, fInc = 0, fExp = 0;
+  const picked = saldoAccounts();
+  const ids = new Set(picked.map(a => a.id));
+
   inMonth(res.transactions, currentMonthKey()).filter(t => !netral(t)).forEach(t => {
-    let amt = Number(t.jumlah) || 0;
-    if (t.jenis === "Pemasukan") inc += amt;
-    else exp += amt;
+    const amt = Number(t.jumlah) || 0;
+    const masuk = t.jenis === "Pemasukan";
+    if (masuk) inc += amt; else exp += amt;
+    if (ids.has(t.rekeningId)) { if (masuk) fInc += amt; else fExp += amt; }
   });
-  (res.accountSummary || []).forEach(a => { sal += Number(a.saldoAkhir) || 0; });
+  picked.forEach(a => { sal += Number(a.saldoAkhir) || 0; });
 
-  rawSummary = { saldo: sal, income: inc, expense: exp };
+  // kartu atas mengikuti rekening yang dipilih
+  rawSummary = { saldo: sal, income: fInc, expense: fExp };
   renderBalanceDisplay();
+  renderSaldoLabel();
 
+  // dua kartu di bawah tetap total semua rekening
   const incEl = document.getElementById("dashTotalIncome");
   const expEl = document.getElementById("dashTotalExpense");
   if (incEl) incEl.innerText = format(inc);
