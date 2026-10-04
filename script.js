@@ -281,6 +281,97 @@ function setDelta(el, cur, old, upIsGood) {
   el.style.color = good ? '#84cc16' : '#f43f5e';
 }
 
+// ===== PILIH REKENING UNTUK KARTU SALDO =====
+let saldoSel = null; // null = semua rekening
+try {
+  const s = JSON.parse(localStorage.getItem('budggt_saldo_sel'));
+  if (Array.isArray(s)) saldoSel = s;
+} catch (e) {}
+
+function saveSaldoSel() {
+  try { localStorage.setItem('budggt_saldo_sel', JSON.stringify(saldoSel)); } catch (e) {}
+}
+
+// rekening yang dihitung; rekening terhapus diabaikan, kalau kosong kembali ke semua
+function saldoAccounts() {
+  const all = globalData.accountSummary || [];
+  if (!saldoSel) return all;
+  const pick = all.filter(a => saldoSel.includes(a.id));
+  return pick.length ? pick : all;
+}
+
+function renderSaldoLabel() {
+  const el = document.getElementById('saldoFilterLabel');
+  if (!el) return;
+  const all = globalData.accountSummary || [];
+  const picked = saldoAccounts();
+  if (all.length === 0 || picked.length === all.length) el.innerText = 'Semua rekening';
+  else if (picked.length === 1) el.innerText = picked[0].nama;
+  else el.innerText = picked.length + ' dari ' + all.length + ' rekening';
+}
+
+function openSaldoPicker() {
+  renderSaldoPicker();
+  toggleModal('modalSaldo');
+}
+
+function renderSaldoPicker() {
+  const box = document.getElementById('saldoPickerList');
+  if (!box) return;
+  const all = globalData.accountSummary || [];
+  if (all.length === 0) {
+    box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada rekening</p>`;
+    return;
+  }
+  const picked = new Set(saldoAccounts().map(a => a.id));
+  const allOn = picked.size === all.length;
+  const row = 'display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border-color); cursor: pointer;';
+  const box_ = on => `<i class="${on ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}" style="font-size: 1.2rem; color: ${on ? '#84cc16' : 'var(--text-muted)'};"></i>`;
+  const total = all.reduce((s, a) => s + (Number(a.saldoAkhir) || 0), 0);
+
+  box.innerHTML = `
+    <div onclick="selectAllSaldo()" style="${row} border-top: none;">
+      ${box_(allOn)}
+      <div style="flex: 1;"><strong style="font-size: 0.95rem;">Semua rekening</strong></div>
+      <span style="font-weight: 800; font-size: 0.9rem;">${format(total)}</span>
+    </div>` +
+    all.map(a => `
+    <div onclick="toggleSaldoAcc('${a.id}')" style="${row}">
+      ${box_(picked.has(a.id))}
+      <div style="flex: 1;">
+        <strong style="font-size: 0.95rem;">${a.nama}</strong>
+        <p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">${a.jenis}</p>
+      </div>
+      <span style="font-weight: 800; font-size: 0.85rem;">${format(a.saldoAkhir)}</span>
+      <button type="button" onclick="event.stopPropagation(); onlySaldoAcc('${a.id}')" style="background: var(--circle-bg); color: var(--text-muted); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; cursor: pointer;">Hanya ini</button>
+    </div>`).join('');
+}
+
+function applySaldoSel() {
+  saveSaldoSel();
+  renderSaldoPicker();
+  updateDashboard(globalData);
+}
+
+function selectAllSaldo() {
+  saldoSel = null;
+  applySaldoSel();
+}
+
+function onlySaldoAcc(id) {
+  const all = globalData.accountSummary || [];
+  saldoSel = all.length <= 1 ? null : [id];
+  applySaldoSel();
+}
+
+function toggleSaldoAcc(id) {
+  const all = (globalData.accountSummary || []).map(a => a.id);
+  let cur = saldoSel ? saldoSel.filter(x => all.includes(x)) : all.slice();
+  if (cur.includes(id)) cur = cur.filter(x => x !== id); else cur.push(id);
+  if (cur.length === 0) { renderSaldoPicker(); return; } // minimal satu rekening
+  saldoSel = cur.length === all.length ? null : cur; // semua dicentang = otomatis termasuk rekening baru
+  applySaldoSel();
+}
 
 // UPDATE DASHBOARD RINGKASAN
 function updateDashboard(res) {
