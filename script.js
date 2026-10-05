@@ -1002,7 +1002,7 @@ function saveProfile(e) {
 // ===== DONUT PENGELUARAN PER KATEGORI =====
 const CAT_PALETTE = ['#ccff00', '#f43f5e', '#38bdf8', '#f59e0b', '#a855f7', '#22c55e', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#eab308'];
 const CAT_LAINNYA = '#64748b';
-const CAT_TOP = 5; // di halaman Laporan hanya 5 teratas, sisanya digabung
+const CAT_TOP = 3; // di halaman Laporan hanya 5 teratas, sisanya digabung
 
 function catData(key) {
   const map = new Map();
