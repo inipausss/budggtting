@@ -930,16 +930,50 @@ function confirmDeleteAcc(id, nama) {
   }
 }
 
+// saldo rekening mengikuti transaksi yang dibuang (dir = -1) atau dikembalikan (dir = 1)
+function adjustSaldo(t, dir) {
+  const a = (globalData.accountSummary || []).find(x => x.id === t.rekeningId);
+  if (a) a.saldoAkhir += dir * (t.jenis === 'Pemasukan' ? 1 : -1) * (Number(t.jumlah) || 0);
+}
+
+// Hapus langsung, tanpa konfirmasi; salah hapus bisa diurungkan lewat toast (id dan posisi asli kembali)
 function confirmDeleteTrx(id, kategori) {
-  if (confirm(`Hapus transaksi "${kategori}" ini?`)) {
-    globalData.transactions = (globalData.transactions || []).filter(t => t.id !== id);
+  const list = globalData.transactions || [];
+  const index = list.findIndex(t => t.id === id);
+  if (index < 0) return;
+  const t = list.splice(index, 1)[0];
+  adjustSaldo(t, -1);
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  renderAllLocalUI();
+
+  google.script.run
+    .withSuccessHandler(() => { loadData(); })
+    .deleteTransaction(id);
+
+  showUndo('"' + kategori + '" dihapus', () => {
+    (globalData.transactions = globalData.transactions || []).splice(index, 0, t);
+    adjustSaldo(t, 1);
     localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
     renderAllLocalUI();
-
     google.script.run
       .withSuccessHandler(() => { loadData(); })
-      .deleteTransaction(id);
-  }
+      .restoreTransaction({ t, index });
+  });
+}
+
+function showUndo(msg, onUndo) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.cssText = 'background: #1e293b; display: flex; justify-content: space-between; align-items: center; gap: 12px;';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  const btn = document.createElement('button');
+  btn.textContent = 'Urungkan';
+  btn.style.cssText = 'background: none; border: none; color: #ccff00; font-weight: 800; font-size: 0.85rem; cursor: pointer;';
+  btn.onclick = () => { el.remove(); onUndo(); };
+  el.append(span, btn);
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 6000);
 }
 
 // SCANNER STRUK AI
