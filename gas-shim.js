@@ -77,7 +77,13 @@
       d.transactions = d.transactions.filter(t => t.id !== id);
       save(d);
     },
-    
+    restoreTransaction(p) { // urungkan hapus: id dan posisi asli kembali
+      const d = load();
+      if (d.transactions.some(t => t.id === p.t.id)) return;
+      d.transactions.splice(Math.min(p.index, d.transactions.length), 0, p.t);
+      save(d);
+    },
+
     setBudget(b) {
       const d = load();
       d.budgets = d.budgets || [];
