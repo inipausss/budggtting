@@ -510,14 +510,21 @@ function renderFullTransactions() {
   const container = document.getElementById("fullTrxContainer");
   if (!container) return;
 
-  const list = inMonth(globalData.transactions, recapMonth);
+  // Ada kata kunci: cari di SEMUA bulan. Kosong: hanya bulan terpilih.
+  const q = ((document.getElementById("trxSearch") || {}).value || "").trim().toLowerCase();
+  const all = globalData.transactions || [];
+  const list = q
+    ? all.filter(t => [t.keterangan, t.kategori, getAccountName(t.rekeningId), t.tanggal, t.jumlah]
+        .join(' ').toLowerCase().includes(q))
+    : inMonth(all, recapMonth);
   let inc = 0, exp = 0;
   list.filter(t => !netral(t)).forEach(t => { (t.jenis === "Pemasukan") ? inc += Number(t.jumlah) || 0 : exp += Number(t.jumlah) || 0; });
   const sum = document.getElementById("trxMonthSummary");
-  if (sum) sum.innerHTML = `<span style="color: var(--primary);">+ ${format(inc)}</span> &nbsp;|&nbsp; <span style="color: #f472b6;">- ${format(exp)}</span>`;
+  if (sum) sum.innerHTML = (q ? `<span style="color: var(--text-muted);">${list.length} hasil, semua bulan</span><br>` : '') +
+    `<span style="color: var(--primary);">+ ${format(inc)}</span> &nbsp;|&nbsp; <span style="color: #f472b6;">- ${format(exp)}</span>`;
 
   if (list.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Tidak ada transaksi di bulan ini</p>`;
+    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">${q ? 'Tidak ada transaksi yang cocok' : 'Tidak ada transaksi di bulan ini'}</p>`;
     return;
   }
   container.innerHTML = list.map((t, index) => renderTrxHtml(t, index, 'full')).join("");
