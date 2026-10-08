@@ -7,6 +7,33 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Toggle Ringkasan | Transaksi di halaman Laporan */
+    .seg {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 16px;
+      background: var(--circle-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+    }
+    .seg-btn {
+      padding: 10px 0;
+      border: none;
+      background: none;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .seg-btn.active {
+      background: var(--primary);
+      color: #000;
+    }
+  </style>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,7 +50,6 @@
       <span>Budggt.</span>
     </div>
     <div class="top-actions">
-      <button class="icon-btn" title="Histori Transaksi" onclick="openPage('analytics')"><i class="fa fa-book-open"></i></button>
       <button class="icon-btn" title="Tagihan" onclick="openPage('bills')" style="position: relative;"><i class="fa fa-bell"></i><span id="billDot" class="bill-dot hidden"></span></button>
       <button class="icon-btn" title="Ganti Mode" onclick="toggleDarkMode()" id="themeToggle">
         <i id="themeIcon" class="fa fa-moon"></i>
@@ -142,23 +168,8 @@
     <div id="accountGrid"></div>
   </main>
 
-  <main id="transactions" class="page hidden">
-    <div class="section-title-row" style="margin-bottom: 12px;">
-      <h2 style="font-size: 1.4rem; font-weight: 800;">Semua Transaksi</h2>
-    </div>
-    <div class="list-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-      <button class="icon-btn" onclick="shiftMonth(-1)"><i class="fa fa-chevron-left"></i></button>
-      <div style="text-align: center;">
-        <strong id="trxMonthLabel" style="font-size: 1rem;"></strong>
-        <p id="trxMonthSummary" style="font-size: 0.75rem; font-weight: 700; margin-top: 2px;"></p>
-      </div>
-      <button class="icon-btn" id="trxNextBtn" onclick="shiftMonth(1)"><i class="fa fa-chevron-right"></i></button>
-    </div>
-    <div class="list-card" id="fullTrxContainer"></div>
-  </main>
-
   <main id="analytics" class="page hidden">
-    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 12px;">Rekapan Bulanan</h2>
+    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 12px;">Laporan</h2>
 
     <div class="list-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
       <button class="icon-btn" onclick="shiftRecap(-1)"><i class="fa fa-chevron-left"></i></button>
@@ -166,32 +177,48 @@
       <button class="icon-btn" id="recapNextBtn" onclick="shiftRecap(1)"><i class="fa fa-chevron-right"></i></button>
     </div>
 
-    <div id="recapSummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;"></div>
-
-    <div class="section-title-row" style="margin-bottom: 12px;">
-      <h3 class="section-title">Pengeluaran per Kategori</h3>
-      <button id="catDetailBtn" onclick="openCatDetail()" class="btn-sec" style="width: auto; padding: 6px 14px; font-size: 0.8rem;">Lihat detail</button>
+    <div class="seg">
+      <button type="button" class="seg-btn active" id="seg-ringkasan" onclick="setReportTab('ringkasan')">Ringkasan</button>
+      <button type="button" class="seg-btn" id="seg-transaksi" onclick="setReportTab('transaksi')">Transaksi</button>
     </div>
-    <div id="catCard" class="list-card" onclick="openCatDetail()" style="height: 240px; position: relative; cursor: pointer; margin-bottom: 8px;">
-      <canvas id="chartFlow"></canvas>
-      <div id="catCenter" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-        <p style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Pengeluaran</p>
-        <h3 id="catTotal" style="font-size: 0.95rem; font-weight: 900;"></h3>
+
+    <!-- Sub-tab: Ringkasan -->
+    <div id="recapView">
+      <div id="recapSummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;"></div>
+
+      <div class="section-title-row" style="margin-bottom: 12px;">
+        <h3 class="section-title">Pengeluaran per Kategori</h3>
+        <button id="catDetailBtn" onclick="openCatDetail()" class="btn-sec" style="width: auto; padding: 6px 14px; font-size: 0.8rem;">Lihat detail</button>
       </div>
-    </div>
-    <div id="catLegend" class="list-card" style="margin-bottom: 20px;"></div>
+      <div id="catCard" class="list-card" onclick="openCatDetail()" style="height: 240px; position: relative; cursor: pointer; margin-bottom: 8px;">
+        <canvas id="chartFlow"></canvas>
+        <div id="catCenter" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
+          <p style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Pengeluaran</p>
+          <h3 id="catTotal" style="font-size: 0.95rem; font-weight: 900;"></h3>
+        </div>
+      </div>
+      <div id="catLegend" class="list-card" style="margin-bottom: 20px;"></div>
 
-    <div class="section-title-row" style="margin-bottom: 12px;">
-      <h3 class="section-title">Tren 6 Bulan</h3>
-    </div>
-    <div class="list-card" style="height: 240px; position: relative; margin-bottom: 20px;">
-      <canvas id="chartTrend"></canvas>
+      <div class="section-title-row" style="margin-bottom: 12px;">
+        <h3 class="section-title">Tren 6 Bulan</h3>
+      </div>
+      <div class="list-card" style="height: 240px; position: relative; margin-bottom: 20px;">
+        <canvas id="chartTrend"></canvas>
+      </div>
+
+      <div class="section-title-row" style="margin: 24px 0 12px;">
+        <h3 class="section-title">Riwayat Per Bulan</h3>
+      </div>
+      <div id="recapHistory"></div>
     </div>
 
-    <div class="section-title-row" style="margin: 24px 0 12px;">
-      <h3 class="section-title">Riwayat Per Bulan</h3>
+    <!-- Sub-tab: Transaksi -->
+    <div id="trxView" class="hidden">
+      <div class="list-card" style="text-align: center; padding: 12px 16px;">
+        <p id="trxMonthSummary" style="font-size: 0.85rem; font-weight: 700;"></p>
+      </div>
+      <div class="list-card" id="fullTrxContainer"></div>
     </div>
-    <div id="recapHistory"></div>
   </main>
 
   <main id="profile" class="page hidden">
@@ -258,7 +285,7 @@
     <button class="nav-tab active" id="btn-dashboard" onclick="openPage('dashboard')"><i class="fa fa-table-cells-large"></i></button>
     <button class="nav-tab" id="btn-accounts" onclick="openPage('accounts')"><i class="fa fa-wallet"></i></button>
     <button class="nav-add-btn" onclick="toggleModal('modalTrx')"><i class="fa fa-plus"></i></button>
-    <button class="nav-tab" id="btn-transactions" onclick="openPage('transactions')"><i class="fa fa-arrow-right-arrow-left"></i></button>
+    <button class="nav-tab" id="btn-analytics" onclick="openPage('analytics')"><i class="fa fa-chart-simple"></i></button>
     <button class="nav-tab" id="btn-profile" onclick="openPage('profile')"><i class="fa fa-user"></i></button>
   </nav>
 
