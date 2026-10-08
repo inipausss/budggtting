@@ -10,7 +10,6 @@ function currentMonthKey() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
-let viewMonth = currentMonthKey();
 
 function inMonth(list, key) {
   return (list || []).filter(t => (t.tanggal || '').slice(0, 7) === key);
@@ -21,17 +20,9 @@ function monthLabel(key) {
   return BULAN[Number(m) - 1] + ' ' + y;
 }
 
-function shiftMonth(delta) {
-  const [y, m] = viewMonth.split('-').map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-  if (key > currentMonthKey()) return; // tidak bisa ke bulan depan
-  viewMonth = key;
-  renderFullTransactions();
-}
-
-// ===== REKAPAN BULANAN =====
+// ===== LAPORAN (Ringkasan + Transaksi, satu state bulan bersama) =====
 let recapMonth = currentMonthKey();
+let reportTab = 'ringkasan'; // 'ringkasan' | 'transaksi'
 
 function shiftRecap(delta) {
   const [y, m] = recapMonth.split('-').map(Number);
@@ -46,6 +37,20 @@ function selectRecap(key) {
   recapMonth = key;
   renderRecap();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setReportTab(tab) {
+  reportTab = tab === 'transaksi' ? 'transaksi' : 'ringkasan';
+  const isRingkasan = reportTab === 'ringkasan';
+  const rv = document.getElementById('recapView');
+  const tv = document.getElementById('trxView');
+  if (rv) rv.classList.toggle('hidden', !isRingkasan);
+  if (tv) tv.classList.toggle('hidden', isRingkasan);
+  const sr = document.getElementById('seg-ringkasan');
+  const st = document.getElementById('seg-transaksi');
+  if (sr) sr.classList.toggle('active', isRingkasan);
+  if (st) st.classList.toggle('active', !isRingkasan);
+  renderRecap(); // grafik digambar ulang setelah wadahnya tampil
 }
 
 function monthTotals(key) {
@@ -92,6 +97,7 @@ function renderRecap() {
   renderFlowChart();
   renderTrend();
   renderRecapHistory();
+  renderFullTransactions();
 }
 
 function renderRecapHistory() {
@@ -208,8 +214,8 @@ function openPage(id) {
   const activeBtn = document.getElementById('btn-' + id);
   if (activeBtn) activeBtn.classList.add("active");
   
-  if (id === 'analytics') { recapMonth = currentMonthKey(); renderRecap(); }
-  if (id === 'transactions') { viewMonth = currentMonthKey(); renderFullTransactions(); }
+  // Laporan selalu terbuka di Ringkasan, bulan berjalan
+  if (id === 'analytics') { recapMonth = currentMonthKey(); setReportTab('ringkasan'); }
 }
 
 // RENDER SELURUH UI DARI DATA LOKAL
@@ -228,10 +234,14 @@ function renderAllLocalUI() {
   renderCalendar(globalData.transactions || []);
   updateDashboard(globalData);
   populateDropdown(globalData.accounts || []);
-  renderFullTransactions();
   renderBudgets();
   renderTagihan();
-    const dm = document.getElementById('modalDay');
+
+  // Laporan (ringkasan + daftar transaksi) ikut segar kalau sedang dibuka
+  const an = document.getElementById('analytics');
+  if (an && !an.classList.contains('hidden')) renderRecap();
+
+  const dm = document.getElementById('modalDay');
   if (dm && !dm.classList.contains('hidden')) renderDay();
 }
 
@@ -495,17 +505,12 @@ function renderTransactions(data) {
   container.innerHTML = list.slice(0, 5).map((t, index) => renderTrxHtml(t, index, 'dash')).join("");
 }
 
-// RENDER FULL TRANSAKSI
+// RENDER DAFTAR TRANSAKSI LENGKAP (sub-tab Transaksi di Laporan, bulan = recapMonth)
 function renderFullTransactions() {
   const container = document.getElementById("fullTrxContainer");
   if (!container) return;
 
-  const label = document.getElementById("trxMonthLabel");
-  if (label) label.innerText = monthLabel(viewMonth);
-  const nextBtn = document.getElementById("trxNextBtn");
-  if (nextBtn) nextBtn.style.opacity = viewMonth >= currentMonthKey() ? 0.3 : 1;
-
-  const list = inMonth(globalData.transactions, viewMonth);
+  const list = inMonth(globalData.transactions, recapMonth);
   let inc = 0, exp = 0;
   list.filter(t => !netral(t)).forEach(t => { (t.jenis === "Pemasukan") ? inc += Number(t.jumlah) || 0 : exp += Number(t.jumlah) || 0; });
   const sum = document.getElementById("trxMonthSummary");
@@ -1103,6 +1108,7 @@ function openCatDetail() {
 function backToRecap() {
   document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
   document.getElementById('analytics').classList.remove('hidden');
+  renderRecap(); // grafik digambar ulang setelah halaman tampil lagi
   window.scrollTo({ top: 0 });
 }
 
@@ -1709,11 +1715,6 @@ function formatShort(num) {
   return num;
 }
 
-function todayStr() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-
 function formatRupiahInput(value) {
   if (!value) return "";
   let number_string = value.toString().replace(/[^0-9]/g, '');
@@ -1751,4 +1752,3 @@ document.addEventListener('click', e => {
   if (m.dataset.lock) return;   // modal yang diberi data-lock tidak ikut tertutup
   toggleModal(m.id);
 });
-
