@@ -1128,3 +1128,14 @@
   .wh-tile.go { cursor: pointer; }
   .wh-tile.go p::after { content: " \203A"; }
   .wh-tile.go:active { transform: scale(0.97); }
+
+  /* ===== Rapikan UI: angka tidak terpotong, kartu dompet tidak patah baris, daftar lebih padat, target sentuh ===== */
+  .flow-col { padding: 16px 14px; }
+  .flow-col h4, .wh-tile b { font-size: clamp(0.82rem, 3.9vw, 1.02rem); overflow: visible; text-overflow: clip; }
+  .wh-tile { padding: 16px 14px; }
+  .wl-bal, .wl-cap { white-space: nowrap; }
+  .wl-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acc-header > div:last-child, .acc-card > div:first-child > div:last-child { flex: none; }
+  .trx-card-item { padding: 14px 16px; margin-bottom: 10px; }
+  .wl-btn { min-height: 36px; }
+  .seg-btn, .tp-seg button { min-height: 40px; }
