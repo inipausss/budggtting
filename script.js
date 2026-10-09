@@ -566,12 +566,12 @@ function goalCardHtml(g) {
           <div class="wl-ic" style="background: ${GOAL_WARNA}26; color: ${GOAL_WARNA};"><i class="fa fa-piggy-bank"></i></div>
           <div style="min-width: 0;">
             <h4 class="wl-name">${esc(g.nama)}${g.kunci ? ` <i class="fa ${terkunci ? 'fa-lock' : 'fa-lock-open'} wl-lock"></i>` : ''}</h4>
-            <p class="wl-sub">SAVINGS GOALS • IDR</p>
+            <p class="wl-sub">TABUNGAN</p>
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="text-align: right;">
-            <p class="wl-cap">Saldo Tabungan</p>
+            <p class="wl-cap">Terkumpul</p>
             <h3 class="wl-bal">${format(got)}</h3>
             <p class="wl-cap">Target ${format(target)}</p>
           </div>
