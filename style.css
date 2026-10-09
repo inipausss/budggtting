@@ -1017,3 +1017,8 @@
   @keyframes sheetDown { from { transform: none; } to { transform: translateY(100%); } }
   .modal.closing                { animation: fadeOut 0.26s ease-in forwards; pointer-events: none; }
   .modal.closing .modal-content { animation: sheetDown 0.28s cubic-bezier(0.64, 0, 0.78, 0) forwards; }
+
+  /* Modal Pengaturan: kartu di dalam modal dibuat datar, dipisah garis tipis saja */
+  #modalSettings .list-card { background: none; border: none; border-radius: 0; margin: 0; padding: 0 0 24px !important; }
+  #modalSettings .list-card + .list-card { border-top: 1px solid var(--border-color); padding-top: 24px !important; }
+  #modalSettings .list-card:last-child { padding-bottom: 4px !important; }
