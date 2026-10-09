@@ -765,3 +765,39 @@
   .menu-circle.t-blue   { background: rgba(59, 130, 246, 0.16); color: #3b82f6; border-color: transparent; }
   .menu-circle.t-red    { background: rgba(239, 68, 68, 0.16);  color: #ef4444; border-color: transparent; }
   .menu-circle.t-green  { background: rgba(34, 197, 94, 0.16);  color: #22c55e; border-color: transparent; }
+
+  /* Level & profil */
+  .lvl-chip {
+    height: 38px; padding: 0 12px; border-radius: 19px;
+    border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main);
+    font-size: 0.75rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+  }
+  .lvl-hero { text-align: center; padding: 8px 0 22px; }
+  .lvl-ring {
+    width: 108px; height: 108px; border-radius: 50%; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .lvl-avatar {
+    width: 88px; height: 88px; border-radius: 50%; background: var(--card-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; font-weight: 900; color: var(--text-main);
+  }
+  .lvl-pill {
+    position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%);
+    background: var(--primary); color: #000; font-size: 0.7rem; font-weight: 900;
+    padding: 4px 12px; border-radius: 12px; white-space: nowrap;
+  }
+  .stat-grid, .badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px; }
+  .stat-tile, .badge {
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    border-radius: 20px; padding: 14px 6px; text-align: center; min-width: 0;
+  }
+  .stat-ic {
+    width: 38px; height: 38px; border-radius: 50%; margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
+  }
+  .stat-tile b { display: block; font-size: 1.25rem; font-weight: 900; }
+  .stat-tile em { font-style: normal; font-size: 0.68rem; font-weight: 600; color: var(--text-muted); }
+  .badge strong { display: block; font-size: 0.72rem; font-weight: 800; }
+  .badge small { display: block; font-size: 0.62rem; color: var(--text-muted); margin-top: 2px; }
+  .badge.locked { opacity: 0.45; }
