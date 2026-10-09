@@ -72,18 +72,18 @@ function renderRecap() {
   const s = monthTotals(recapMonth);
   const cap = 'font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;';
   const val = 'font-size: 1.05rem; font-weight: 900; letter-spacing: -0.3px;';
-  const netColor = s.net >= 0 ? '#84cc16' : '#f43f5e';
+  const netColor = s.net >= 0 ? 'var(--pos)' : 'var(--neg)';
   const netText = (s.net >= 0 ? '+ ' : '- ') + format(Math.abs(s.net));
 
   const sum = document.getElementById('recapSummary');
   if (sum) sum.innerHTML = `
     <div class="list-card" style="margin: 0; padding: 14px;">
       <p style="${cap}">Pemasukan</p>
-      <h3 style="${val} color: #84cc16;">${format(s.inc)}</h3>
+      <h3 style="${val} color: var(--pos);">${format(s.inc)}</h3>
     </div>
     <div class="list-card" style="margin: 0; padding: 14px;">
       <p style="${cap}">Pengeluaran</p>
-      <h3 style="${val} color: #f43f5e;">${format(s.exp)}</h3>
+      <h3 style="${val} color: var(--neg);">${format(s.exp)}</h3>
     </div>
     <div class="list-card" style="margin: 0; padding: 14px;">
       <p style="${cap}">${s.net >= 0 ? 'Hemat' : 'Defisit'}</p>
@@ -120,7 +120,7 @@ function renderRecapHistory() {
       <div class="list-card" onclick="selectRecap('${k}')" style="cursor: pointer; padding: 14px 16px; ${active}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <strong style="font-size: 0.95rem;">${monthLabel(k)}</strong>
-          <span style="font-size: 0.8rem; font-weight: 800; color: ${s.net >= 0 ? '#84cc16' : '#f43f5e'};">${s.net >= 0 ? '+' : '-'} ${format(Math.abs(s.net))}</span>
+          <span style="font-size: 0.8rem; font-weight: 800; color: ${s.net >= 0 ? 'var(--pos)' : 'var(--neg)'};">${s.net >= 0 ? '+' : '-'} ${format(Math.abs(s.net))}</span>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
           <span>Masuk ${format(s.inc)}</span>
@@ -202,7 +202,7 @@ function renderThemePicker() {
         <div style="width: 40px; height: 40px; border-radius: 12px; background: var(--card-bg); display: flex; align-items: center; justify-content: center; color: var(--text-main);"><i class="fa ${ic}"></i></div>
         <strong style="flex: 1; font-size: 0.95rem;">${nama}</strong>
         ${sw ? `<span style="display: flex;">${sw.map((c, i) => `<span style="width: 22px; height: 22px; border-radius: 50%; background: ${c}; border: 1px solid rgba(128,128,128,0.45); margin-left: ${i ? -6 : 0}px;"></span>`).join('')}</span>` : ''}
-        ${on ? '<i class="fa fa-circle-check" style="color: #22c55e; font-size: 1.2rem;"></i>' : ''}
+        ${on ? '<i class="fa fa-circle-check" style="color: var(--pos); font-size: 1.2rem;"></i>' : ''}
       </div>`;
   };
   const lbl = t => `<p style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin: 14px 0 8px;">${t}</p>`;
@@ -333,8 +333,8 @@ function setDelta(el, cur, old, upIsGood) {
     good = pct === 0 || (pct > 0) === upIsGood;
   }
   el.innerText = text;
-  el.style.background = good ? 'rgba(204,255,0,0.15)' : 'rgba(244,63,94,0.12)';
-  el.style.color = good ? '#84cc16' : '#f43f5e';
+  el.style.background = good ? 'var(--pos-bg)' : 'var(--neg-bg)';
+  el.style.color = good ? 'var(--pos)' : 'var(--neg)';
 }
 
 // ===== PILIH REKENING UNTUK KARTU SALDO =====
@@ -382,7 +382,7 @@ function renderSaldoPicker() {
   const picked = new Set(saldoAccounts().map(a => a.id));
   const allOn = picked.size === all.length;
   const row = 'display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border-color); cursor: pointer;';
-  const box_ = on => `<i class="${on ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}" style="font-size: 1.2rem; color: ${on ? '#84cc16' : 'var(--text-muted)'};"></i>`;
+  const box_ = on => `<i class="${on ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}" style="font-size: 1.2rem; color: ${on ? 'var(--pos)' : 'var(--text-muted)'};"></i>`;
   const total = all.reduce((s, a) => s + (Number(a.saldoAkhir) || 0), 0);
 
   box.innerHTML = `
@@ -552,7 +552,7 @@ function accountCardHtml(a, t) {
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="text-align: right;">
             <p class="wl-cap">Saldo</p>
-            <h3 class="wl-bal" style="${saldo < 0 ? 'color: #f43f5e;' : ''}">${format(saldo)}</h3>
+            <h3 class="wl-bal" style="${saldo < 0 ? 'color: var(--neg);' : ''}">${format(saldo)}</h3>
           </div>
           <i class="fa fa-chevron-down" style="font-size: 0.8rem; color: var(--text-muted);"></i>
         </div>
@@ -580,7 +580,7 @@ function goalCardHtml(g) {
   const pct = target > 0 ? Math.min(100, got / target * 100) : 0;
   const done = target > 0 && got >= target;
   const terkunci = !!g.kunci && !done;
-  const warna = done ? '#84cc16' : GOAL_WARNA;
+  const warna = done ? 'var(--pos)' : GOAL_WARNA;
   return `
     <div class="acc-card" id="acc-card-g_${g.id}">
       <div class="acc-header" onclick="toggleAccDropdown('g_${g.id}')">
@@ -843,7 +843,7 @@ function renderFullTransactions() {
   list.filter(t => !netral(t)).forEach(t => { (t.jenis === "Pemasukan") ? inc += Number(t.jumlah) || 0 : exp += Number(t.jumlah) || 0; });
   const sum = $("trxMonthSummary");
   if (sum) sum.innerHTML = `<span style="color: var(--text-muted);">${list.length} transaksi${semua ? ', semua waktu' : ''}</span><br>` +
-    `<span style="color: var(--primary);">+ ${format(inc)}</span> &nbsp;|&nbsp; <span style="color: #f472b6;">- ${format(exp)}</span>`;
+    `<span style="color: var(--pos);">+ ${format(inc)}</span> &nbsp;|&nbsp; <span style="color: var(--neg);">- ${format(exp)}</span>`;
 
   if (list.length === 0) {
     container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">${aktif ? 'Tidak ada transaksi yang cocok' : 'Tidak ada transaksi di bulan ini'}</p>`;
@@ -872,7 +872,7 @@ function renderTrxHtml(t, index, prefix) {
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="font-weight: 800; font-size: 0.95rem; color: ${t.jenis === 'Pemasukan' ? 'var(--primary)' : '#f472b6'};">
+          <div style="font-weight: 800; font-size: 0.95rem; color: ${t.jenis === 'Pemasukan' ? 'var(--pos)' : 'var(--neg)'};">
             ${t.jenis === 'Pemasukan' ? '+' : '-'} ${format(jumlahNum)}
           </div>
           <i class="fa fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
@@ -897,7 +897,7 @@ function renderTrxHtml(t, index, prefix) {
           <button type="button" onclick="openEditTrx('${t.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa fa-pen"></i> Ubah
           </button>
-          <button type="button" onclick="confirmDeleteTrx('${t.id}', '${mainTitle}')" style="background: rgba(244,63,94,0.12); color: #f43f5e; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button type="button" onclick="confirmDeleteTrx('${t.id}', '${mainTitle}')" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa fa-trash"></i> Hapus
           </button>
         </div>
@@ -1536,7 +1536,7 @@ function renderTrend() {
       labels,
       datasets: [
         { label: 'Masuk', data: inc, backgroundColor: accent(), borderRadius: 4 },
-        { label: 'Keluar', data: exp, backgroundColor: '#f43f5e', borderRadius: 4 }
+        { label: 'Keluar', data: exp, backgroundColor: getComputedStyle(document.body).getPropertyValue('--neg').trim() || '#e11d48', borderRadius: 4 }
       ]
     },
     options: {
@@ -1640,7 +1640,7 @@ function renderCalendar(transactions) {
 // ===== BUDGET PER KATEGORI =====
 const BUDGET_KUNING = 50;  // % mulai kuning
 const BUDGET_MERAH = 80;   // % mulai merah
-const BUDGET_WARNA = ['#84cc16', '#eab308', '#f43f5e']; // hijau, kuning, merah
+const BUDGET_WARNA = ['var(--pos)', 'var(--warn)', 'var(--neg)']; // hijau, kuning, merah
 const BUDGET_STATUS = ['Aman', 'Hati-hati', 'Hampir habis'];
 
 function budgetList() { return globalData.budgets || []; }
@@ -1701,7 +1701,7 @@ function renderBudgetManager() {
         <strong style="font-size: 0.9rem;">${b.kategori}</strong>
         <p style="font-size: 0.75rem; color: var(--text-muted);">${format(b.batas)} / bulan</p>
       </div>
-      <button type="button" onclick="removeBudget(${i})" style="background: rgba(244,63,94,0.12); color: #f43f5e; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+      <button type="button" onclick="removeBudget(${i})" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
         <i class="fa fa-trash"></i> Hapus
       </button>
     </div>`).join('');
@@ -1752,7 +1752,7 @@ function removeBudget(i) {
 function showToast(msg, lv) {
   const el = document.createElement('div');
   el.className = 'toast';
-  el.style.background = BUDGET_WARNA[lv] || BUDGET_WARNA[2];
+  el.style.background = ['#4d7c0f', '#eab308', '#be123c'][lv] || '#be123c';
   if (lv === 1) el.style.color = '#000';
   el.innerText = msg;
   document.body.appendChild(el);
@@ -1787,13 +1787,13 @@ function billDueDate(b, key) {
 function billStatus(b) {
   const key = currentMonthKey();
   const due = billDueDate(b, key);
-  if (b.lunas === key) return { lv: 'lunas', label: 'Lunas', warna: '#84cc16', due };
+  if (b.lunas === key) return { lv: 'lunas', label: 'Lunas', warna: 'var(--pos)', due };
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diff = Math.round((due - today) / 86400000);
-  if (diff < 0) return { lv: 'telat', label: 'Terlambat ' + (-diff) + ' hari', warna: '#f43f5e', due };
-  if (diff === 0) return { lv: 'soon', label: 'Jatuh tempo hari ini', warna: '#eab308', due };
-  if (diff <= TAGIHAN_SOON) return { lv: 'soon', label: diff + ' hari lagi', warna: '#eab308', due };
+  if (diff < 0) return { lv: 'telat', label: 'Terlambat ' + (-diff) + ' hari', warna: 'var(--neg)', due };
+  if (diff === 0) return { lv: 'soon', label: 'Jatuh tempo hari ini', warna: 'var(--warn)', due };
+  if (diff <= TAGIHAN_SOON) return { lv: 'soon', label: diff + ' hari lagi', warna: 'var(--warn)', due };
   return { lv: 'ok', label: diff + ' hari lagi', warna: 'var(--text-muted)', due };
 }
 
@@ -1826,7 +1826,7 @@ function renderBills() {
       <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
         ${s.lv !== 'lunas' ? `<button type="button" onclick="openPayBill('${b.id}')" style="background: var(--primary); color: #000; border: none; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; cursor: pointer;"><i class="fa fa-check"></i> Bayar</button>` : ''}
         <button type="button" onclick="openBill('${b.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="fa fa-pen"></i> Ubah</button>
-        <button type="button" onclick="removeBill('${b.id}')" style="background: rgba(244,63,94,0.12); color: #f43f5e; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="fa fa-trash"></i> Hapus</button>
+        <button type="button" onclick="removeBill('${b.id}')" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="fa fa-trash"></i> Hapus</button>
       </div>
     </div>`).join('');
 }
@@ -2001,11 +2001,11 @@ function renderDay() {
   document.getElementById('daySummary').innerHTML = `
     <div class="list-card" style="margin: 0; padding: 14px;">
       <p style="${cap}">Masuk</p>
-      <h3 style="${val} color: #84cc16;">${format(inc)}</h3>
+      <h3 style="${val} color: var(--pos);">${format(inc)}</h3>
     </div>
     <div class="list-card" style="margin: 0; padding: 14px;">
       <p style="${cap}">Keluar</p>
-      <h3 style="${val} color: #f43f5e;">${format(exp)}</h3>
+      <h3 style="${val} color: var(--neg);">${format(exp)}</h3>
     </div>`;
 
    // tagihan yang jatuh tempo di tanggal ini (kalender hanya bulan berjalan)
@@ -2127,7 +2127,7 @@ function renderLevel() {
     <div class="stat-grid">
       ${tile('fa-fire', '#f97316', st.cur, 'Streak')}
       ${tile('fa-arrow-trend-up', '#ef4444', st.best, 'Streak terpanjang')}
-      ${tile('fa-trophy', '#eab308', st.xp, 'Total XP')}
+      ${tile('fa-trophy', 'var(--warn)', st.xp, 'Total XP')}
       ${tile('fa-calendar-check', '#3b82f6', st.days, 'Hari aktif')}
       ${tile('fa-receipt', '#14b8a6', st.trx, 'Transaksi')}
       ${tile('fa-medal', '#22c55e', got, 'Lencana')}
