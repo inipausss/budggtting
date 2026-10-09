@@ -996,3 +996,18 @@
   .wl-actions { gap: 10px; padding-top: 14px; }
   .acc-card.open .acc-details { max-height: 260px; }
   #trxTable.list-card, #fullTrxContainer.list-card { padding: 0; background: none; border: none; }
+
+  /* ===== Animasi: pindah halaman, modal slide-up, tombol ditekan ===== */
+  /* ponytail: CSS saja, jadi hanya animasi saat buka; animasi saat tutup butuh JS (tunda display:none), tambahkan kalau perlu */
+  @keyframes pageIn  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+  .page:not(.hidden)           { animation: pageIn 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+  .modal:not(.hidden)          { animation: fadeIn 0.2s ease-out; }
+  .modal:not(.hidden) .modal-content { animation: sheetUp 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+  .toast                       { animation: pageIn 0.25s ease-out; }
+  .btn-primary, .btn-sec, .nav-tab, .nav-add-btn, .menu-item, .icon-btn, .wl-btn { transition: transform 0.12s ease, background-color 0.25s, color 0.2s; }
+  .btn-primary:active, .btn-sec:active, .nav-tab:active, .menu-item:active, .icon-btn:active, .wl-btn:active { transform: scale(0.96); }
+  @media (prefers-reduced-motion: reduce) {
+    .page, .modal, .modal-content, .toast { animation: none !important; }
+  }
