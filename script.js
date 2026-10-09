@@ -510,21 +510,46 @@ function renderFullTransactions() {
   const container = document.getElementById("fullTrxContainer");
   if (!container) return;
 
-  // Ada kata kunci: cari di SEMUA bulan. Kosong: hanya bulan terpilih.
-  const q = ((document.getElementById("trxSearch") || {}).value || "").trim().toLowerCase();
   const all = globalData.transactions || [];
-  const list = q
-    ? all.filter(t => [t.keterangan, t.kategori, getAccountName(t.rekeningId), t.tanggal, t.jumlah]
-        .join(' ').toLowerCase().includes(q))
-    : inMonth(all, recapMonth);
+  const $ = id => document.getElementById(id);
+
+  // isi pilihan chip Dompet & Kategori dari data, pilihan yang sedang aktif dipertahankan
+  const fill = (id, first, items) => {
+    const el = $(id); if (!el) return;
+    const cur = el.value;
+    el.innerHTML = '';
+    el.add(new Option(first, ''));
+    items.forEach(([v, l]) => el.add(new Option(l, v)));
+    el.value = items.some(i => i[0] === cur) ? cur : '';
+  };
+  const kats = new Map();
+  all.forEach(t => { const k = (t.kategori || '').trim(); if (k && !kats.has(k.toLowerCase())) kats.set(k.toLowerCase(), k); });
+  fill('fDompet', 'Semua dompet', (globalData.accounts || []).map(a => [a.id, a.nama]));
+  fill('fKategori', 'Semua kategori', [...kats.values()].sort((a, b) => a.localeCompare(b)).map(k => [k, k]));
+  if ($('fWaktu')) $('fWaktu').options[0].text = monthLabel(recapMonth); // chip waktu mengikuti pemilih bulan di atas
+  document.querySelectorAll('.chip').forEach(el => el.classList.toggle('on', el.selectedIndex > 0));
+
+  const q = (($('trxSearch') || {}).value || "").trim().toLowerCase();
+  const semua = ($('fWaktu') || {}).value === 'semua';
+  const dompet = ($('fDompet') || {}).value || '';
+  const kat = (($('fKategori') || {}).value || '').toLowerCase();
+  const jenis = ($('fJenis') || {}).value || '';
+  const aktif = q || semua || dompet || kat || jenis;
+
+  const list = (semua ? all : inMonth(all, recapMonth)).filter(t =>
+    (!dompet || t.rekeningId === dompet) &&
+    (!kat || (t.kategori || '').trim().toLowerCase() === kat) &&
+    (!jenis || t.jenis === jenis) &&
+    (!q || [t.keterangan, t.kategori, getAccountName(t.rekeningId), t.tanggal, t.jumlah].join(' ').toLowerCase().includes(q)));
+
   let inc = 0, exp = 0;
   list.filter(t => !netral(t)).forEach(t => { (t.jenis === "Pemasukan") ? inc += Number(t.jumlah) || 0 : exp += Number(t.jumlah) || 0; });
-  const sum = document.getElementById("trxMonthSummary");
-  if (sum) sum.innerHTML = (q ? `<span style="color: var(--text-muted);">${list.length} hasil, semua bulan</span><br>` : '') +
+  const sum = $("trxMonthSummary");
+  if (sum) sum.innerHTML = `<span style="color: var(--text-muted);">${list.length} transaksi${semua ? ', semua waktu' : ''}</span><br>` +
     `<span style="color: var(--primary);">+ ${format(inc)}</span> &nbsp;|&nbsp; <span style="color: #f472b6;">- ${format(exp)}</span>`;
 
   if (list.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">${q ? 'Tidak ada transaksi yang cocok' : 'Tidak ada transaksi di bulan ini'}</p>`;
+    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">${aktif ? 'Tidak ada transaksi yang cocok' : 'Tidak ada transaksi di bulan ini'}</p>`;
     return;
   }
   container.innerHTML = list.map((t, index) => renderTrxHtml(t, index, 'full')).join("");
