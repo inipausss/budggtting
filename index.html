@@ -25,7 +25,7 @@
       background: none;
       border-radius: 10px;
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 500;
       color: var(--text-muted);
       cursor: pointer;
     }
@@ -37,7 +37,7 @@
     .search-wrap { position: relative; margin-bottom: 12px; }
     .search-wrap i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem; pointer-events: none; }
     .search-wrap .input-field { margin: 0; padding-left: 42px; border-radius: 24px; }
-    .chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px 12px; padding: 0 20px 2px; scrollbar-width: none; }
+    .chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -24px 12px; padding: 0 24px 2px; scrollbar-width: none; }
     .chips::-webkit-scrollbar { display: none; }
     .chip-wrap { position: relative; flex: none; display: block; }
     .chip-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--text-muted); pointer-events: none; }
@@ -53,7 +53,7 @@
       background-position: right 11px center;
       color: var(--text-main);
       font-size: 0.78rem;
-      font-weight: 700;
+      font-weight: 500;
       text-overflow: ellipsis;
     }
     .chip.on { border-color: var(--primary); background-color: rgba(204, 255, 0, 0.12); background-color: color-mix(in srgb, var(--primary) 14%, var(--card-bg)); }
@@ -76,8 +76,8 @@
     <div class="top-actions">
       <button class="lvl-chip" id="lvlChip" title="Level" onclick="openPage('profile')">Lv 1</button>
       <button class="icon-btn" title="Tagihan" onclick="openPage('bills')" style="position: relative;"><i class="fa fa-bell"></i><span id="billDot" class="bill-dot hidden"></span></button>
-      <button class="icon-btn" title="Pilih Tema" onclick="openTheme()">
-        <i class="fa fa-palette"></i>
+      <button class="icon-btn" title="Pengaturan" onclick="toggleModal('modalSettings')">
+        <i class="fa fa-gear"></i>
       </button>
     </div>
   </header>
@@ -165,17 +165,17 @@
     </div>
 
     <div class="list-card" style="padding: 24px;">
-      <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">Total Pemasukan</p>
-      <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px;" id="dashTotalIncome">Rp 0</h2>
-      <div style="display: inline-flex; align-items: center; background: var(--pos-bg); color: var(--pos); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
+      <p style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-bottom: 8px;">Total Pemasukan</p>
+      <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px;" id="dashTotalIncome">Rp 0</h2>
+      <div style="display: inline-flex; align-items: center; background: var(--pos-bg); color: var(--pos); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500;">
         +100% vs periode lalu
       </div>
     </div>
 
     <div class="list-card" style="padding: 24px;">
-      <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">Total Pengeluaran</p>
-      <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px; color: var(--neg);" id="dashTotalExpense">Rp 0</h2>
-      <div style="display: inline-flex; align-items: center; background: var(--neg-bg); color: var(--neg); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
+      <p style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-bottom: 8px;">Total Pengeluaran</p>
+      <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px; color: var(--neg);" id="dashTotalExpense">Rp 0</h2>
+      <div style="display: inline-flex; align-items: center; background: var(--neg-bg); color: var(--neg); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500;">
         +100% vs periode lalu
       </div>
     </div>
@@ -188,7 +188,7 @@
 
   <main id="accounts" class="page hidden">
     <div class="section-title-row" style="margin-bottom: 20px;">
-      <h2 style="font-size: 1.4rem; font-weight: 800;">Dompet Saya</h2>
+      <h2 style="font-size: 1.4rem; font-weight: 600;">Dompet Saya</h2>
       <div style="display: flex; gap: 8px;">
         <button onclick="openTransfer()" class="btn-sec" style="width: auto; padding: 8px 14px; font-size: 0.85rem;"><i class="fa fa-right-left"></i> Pindah</button>
         <button onclick="toggleModal('modalAccount')" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
@@ -198,7 +198,7 @@
   </main>
 
   <main id="analytics" class="page hidden">
-    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 12px;">Laporan</h2>
+    <h2 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 12px;">Laporan</h2>
 
     <div class="list-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
       <button class="icon-btn" onclick="shiftRecap(-1)"><i class="fa fa-chevron-left"></i></button>
@@ -222,8 +222,8 @@
       <div id="catCard" class="list-card" onclick="openCatDetail()" style="height: 240px; position: relative; cursor: pointer; margin-bottom: 8px;">
         <canvas id="chartFlow"></canvas>
         <div id="catCenter" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-          <p style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Pengeluaran</p>
-          <h3 id="catTotal" style="font-size: 0.95rem; font-weight: 900;"></h3>
+          <p style="font-size: 0.72rem; font-weight: 500; color: var(--text-muted);">Pengeluaran</p>
+          <h3 id="catTotal" style="font-size: 0.95rem; font-weight: 700;"></h3>
         </div>
       </div>
       <div id="catLegend" class="list-card" style="margin-bottom: 20px;"></div>
@@ -269,7 +269,7 @@
         </label>
       </div>
       <div class="list-card" style="text-align: center; padding: 12px 16px;">
-        <p id="trxMonthSummary" style="font-size: 0.85rem; font-weight: 700;"></p>
+        <p id="trxMonthSummary" style="font-size: 0.85rem; font-weight: 500;"></p>
       </div>
       <div class="list-card" id="fullTrxContainer"></div>
     </div>
@@ -277,16 +277,52 @@
 
   <main id="profile" class="page hidden">
     <div id="levelBox"></div>
-    <div class="section-title-row" style="margin-bottom: 20px;">
-      <h2 style="font-size: 1.4rem; font-weight: 800;">Preferensi</h2>
-    </div>
+  </main>
 
+  <main id="bills" class="page hidden">
+    <div class="section-title-row" style="margin-bottom: 20px;">
+      <h2 style="font-size: 1.4rem; font-weight: 600;">Tagihan Bulanan</h2>
+      <button onclick="openBill()" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
+    </div>
+    <div id="billList"></div>
+  </main>
+
+  <main id="analyticsDetail" class="page hidden">
+    <div class="section-title-row" style="margin-bottom: 8px; justify-content: flex-start; gap: 10px;">
+      <button class="icon-btn" onclick="backToRecap()"><i class="fa fa-chevron-left"></i></button>
+      <h2 style="font-size: 1.4rem; font-weight: 600;">Detail Pengeluaran</h2>
+    </div>
+    <p id="catDetailMonth" style="text-align: center; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-bottom: 12px;"></p>
+    <div id="catDetailCard" class="list-card" style="height: 280px; position: relative; margin-bottom: 16px;">
+      <canvas id="chartCatDetail"></canvas>
+      <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
+        <p style="font-size: 0.72rem; font-weight: 500; color: var(--text-muted);">Total</p>
+        <h3 id="catDetailTotal" style="font-size: 1.05rem; font-weight: 700;"></h3>
+      </div>
+    </div>
+    <div class="list-card" id="catDetailList"></div>
+  </main>
+  
+  <nav class="bottom-nav">
+    <button class="nav-tab active" id="btn-dashboard" onclick="openPage('dashboard')"><i class="fa fa-table-cells-large"></i><span>Beranda</span></button>
+    <button class="nav-tab" id="btn-accounts" onclick="openPage('accounts')"><i class="fa fa-wallet"></i><span>Dompet</span></button>
+    <button class="nav-add-btn" onclick="toggleModal('modalTrx')"><i class="fa fa-plus"></i></button>
+    <button class="nav-tab" id="btn-analytics" onclick="openPage('analytics')"><i class="fa fa-chart-simple"></i><span>Laporan</span></button>
+    <button class="nav-tab" id="btn-profile" onclick="openPage('profile')"><i class="fa fa-user"></i><span>Profil</span></button>
+  </nav>
+
+  <div id="modalSettings" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="font-size: 1.25rem; font-weight: 600;">Pengaturan</h3>
+        <button onclick="toggleModal('modalSettings')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
     <div class="list-card" style="padding: 24px;">
       <form id="profileForm" onsubmit="saveProfile(event)">
-        <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Nama Tampilan</label>
+        <label style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 6px;">Nama Tampilan</label>
         <input type="text" id="prefDisplayName" placeholder="Nama Panggilan Kamu" class="input-field" required>
 
-        <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; margin-top: 16px;">Alamat Email</label>
+        <label style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 6px; margin-top: 16px;">Alamat Email</label>
         <input type="text" id="prefEmail" class="input-field" disabled style="opacity: 0.7; cursor: not-allowed;">
 
         <button type="submit" class="btn-primary" style="margin-top: 20px;">
@@ -301,11 +337,11 @@
 
     <!-- Backup ke Google Sheets -->
     <div class="list-card" style="padding: 24px;">
-      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">URL Web App Backup</label>
+      <label style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 6px;">URL Web App Backup</label>
       <input type="text" id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec" class="input-field">
-      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Token Rahasia</label>
+      <label style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 6px;">Token Rahasia</label>
       <input type="password" id="cfgToken" placeholder="Token" class="input-field">
-      <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Nama Profil (opsional)</label>
+      <label style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 6px;">Nama Profil (opsional)</label>
       <input type="text" id="cfgProfil" placeholder="Nama profil" class="input-field">
       <button type="button" class="btn-primary" onclick="saveCfg()">Simpan Pengaturan</button>
       <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -314,44 +350,13 @@
       </div>
       <p id="backupInfo" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;"></p>
     </div>
-  </main>
-
-  <main id="bills" class="page hidden">
-    <div class="section-title-row" style="margin-bottom: 20px;">
-      <h2 style="font-size: 1.4rem; font-weight: 800;">Tagihan Bulanan</h2>
-      <button onclick="openBill()" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
     </div>
-    <div id="billList"></div>
-  </main>
-
-  <main id="analyticsDetail" class="page hidden">
-    <div class="section-title-row" style="margin-bottom: 8px; justify-content: flex-start; gap: 10px;">
-      <button class="icon-btn" onclick="backToRecap()"><i class="fa fa-chevron-left"></i></button>
-      <h2 style="font-size: 1.4rem; font-weight: 800;">Detail Pengeluaran</h2>
-    </div>
-    <p id="catDetailMonth" style="text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 12px;"></p>
-    <div id="catDetailCard" class="list-card" style="height: 280px; position: relative; margin-bottom: 16px;">
-      <canvas id="chartCatDetail"></canvas>
-      <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-        <p style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Total</p>
-        <h3 id="catDetailTotal" style="font-size: 1.05rem; font-weight: 900;"></h3>
-      </div>
-    </div>
-    <div class="list-card" id="catDetailList"></div>
-  </main>
-  
-  <nav class="bottom-nav">
-    <button class="nav-tab active" id="btn-dashboard" onclick="openPage('dashboard')"><i class="fa fa-table-cells-large"></i><span>Beranda</span></button>
-    <button class="nav-tab" id="btn-accounts" onclick="openPage('accounts')"><i class="fa fa-wallet"></i><span>Dompet</span></button>
-    <button class="nav-add-btn" onclick="toggleModal('modalTrx')"><i class="fa fa-plus"></i></button>
-    <button class="nav-tab" id="btn-analytics" onclick="openPage('analytics')"><i class="fa fa-chart-simple"></i><span>Laporan</span></button>
-    <button class="nav-tab" id="btn-profile" onclick="openPage('profile')"><i class="fa fa-user"></i><span>Profil</span></button>
-  </nav>
+  </div>
 
   <div id="modalTheme" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <h3 style="font-size: 1.15rem; font-weight: 800;">Pilih Tema</h3>
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Pilih Tema</h3>
         <button onclick="toggleModal('modalTheme')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Atur tampilan Budggt. di perangkatmu</p>
@@ -362,7 +367,7 @@
   <div id="modalDay" class="modal hidden">
         <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 id="dayTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
+        <h3 id="dayTitle" style="font-size: 1.15rem; font-weight: 600;"></h3>
         <div style="display: flex; align-items: center; gap: 10px;">
           <button id="dayAddBtn" onclick="addForDay()" title="Tambah di tanggal ini" style="width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: #000; border: none; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fa fa-plus"></i></button>
           <button onclick="toggleModal('modalDay')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
@@ -376,7 +381,7 @@
   <div id="modalSaldo" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <h3 style="font-size: 1.15rem; font-weight: 800;">Tampilkan Saldo Dari</h3>
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Tampilkan Saldo Dari</h3>
         <button onclick="toggleModal('modalSaldo')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Saldo, pemasukan, dan pengeluaran di kartu Dashboard mengikuti rekening yang dipilih.</p>
@@ -387,7 +392,7 @@
   <div id="modalTrx" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="font-size: 1.25rem; font-weight: 800;">Catat Transaksi</h3>
+        <h3 style="font-size: 1.25rem; font-weight: 600;">Catat Transaksi</h3>
         <button onclick="toggleModal('modalTrx')" style="background:none; border:none; font-size: 1.4rem; cursor: pointer;">&times;</button>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
@@ -426,7 +431,7 @@
   <div id="modalAccount" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 1.15rem; font-weight: 800;">Tambah Rekening / Dompet</h3>
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Tambah Rekening / Dompet</h3>
         <button onclick="toggleModal('modalAccount')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <input id="accNama" placeholder="Nama Bank / E-Wallet (cth: BCA / Dana)" class="input-field" required>
@@ -447,7 +452,7 @@
   <div id="modalEditAccount" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 1.15rem; font-weight: 800;">Ubah Rekening / Dompet</h3>
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Ubah Rekening / Dompet</h3>
         <button onclick="toggleModal('modalEditAccount')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <input type="hidden" id="editAccId">
@@ -470,7 +475,7 @@
   <div id="modalGoal" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 id="goalTitle" style="font-size: 1.15rem; font-weight: 800;">Tambah Savings Goal</h3>
+        <h3 id="goalTitle" style="font-size: 1.15rem; font-weight: 600;">Tambah Savings Goal</h3>
         <button onclick="toggleModal('modalGoal')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <input type="hidden" id="goalId">
@@ -478,7 +483,7 @@
       <input type="text" id="goalTarget" placeholder="Target dana (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
       <label style="display: flex; align-items: flex-start; gap: 10px; margin: 2px 0 16px; cursor: pointer;">
         <input type="checkbox" id="goalKunci" style="width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary);">
-        <span style="font-size: 0.85rem; font-weight: 700;"><i class="fa fa-lock"></i> Kunci tabungan<br><small style="color: var(--text-muted); font-weight: 500;">Tidak bisa ditarik sebelum target tercapai</small></span>
+        <span style="font-size: 0.85rem; font-weight: 500;"><i class="fa fa-lock"></i> Kunci tabungan<br><small style="color: var(--text-muted); font-weight: 500;">Tidak bisa ditarik sebelum target tercapai</small></span>
       </label>
       <button onclick="submitGoal()" class="btn-primary">Simpan Goal</button>
     </div>
@@ -487,13 +492,13 @@
   <div id="modalGoalMove" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <h3 id="goalMoveTitle" style="font-size: 1.15rem; font-weight: 800;">Setor</h3>
+        <h3 id="goalMoveTitle" style="font-size: 1.15rem; font-weight: 600;">Setor</h3>
         <button onclick="toggleModal('modalGoalMove')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <p id="goalMoveInfo" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;"></p>
       <input type="hidden" id="goalMoveId">
       <input type="hidden" id="goalMoveMode">
-      <p id="goalMoveLbl" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;"></p>
+      <p id="goalMoveLbl" style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-bottom: 6px;"></p>
       <select id="goalMoveRekening" class="input-field"></select>
       <input type="text" id="goalMoveJumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
       <button onclick="submitGoalMove()" class="btn-primary">Simpan</button>
@@ -503,7 +508,7 @@
   <div id="modalEditTrx" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="font-size: 1.25rem; font-weight: 800;">Ubah Transaksi</h3>
+        <h3 style="font-size: 1.25rem; font-weight: 600;">Ubah Transaksi</h3>
         <button onclick="toggleModal('modalEditTrx')" style="background:none; border:none; font-size: 1.4rem; cursor: pointer;">&times;</button>
       </div>
       <form id="editTrxForm">
@@ -525,7 +530,7 @@
   <div id="modalBudget" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 1.15rem; font-weight: 800;">Atur Budget</h3>
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Atur Budget</h3>
         <button onclick="toggleModal('modalBudget')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <input list="kategoriList" id="budKategori" placeholder="Kategori (cth: Makanan)" class="input-field">
@@ -539,7 +544,7 @@
   <div id="modalBill" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 id="billTitle" style="font-size: 1.15rem; font-weight: 800;">Tambah Tagihan</h3>
+        <h3 id="billTitle" style="font-size: 1.15rem; font-weight: 600;">Tambah Tagihan</h3>
         <button onclick="toggleModal('modalBill')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <input type="hidden" id="billId">
@@ -555,7 +560,7 @@
   <div id="modalPayBill" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h3 style="font-size: 1.15rem; font-weight: 800;">Bayar Tagihan</h3>
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Bayar Tagihan</h3>
         <button onclick="toggleModal('modalPayBill')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
       </div>
       <p id="payBillName" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;"></p>
