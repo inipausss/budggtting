@@ -55,6 +55,10 @@ function backup(d) {
     (d.bills || []).map(function (b) {
       return [b.id, b.nama, Number(b.jumlah) || 0, b.kategori, b.rekeningId || '', Number(b.tanggal) || 1, b.lunas || '', me];
     }), ['G']);
+  writeSheet('Debts', ['ID', 'Nama', 'Tipe', 'Jumlah', 'Terbayar', 'Jatuh Tempo', 'Catatan', 'User Email'],
+    (d.debts || []).map(function (x) {
+      return [x.id, x.nama, x.tipe, Number(x.jumlah) || 0, Number(x.terbayar) || 0, x.jatuh || '', x.catatan || '', me];
+    }), ['F']);
   return { ok: true };
 }
 
@@ -89,6 +93,12 @@ function restore() {
           return { id: String(r[0]), nama: String(r[1]), batas: Number(r[2]) || 0, periode: r[3] === 'mingguan' ? 'mingguan' : 'bulanan', cats: cats, alert: Number(r[5]) || 80 };
         });
       })(),
+      debts: rows('Debts').map(function (r) {
+        return {
+          id: String(r[0]), nama: String(r[1]), tipe: r[2] === 'piutang' ? 'piutang' : 'utang', jumlah: Number(r[3]) || 0,
+          terbayar: Number(r[4]) || 0, jatuh: r[5] ? String(r[5]) : '', catatan: r[6] ? String(r[6]) : ''
+        };
+      }),
       bills: rows('Bills').map(function (r) {
         return {
           id: r[0], nama: String(r[1]), jumlah: Number(r[2]) || 0, kategori: String(r[3]), rekeningId: r[4] ? String(r[4]) : '',
