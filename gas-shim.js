@@ -2,7 +2,7 @@
 (function () {
   const DB = 'budggt_db', CFG = 'budggt_cfg';
   const $ = id => document.getElementById(id);
-  const empty = () => ({ accounts: [], transactions: [], budgets: [], bills: [] });
+  const empty = () => ({ accounts: [], transactions: [], budgets: [], bills: [], goals: [] });
   const load = () => { try { return JSON.parse(localStorage.getItem(DB)) || empty(); } catch (e) { return empty(); } };
   const save = d => localStorage.setItem(DB, JSON.stringify(d));
   const cfg = () => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } };
@@ -31,7 +31,7 @@
         });
         return { id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAkhir: s };
       });
-      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: d.budgets || [], bills: d.bills || [] };
+      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: d.budgets || [], bills: d.bills || [], goals: d.goals || [] };
     },
     addAccount(a) {
       const d = load();
@@ -117,6 +117,23 @@
     deleteBill(id) {
       const d = load();
       d.bills = (d.bills || []).filter(x => x.id !== id);
+      save(d);
+    },
+
+    setGoal(g) {
+      const d = load();
+      d.goals = d.goals || [];
+      const item = {
+        id: g.id || uid(), nama: String(g.nama || '').trim(), target: Number(g.target) || 0,
+        terkumpul: Number(g.terkumpul) || 0, kunci: !!g.kunci
+      };
+      const i = d.goals.findIndex(x => x.id === item.id);
+      if (i > -1) d.goals[i] = item; else d.goals.push(item);
+      save(d);
+    },
+    deleteGoal(id) {
+      const d = load();
+      d.goals = (d.goals || []).filter(x => x.id !== id);
       save(d);
     },
     
