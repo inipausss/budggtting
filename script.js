@@ -154,14 +154,15 @@ const THEMES = [
   { id: 'terang', nama: 'Terang',     ic: 'fa-sun',    dark: false, sw: ['#ffffff', '#f1f5f9', '#ccff00'] },
   { id: 'langit', nama: 'Langit',     ic: 'fa-cloud',  dark: false, sw: ['#f0f9ff', '#e0f2fe', '#38bdf8'] },
   { id: 'sakura', nama: 'Sakura',     ic: 'fa-heart',  dark: false, sw: ['#fff5f9', '#fce7f3', '#f9a8d4'] },
+  { id: 'emas',   nama: 'Emas',       ic: 'fa-crown',  dark: true,  sw: ['#0a0a0b', '#141416', '#d4af6a'] },
   { id: 'gelap',  nama: 'Gelap',      ic: 'fa-moon',   dark: true,  sw: ['#0f1115', '#181b20', '#ccff00'] },
   { id: 'malam',  nama: 'Malam',      ic: 'fa-star',   dark: true,  sw: ['#0b1020', '#141b34', '#22d3ee'] },
   { id: 'kopi',   nama: 'Kopi',       ic: 'fa-mug-hot', dark: true, sw: ['#17110d', '#241a14', '#fbbf24'] },
   { id: 'oled',   nama: 'Hitam OLED', ic: 'fa-circle', dark: true,  sw: ['#000000', '#0d0d0d', '#4ade80'] }
 ];
 const THEME_KEY = 'budggt_theme';
-let themePref = 'terang'; // id tema, atau 'auto' = ikuti sistem
-try { themePref = localStorage.getItem(THEME_KEY) || (localStorage.getItem('theme') === 'dark' ? 'gelap' : 'terang'); } catch (e) {}
+let themePref = 'emas'; // id tema, atau 'auto' = ikuti sistem
+try { themePref = localStorage.getItem(THEME_KEY) || (localStorage.getItem('theme') === 'dark' ? 'gelap' : 'emas'); } catch (e) {}
 
 // warna aksen tema aktif, untuk grafik (canvas tidak bisa membaca var() CSS)
 function accent() { return getComputedStyle(document.body).getPropertyValue('--primary').trim() || '#ccff00'; }
@@ -221,6 +222,22 @@ function toggleBalanceVisibility() {
   renderBalanceDisplay();
 }
 
+// saldo "menghitung naik" saat pertama tampil / berubah; tanpa animasi kalau perangkat minta gerak dikurangi
+let shownSaldo = null;
+function countUp(el, to) {
+  const from = shownSaldo === null ? 0 : shownSaldo;
+  shownSaldo = to;
+  cancelAnimationFrame(el._raf);
+  if (from === to || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { el.innerText = format(to); return; }
+  const t0 = performance.now();
+  const step = t => {
+    const k = Math.min(1, (t - t0) / 700);
+    el.innerText = format(Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))));
+    if (k < 1) el._raf = requestAnimationFrame(step);
+  };
+  el._raf = requestAnimationFrame(step);
+}
+
 function renderBalanceDisplay() {
   const elSaldo = document.getElementById("sumSaldo");
   const elIncome = document.getElementById("sumIncome");
@@ -230,6 +247,7 @@ function renderBalanceDisplay() {
   if (!elSaldo) return;
 
   if (isBalanceHidden) {
+    cancelAnimationFrame(elSaldo._raf);
     elSaldo.innerText = "Rp •••••••";
     if (elIncome) elIncome.innerText = "Rp •••••••";
     if (elExpense) elExpense.innerText = "Rp •••••••";
@@ -238,7 +256,7 @@ function renderBalanceDisplay() {
       lockIcon.style.color = "#ffffff";
     }
   } else {
-    elSaldo.innerText = format(rawSummary.saldo);
+    countUp(elSaldo, rawSummary.saldo);
     if (elIncome) elIncome.innerText = format(rawSummary.income);
     if (elExpense) elExpense.innerText = format(rawSummary.expense);
     if (lockIcon) {
@@ -1504,6 +1522,7 @@ function padTap(e) {
   const btn = e.target.closest('[data-k]');
   if (!btn) return;
   const k = btn.dataset.k;
+  if (navigator.vibrate) navigator.vibrate(k === 'ok' ? 18 : 8); // getar halus (Android)
   if (k === 'ok') { document.getElementById('trxForm').requestSubmit(); return; }
   const j = document.getElementById('jumlah');
   let d = j.value.replace(/\./g, '');
@@ -2261,21 +2280,26 @@ function renderBills() {
   items.sort((x, y) => urut[x.s.lv] - urut[y.s.lv] || x.s.due - y.s.due);
 
   box.innerHTML = items.map(({ b, s }) => `
-    <div class="list-card" style="padding: 16px; margin-bottom: 10px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <strong style="font-size: 0.95rem;">${b.nama}</strong>
-        <span style="font-size: 0.7rem; font-weight: 600; color: ${s.warna}; ">${s.label}</span>
+    <div class="acc-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <div class="wl-ic" style="background: #ef444426; color: #ef4444;"><i class="fa fa-file-invoice-dollar"></i></div>
+          <div style="min-width: 0;">
+            <h4 class="wl-name">${esc(b.nama)}</h4>
+            <p class="wl-sub" style="color: ${s.warna};">${s.label}</p>
+          </div>
+        </div>
+        <div style="text-align: right; flex: none;">
+          <h3 class="wl-bal">${format(b.jumlah)}</h3>
+          <p class="wl-cap">Tiap tgl ${b.tanggal} · ${esc(b.kategori)}</p>
+        </div>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-bottom: 12px;">
-        <span>Tiap tanggal ${b.tanggal} · ${b.kategori}</span>
-        <span style="color: var(--text-main); font-weight: 600;">${format(b.jumlah)}</span>
+      <div class="wl-actions" style="justify-content: flex-start; flex-wrap: wrap; margin-top: 14px;">
+        ${s.lv !== 'lunas' ? `<button type="button" class="wl-btn p" onclick="openPayBill('${b.id}')"><i class="fa fa-check"></i> Bayar</button>` : ''}
+        <button type="button" class="wl-btn" onclick="openBill('${b.id}')"><i class="fa fa-pen"></i> Ubah</button>
+        <button type="button" class="wl-btn d" onclick="removeBill('${b.id}')"><i class="fa fa-trash"></i> Hapus</button>
       </div>
-      <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
-        ${s.lv !== 'lunas' ? `<button type="button" onclick="openPayBill('${b.id}')" style="background: var(--primary); color: #000; border: none; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer;"><i class="fa fa-check"></i> Bayar</button>` : ''}
-        <button type="button" onclick="openBill('${b.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer;"><i class="fa fa-pen"></i> Ubah</button>
-        <button type="button" onclick="removeBill('${b.id}')" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer;"><i class="fa fa-trash"></i> Hapus</button>
-      </div>
-    </div>`).join('');
+    </div>    </div>`).join('');
 }
 
 // Ringkasan di dashboard + titik merah di lonceng
@@ -2624,8 +2648,8 @@ function matchKategori(raw) {
   return part || raw.trim();
 }
 function formatShort(num) {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'JT';
-  if (num >= 1000) return Math.round(num / 1000) + 'RB';
+  if (num >= 1000000) return +(num / 1000000).toFixed(1) + 'jt';
+  if (num >= 1000) return Math.round(num / 1000) + 'rb';
   return num;
 }
 
