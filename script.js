@@ -281,6 +281,7 @@ function renderAllLocalUI() {
   populateDropdown(globalData.accounts || []);
   renderBudgets();
   renderTagihan();
+  renderLevel();
 
   // Laporan (ringkasan + daftar transaksi) ikut segar kalau sedang dibuka
   const an = document.getElementById('analytics');
@@ -1111,6 +1112,7 @@ function saveProfile(e) {
 
   localStorage.setItem('user_display_name', newName);
   updateGreeting(newName);
+  renderLevel();
   alert("Nama tampilan berhasil diperbarui!");
 }
 
@@ -1789,6 +1791,108 @@ function addForDay() {
   document.getElementById('tanggal').value = dayKey; // toggleModal mengisi hari ini, ditimpa di sini
 }
 
+
+// ===== LEVEL (dari konsistensi mencatat; semua dihitung ulang dari transaksi, tidak ada yang disimpan) =====
+const LEVEL_TITLES = ['Pemula', 'Pencatat Rajin', 'Penabung Handal', 'Pengatur Uang', 'Juragan Hemat', 'Sultan Budget', 'Legenda'];
+const xpForLevel = n => 50 * n * (n - 1); // Lv2 = 100 XP, Lv3 = 300, Lv4 = 600, Lv5 = 1000 ...
+const dayIdx = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function levelStats() {
+  const today = dayIdx(todayStr());
+  // hanya pencatatan sungguhan: Transfer dan Koreksi Saldo tidak dihitung, tanggal masa depan juga tidak
+  const real = (globalData.transactions || []).filter(t => !netral(t) && /^\d{4}-\d{2}-\d{2}$/.test(t.tanggal || '') && dayIdx(t.tanggal) <= today);
+  const days = [...new Set(real.map(t => dayIdx(t.tanggal)))].sort((a, b) => a - b);
+
+  let best = 0, run = 0, bonus = 0, prev = null;
+  days.forEach(d => {
+    if (prev !== null && d === prev + 1) run++;
+    else { bonus += Math.floor(run / 7) * 50; run = 1; }
+    best = Math.max(best, run);
+    prev = d;
+  });
+  bonus += Math.floor(run / 7) * 50;
+  const cur = prev !== null && prev >= today - 1 ? run : 0; // streak masih hidup kalau kemarin atau hari ini ada catatan
+
+  const xp = days.length * 10 + bonus;
+  let level = 1;
+  while (xp >= xpForLevel(level + 1)) level++;
+
+  const st = { days: days.length, trx: real.length, cur, best, xp, level, start: xpForLevel(level), next: xpForLevel(level + 1),
+    title: LEVEL_TITLES[Math.min(level, LEVEL_TITLES.length) - 1] };
+  const B = [
+    ['fa-pen',               'Catatan Pertama',  'Catat 1 transaksi',  st.trx >= 1],
+    ['fa-fire',              'Mulai Panas',      'Streak 3 hari',      best >= 3],
+    ['fa-fire-flame-curved', 'Seminggu Penuh',   'Streak 7 hari',      best >= 7],
+    ['fa-bolt',              'Sebulan Konsisten','Streak 30 hari',     best >= 30],
+    ['fa-calendar-check',    'Rajin',            '10 hari aktif',      st.days >= 10],
+    ['fa-calendar-days',     'Langganan',        '50 hari aktif',      st.days >= 50],
+    ['fa-medal',             'Veteran',          '100 hari aktif',     st.days >= 100],
+    ['fa-receipt',           '50 Catatan',       '50 transaksi',       st.trx >= 50],
+    ['fa-book',              'Buku Tebal',       '200 transaksi',      st.trx >= 200],
+    ['fa-percent',           'Pengatur Budget',  'Buat 1 budget',      budgetList().length > 0],
+    ['fa-bell',              'Pelacak Tagihan',  'Buat 1 tagihan',     billList().length > 0],
+    ['fa-crown',             'Juragan',          'Capai Level 5',      level >= 5]
+  ];
+  st.badges = B.map(([ic, nama, desc, ok]) => ({ ic, nama, desc, ok }));
+  return st;
+}
+
+function renderLevel() {
+  const st = levelStats();
+  const chip = document.getElementById('lvlChip');
+  if (chip) chip.innerText = 'Lv ' + st.level + (st.cur > 0 ? ' · 🔥' + st.cur : '');
+
+  // selamat saat naik level; pertama kali hanya mencatat level tanpa toast
+  try {
+    const seen = Number(localStorage.getItem('budggt_lvl'));
+    if (seen && st.level > seen) showToast('🎉 Naik ke Level ' + st.level + ' · ' + st.title + '!', 1);
+    localStorage.setItem('budggt_lvl', st.level);
+  } catch (e) {}
+
+  const box = document.getElementById('levelBox');
+  if (!box) return;
+  const name = localStorage.getItem('user_display_name') || (globalData.user || 'Pengguna').split('@')[0];
+  const pct = Math.min(100, Math.round((st.xp - st.start) / (st.next - st.start) * 100));
+  const got = st.badges.filter(b => b.ok).length;
+  const tile = (ic, col, val, lbl) => `
+    <div class="stat-tile">
+      <div class="stat-ic" style="background: ${col}29; color: ${col};"><i class="fa ${ic}"></i></div>
+      <b>${val}</b><em>${lbl}</em>
+    </div>`;
+
+  box.innerHTML = `
+    <div class="lvl-hero">
+      <div class="lvl-ring" style="background: conic-gradient(var(--primary) ${pct}%, var(--border-color) 0);">
+        <div class="lvl-avatar">${esc((name.charAt(0) || '?').toUpperCase())}</div>
+        <span class="lvl-pill">Level ${st.level}</span>
+      </div>
+      <h2 style="font-size: 1.4rem; font-weight: 900; margin-top: 20px;">${esc(name)}</h2>
+      <p style="color: var(--text-muted); font-weight: 600; font-size: 0.9rem;">${st.title}</p>
+      <p style="font-size: 0.8rem; font-weight: 800; margin-top: 8px;">${st.xp} / ${st.next} XP</p>
+      <div class="budget-track" style="width: calc(100% - 56px); margin: 8px auto 0;"><div class="budget-fill" style="width: ${pct}%; background: var(--primary);"></div></div>
+      <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 8px;">10 XP tiap hari kamu mencatat, +50 XP tiap 7 hari beruntun</p>
+    </div>
+    <div class="stat-grid">
+      ${tile('fa-fire', '#f97316', st.cur, 'Streak')}
+      ${tile('fa-arrow-trend-up', '#ef4444', st.best, 'Streak terpanjang')}
+      ${tile('fa-trophy', '#eab308', st.xp, 'Total XP')}
+      ${tile('fa-calendar-check', '#3b82f6', st.days, 'Hari aktif')}
+      ${tile('fa-receipt', '#14b8a6', st.trx, 'Transaksi')}
+      ${tile('fa-medal', '#22c55e', got, 'Lencana')}
+    </div>
+    <div class="section-title-row" style="margin-bottom: 12px;">
+      <h3 class="section-title">Pencapaian</h3>
+      <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">${got}/${st.badges.length}</span>
+    </div>
+    <div class="badge-grid">
+      ${st.badges.map(b => `
+        <div class="badge ${b.ok ? '' : 'locked'}">
+          <div class="stat-ic" style="background: var(--circle-bg); color: ${b.ok ? 'var(--text-main)' : 'var(--text-muted)'};"><i class="fa ${b.ok ? b.ic : 'fa-lock'}"></i></div>
+          <strong>${b.nama}</strong><small>${b.desc}</small>
+        </div>`).join('')}
+    </div>`;
+}
 
 // UTILITIES
 
