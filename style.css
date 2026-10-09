@@ -1139,3 +1139,9 @@
   .trx-card-item { padding: 14px 16px; margin-bottom: 10px; }
   .wl-btn { min-height: 36px; }
   .seg-btn, .tp-seg button { min-height: 40px; }
+
+  /* daftar transaksi per tanggal + pengingat backup */
+  .day-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); padding: 18px 4px 10px; }
+  #fullTrxContainer .day-head:first-child { padding-top: 4px; }
+  .nag { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; margin-bottom: 0; }
+  .nag p { font-size: 0.8rem; font-weight: 500; line-height: 1.4; }
