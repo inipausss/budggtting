@@ -1022,3 +1022,42 @@
   #modalSettings .list-card { background: none; border: none; border-radius: 0; margin: 0; padding: 0 0 24px !important; }
   #modalSettings .list-card + .list-card { border-top: 1px solid var(--border-color); padding-top: 24px !important; }
   #modalSettings .list-card:last-child { padding-bottom: 4px !important; }
+
+  /* ===== Halaman Budget & form budget ===== */
+  body.focus-page .top-bar, body.focus-page .bottom-nav { display: none; }
+  .sub-head { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; text-align: center; margin-bottom: 28px; }
+  .sub-head h2 { font-size: 1.1rem; font-weight: 600; }
+  .sub-head .icon-btn { width: 44px; height: 44px; }
+  .bf-save { background: var(--primary); color: #000; border-color: transparent; }
+
+  .bgt-sum { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 28px; padding: 24px; margin-bottom: 28px; }
+  .bgt-month { text-align: center; font-weight: 500; margin-bottom: 22px; }
+  .bgt-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .bgt-cap { font-size: 0.78rem; color: var(--text-muted); font-weight: 400; }
+  .bgt-big { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 4px 0; }
+  .bgt-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; }
+  .bgt-gauge { position: relative; width: 180px; margin: 14px auto 0; }
+  .bgt-gauge svg { display: block; width: 100%; }
+  .bgt-gauge > div { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; }
+  .bgt-gauge b { display: block; font-size: 1.6rem; font-weight: 600; line-height: 1.1; }
+  .bgt-line { text-align: center; margin-top: 16px; color: var(--text-muted); }
+  .bgt-line b { color: var(--text-main); font-weight: 600; }
+
+  .bf-lbl { display: block; font-size: 0.85rem; color: var(--text-muted); margin: 28px 0 10px; }
+  .bf-lbl small { margin-left: 6px; font-size: 0.75rem; opacity: 0.8; }
+  .bf-hint { font-size: 0.78rem; color: var(--text-muted); }
+  .bf-amount { display: flex; align-items: center; gap: 12px; }
+  .bf-amount span { font-size: 1.5rem; font-weight: 500; background: var(--circle-bg); padding: 10px 16px; border-radius: 14px; }
+  .bf-amount input { flex: 1; min-width: 0; font-size: 2rem; font-weight: 500; letter-spacing: -0.02em; background: none; border: none; outline: none; color: var(--text-main); }
+  .bf-amount.small input { flex: none; width: 90px; font-size: 1.4rem; padding: 10px 14px; background: var(--circle-bg); border-radius: 14px; text-align: center; }
+  .bf-amount.small span { background: none; padding: 0; font-size: 1.2rem; }
+  .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 8px; }
+  .cat-chip { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; min-width: 0; }
+  .cat-nm { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-ic { width: 56px; height: 56px; border-radius: 50%; background: var(--circle-bg); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; color: var(--circle-icon); }
+  .cat-chip.on { color: var(--text-main); }
+  .cat-chip.on .cat-ic { background: color-mix(in srgb, var(--primary) 20%, var(--card-bg)); border-color: var(--primary); }
+  .bf-add { display: flex; gap: 10px; margin-top: 22px; }
+  .bf-add .input-field { margin: 0; flex: 1; min-width: 0; }
+  .bf-add .btn-sec { width: auto; padding: 0 22px; }
+  .bf-del { width: 100%; margin-top: 36px; padding: 16px; border: none; border-radius: var(--radius-sm); background: var(--neg-bg); color: var(--neg); font-size: 0.95rem; font-weight: 500; cursor: pointer; }
