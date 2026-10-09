@@ -190,9 +190,9 @@
   window.backupNow = async () => {
     try {
       await remote('backup', { data: load() });
-      const c = cfg(); c.last = new Date().toLocaleString('id-ID');
+      const c = cfg(); c.last = new Date().toLocaleString('id-ID'); c.lastTs = Date.now();
       localStorage.setItem(CFG, JSON.stringify(c));
-      info(); alert('Backup berhasil');
+      info(); alert('Backup berhasil'); if (window.renderBackupNag) renderBackupNag();
     } catch (e) { alert('Backup gagal: ' + e.message); }
   };
   window.restoreNow = async () => {
