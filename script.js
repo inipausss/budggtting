@@ -287,6 +287,7 @@ function renderAllLocalUI() {
   renderBudgets();
   renderTagihan();
   renderLevel();
+  renderDebts();
 
   // Laporan (ringkasan + daftar transaksi) ikut segar kalau sedang dibuka
   const an = document.getElementById('analytics');
@@ -474,15 +475,16 @@ function walletStats() {
       const d = dayIdx(t.tanggal);
       if (d > hari - 30 && d <= hari) delta += (t.jenis === 'Pemasukan' ? 1 : -1) * (Number(t.jumlah) || 0);
     });
-  const kekayaan = saldo + tabungan;
+  const ds = debtStats();
+  const kekayaan = saldo + tabungan + ds.piutang - ds.utang; // piutang = uang kita di orang lain
   const dulu = kekayaan - delta;
-  return { saldo, utang, tabungan, tagihan, delta, kekayaan, pct: dulu > 0 ? delta / dulu * 100 : 0 };
+  return { saldo, utang: utang + ds.utang, tabungan, tagihan, delta, kekayaan, pct: dulu > 0 ? delta / dulu * 100 : 0 };
 }
 
 function walletHeroHtml() {
   const s = walletStats();
   const naik = s.delta >= 0;
-  const tile = (lbl, val) => `<div class="wh-tile"><p>${lbl}</p><b>${format(val)}</b></div>`;
+  const tile = (lbl, val, go) => `<div class="wh-tile${go ? ' go' : ''}"${go ? ` onclick="${go}"` : ''}><p>${lbl}</p><b>${format(val)}</b></div>`;
   return `
     <div class="wallet-hero">
       <p class="wh-label">Saldo Tersedia (IDR)</p>
@@ -493,9 +495,9 @@ function walletHeroHtml() {
       </div>
       <div class="wh-grid">
         ${tile('Kekayaan Bersih', s.kekayaan)}
-        ${tile('Utang / Minus', s.utang)}
+        ${tile('Utang / Minus', s.utang, "openPage('debts')")}
         ${tile('Tabungan Aktif', s.tabungan)}
-        ${tile('Tagihan Mendatang', s.tagihan)}
+        ${tile('Tagihan Mendatang', s.tagihan, "openPage('bills')")}
       </div>
     </div>`;
 }
@@ -749,6 +751,205 @@ function submitGoalMove() {
     .withSuccessHandler(() => loadData())
     .withFailureHandler(err => alert('Gagal mencatat transaksi tabungan: ' + err.message))
     .addTransaction(Object.assign({}, trx, { jumlah: String(jumlah) }));
+}
+
+// ===== UTANG & PIUTANG =====
+// ponytail: tiap catatan = satu orang/pihak dengan total + terbayar (cicilan boleh); uang ke/dari dompet dicatat sebagai transaksi netral (bukan pemasukan/pengeluaran)
+const KAT_UTANG = 'Utang';     // pinjaman masuk / cicilan utang keluar
+const KAT_PIUTANG = 'Piutang'; // uang dipinjamkan keluar / pembayaran diterima
+
+function debtList() { return globalData.debts || []; }
+function debtSisa(d) { return Math.max(0, (Number(d.jumlah) || 0) - (Number(d.terbayar) || 0)); }
+function debtStats() {
+  const s = { utang: 0, piutang: 0 };
+  debtList().forEach(d => { s[d.tipe === 'piutang' ? 'piutang' : 'utang'] += debtSisa(d); });
+  return s;
+}
+
+function debtStatus(d) {
+  if (debtSisa(d) <= 0) return { label: 'Lunas', warna: 'var(--pos)' };
+  if (!d.jatuh) return { label: 'Tanpa jatuh tempo', warna: 'var(--text-muted)' };
+  const diff = dayIdx(d.jatuh) - dayIdx(todayStr());
+  if (diff < 0) return { label: 'Terlambat ' + (-diff) + ' hari', warna: 'var(--neg)' };
+  if (diff === 0) return { label: 'Jatuh tempo hari ini', warna: 'var(--warn)' };
+  if (diff <= TAGIHAN_SOON) return { label: diff + ' hari lagi', warna: 'var(--warn)' };
+  return { label: diff <= 30 ? diff + ' hari lagi' : 'Jatuh tempo ' + new Date(d.jatuh + 'T00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }), warna: 'var(--text-muted)' };
+}
+
+function debtCardHtml(d) {
+  const utang = d.tipe !== 'piutang';
+  const sisa = debtSisa(d), total = Number(d.jumlah) || 0;
+  const pct = total > 0 ? Math.min(100, (total - sisa) / total * 100) : 0;
+  const warna = utang ? '#ef4444' : '#22c55e';
+  const st = debtStatus(d);
+  return `
+    <div class="acc-card" style="${sisa <= 0 ? 'opacity: 0.6;' : ''}">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <div class="wl-ic" style="background: ${warna}26; color: ${warna};"><i class="fa ${utang ? 'fa-money-bill-transfer' : 'fa-hand-holding-dollar'}"></i></div>
+          <div style="min-width: 0;">
+            <h4 class="wl-name">${esc(d.nama)}</h4>
+            <p class="wl-sub" style="color: ${st.warna};">${st.label}</p>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <p class="wl-cap">Sisa</p>
+          <h3 class="wl-bal">${format(sisa)}</h3>
+          <p class="wl-cap">dari ${format(total)}</p>
+        </div>
+      </div>
+      <div class="budget-track" style="margin-top: 12px;"><div class="budget-fill" style="width: ${pct}%; background: ${warna};"></div></div>
+      ${d.catatan ? `<p class="wl-cap" style="margin-top: 8px;">${esc(d.catatan)}</p>` : ''}
+      <div class="wl-actions" style="justify-content: flex-start; flex-wrap: wrap; margin-top: 14px;">
+        ${sisa > 0 ? `<button type="button" class="wl-btn p" onclick="openDebtPay('${d.id}')"><i class="fa ${utang ? 'fa-arrow-up' : 'fa-arrow-down'}"></i> ${utang ? 'Bayar' : 'Terima'}</button>` : ''}
+        <button type="button" class="wl-btn" onclick="openDebt('${d.id}')"><i class="fa fa-pen"></i> Ubah</button>
+        <button type="button" class="wl-btn d" onclick="removeDebt('${d.id}')"><i class="fa fa-trash"></i> Hapus</button>
+      </div>
+    </div>`;
+}
+
+function renderDebts() {
+  const box = document.getElementById('debtBox');
+  if (!box) return;
+  const s = debtStats();
+  const net = s.piutang - s.utang;
+  const sect = (tipe, judul, kosong) => {
+    const items = debtList().filter(d => (d.tipe === 'piutang' ? 'piutang' : 'utang') === tipe)
+      .sort((a, b) => (debtSisa(a) <= 0) - (debtSisa(b) <= 0) || (a.jatuh || '9').localeCompare(b.jatuh || '9'));
+    return `<div class="wl-section">` + walletHeadHtml(judul, s[tipe], `openDebt(null, '${tipe}')`, 'Tambah') +
+      (items.length ? items.map(debtCardHtml).join('')
+        : `<div class="wl-empty"><i class="fa fa-handshake"></i><p>${kosong}</p></div>`) + `</div>`;
+  };
+  box.innerHTML = `
+    <div class="wallet-hero">
+      <p class="wh-label">Posisi Bersih</p>
+      <h2 class="wh-total">${net < 0 ? '-' : ''}${format(Math.abs(net))}</h2>
+      <div class="wh-grid">
+        <div class="wh-tile"><p>Utang Saya</p><b>${format(s.utang)}</b></div>
+        <div class="wh-tile"><p>Piutang</p><b>${format(s.piutang)}</b></div>
+      </div>
+    </div>` +
+    sect('utang', 'Utang Saya', 'Tidak ada utang 🎉') +
+    sect('piutang', 'Piutang', 'Belum ada yang berutang padamu');
+}
+
+const walletOpts = () => '<option value="">Tidak dicatat ke dompet</option>' +
+  (globalData.accountSummary || []).map(a => `<option value="${a.id}">${esc(a.nama)} · ${format(a.saldoAkhir)}</option>`).join('');
+
+// transaksi netral ke dompet (kosong = tidak dicatat); dipanggil SETELAH setDebt supaya loadData() membaca data terbaru
+function catatDebtTrx(rekeningId, jenis, kategori, keterangan, jumlah) {
+  const acc = (globalData.accountSummary || []).find(a => a.id === rekeningId);
+  if (!acc) return;
+  const trx = { tanggal: todayStr(), jenis, kategori, keterangan, jumlah, rekeningId };
+  (globalData.transactions = globalData.transactions || []).unshift(Object.assign({ id: 'temp_' + Date.now() }, trx));
+  acc.saldoAkhir = (Number(acc.saldoAkhir) || 0) + (jenis === 'Pemasukan' ? jumlah : -jumlah);
+  google.script.run
+    .withSuccessHandler(() => loadData())
+    .withFailureHandler(err => alert('Gagal mencatat transaksi ke dompet: ' + err.message))
+    .addTransaction(Object.assign({}, trx, { jumlah: String(jumlah) }));
+}
+
+function setDebtTipe(t) {
+  document.getElementById('debtTipe').value = t;
+  document.getElementById('dt-utang').classList.toggle('active', t === 'utang');
+  document.getElementById('dt-piutang').classList.toggle('active', t === 'piutang');
+  document.getElementById('debtWalletLbl').innerText = t === 'utang' ? 'Uang pinjaman masuk ke dompet' : 'Uang yang dipinjamkan keluar dari dompet';
+}
+
+function openDebt(id, tipe) {
+  const d = id ? debtList().find(x => x.id === id) : null;
+  if (id && !d) return;
+  document.getElementById('debtTitle').innerText = d ? 'Ubah Catatan' : 'Tambah Utang / Piutang';
+  document.getElementById('debtId').value = d ? d.id : '';
+  document.getElementById('debtNama').value = d ? d.nama : '';
+  document.getElementById('debtJumlah').value = d ? formatRupiahInput(d.jumlah) : '';
+  document.getElementById('debtJatuh').value = d ? d.jatuh || '' : '';
+  document.getElementById('debtCatatan').value = d ? d.catatan || '' : '';
+  document.getElementById('debtRekening').innerHTML = walletOpts();
+  document.getElementById('debtWalletBox').classList.toggle('hidden', !!d); // ubah catatan tidak menyentuh dompet
+  setDebtTipe(d ? d.tipe : (tipe || 'utang'));
+  toggleModal('modalDebt');
+}
+
+function submitDebt() {
+  const id = document.getElementById('debtId').value;
+  const tipe = document.getElementById('debtTipe').value;
+  const nama = document.getElementById('debtNama').value.trim();
+  const jumlah = Number(document.getElementById('debtJumlah').value.replace(/\./g, '')) || 0;
+  const jatuh = document.getElementById('debtJatuh').value;
+  const catatan = document.getElementById('debtCatatan').value.trim();
+  const rekeningId = document.getElementById('debtRekening').value;
+
+  if (!nama) { alert('Isi nama (orang atau pihak yang bersangkutan)'); return; }
+  if (jumlah <= 0) { alert('Isi jumlahnya dulu'); return; }
+
+  let d;
+  if (id) {
+    d = debtList().find(x => x.id === id);
+    if (!d) return;
+    if (jumlah < (Number(d.terbayar) || 0)) { alert('Jumlah tidak boleh di bawah yang sudah dibayar (' + format(d.terbayar) + ')'); return; }
+    Object.assign(d, { nama, tipe, jumlah, jatuh, catatan });
+  } else {
+    d = { id: 'debt_' + Date.now(), nama, tipe, jumlah, terbayar: 0, jatuh, catatan };
+    (globalData.debts = globalData.debts || []).push(d);
+  }
+
+  google.script.run
+    .withFailureHandler(err => alert('Gagal simpan: ' + err.message))
+    .setDebt(d);
+  if (!id && rekeningId) {
+    // utang baru = uang masuk; piutang baru = uang keluar
+    catatDebtTrx(rekeningId, tipe === 'utang' ? 'Pemasukan' : 'Pengeluaran', tipe === 'utang' ? KAT_UTANG : KAT_PIUTANG, (tipe === 'utang' ? 'Pinjam dari ' : 'Pinjamkan ke ') + nama, jumlah);
+  }
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  toggleModal('modalDebt');
+  renderAllLocalUI();
+}
+
+function removeDebt(id) {
+  const d = debtList().find(x => x.id === id);
+  if (!d || !confirm('Hapus catatan "' + d.nama + '"? Transaksi di dompet yang sudah tercatat tidak ikut terhapus.')) return;
+  globalData.debts = globalData.debts.filter(x => x.id !== id);
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  renderAllLocalUI();
+  google.script.run
+    .withFailureHandler(err => alert('Gagal hapus: ' + err.message))
+    .deleteDebt(id);
+}
+
+function openDebtPay(id) {
+  const d = debtList().find(x => x.id === id);
+  if (!d) return;
+  const utang = d.tipe !== 'piutang';
+  document.getElementById('debtPayId').value = d.id;
+  document.getElementById('debtPayTitle').innerText = (utang ? 'Bayar utang ke ' : 'Terima dari ') + d.nama;
+  document.getElementById('debtPayInfo').innerText = 'Sisa ' + format(debtSisa(d)) + ' dari ' + format(d.jumlah);
+  document.getElementById('debtPayJumlah').value = formatRupiahInput(debtSisa(d));
+  document.getElementById('debtPayLbl').innerText = utang ? 'Dibayar dari dompet' : 'Masuk ke dompet';
+  const sel = document.getElementById('debtPayRekening');
+  sel.innerHTML = walletOpts();
+  if (sel.options.length > 1) sel.selectedIndex = 1; // bawaan: catat ke dompet pertama
+  toggleModal('modalDebtPay');
+}
+
+function submitDebtPay() {
+  const d = debtList().find(x => x.id === document.getElementById('debtPayId').value);
+  if (!d) return;
+  const utang = d.tipe !== 'piutang';
+  const jumlah = Number(document.getElementById('debtPayJumlah').value.replace(/\./g, '')) || 0;
+  const rekeningId = document.getElementById('debtPayRekening').value;
+  if (jumlah <= 0) { alert('Isi jumlahnya dulu'); return; }
+  if (jumlah > debtSisa(d)) { alert('Maksimal sebesar sisa: ' + format(debtSisa(d))); return; }
+
+  d.terbayar = (Number(d.terbayar) || 0) + jumlah;
+  google.script.run
+    .withFailureHandler(err => alert('Gagal simpan: ' + err.message))
+    .setDebt(d);
+  if (rekeningId) catatDebtTrx(rekeningId, utang ? 'Pengeluaran' : 'Pemasukan', utang ? KAT_UTANG : KAT_PIUTANG, (utang ? 'Bayar utang ke ' : 'Terima dari ') + d.nama, jumlah);
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  toggleModal('modalDebtPay');
+  renderAllLocalUI();
+  if (debtSisa(d) <= 0) showToast('🎉 ' + d.nama + ' lunas!', 0);
 }
 
 function toggleAccDropdown(index) {
@@ -1153,7 +1354,7 @@ function submitEditAccount() {
 }
 
 // ===== PINDAH SALDO (transfer antar rekening) =====
-const KATEGORI_NETRAL = ['Transfer', 'Koreksi Saldo', KAT_SETOR, KAT_TARIK]; // tidak dihitung sebagai pemasukan/pengeluaran
+const KATEGORI_NETRAL = ['Transfer', 'Koreksi Saldo', KAT_SETOR, KAT_TARIK, KAT_UTANG, KAT_PIUTANG]; // tidak dihitung sebagai pemasukan/pengeluaran
 function netral(t) { return KATEGORI_NETRAL.includes(t.kategori); }
 
 // ===== Halaman Catat Transaksi (layar penuh): kategori berikon + numpad sendiri =====
