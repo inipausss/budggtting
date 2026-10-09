@@ -70,8 +70,8 @@ function renderRecap() {
   if (nextBtn) nextBtn.style.opacity = recapMonth >= currentMonthKey() ? 0.3 : 1;
 
   const s = monthTotals(recapMonth);
-  const cap = 'font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;';
-  const val = 'font-size: 1.05rem; font-weight: 900; letter-spacing: -0.3px;';
+  const cap = 'font-size: 0.72rem; font-weight: 500; color: var(--text-muted); margin-bottom: 6px;';
+  const val = 'font-size: 1.05rem; font-weight: 700; letter-spacing: -0.3px;';
   const netColor = s.net >= 0 ? 'var(--pos)' : 'var(--neg)';
   const netText = (s.net >= 0 ? '+ ' : '- ') + format(Math.abs(s.net));
 
@@ -120,9 +120,9 @@ function renderRecapHistory() {
       <div class="list-card" onclick="selectRecap('${k}')" style="cursor: pointer; padding: 14px 16px; ${active}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <strong style="font-size: 0.95rem;">${monthLabel(k)}</strong>
-          <span style="font-size: 0.8rem; font-weight: 800; color: ${s.net >= 0 ? 'var(--pos)' : 'var(--neg)'};">${s.net >= 0 ? '+' : '-'} ${format(Math.abs(s.net))}</span>
+          <span style="font-size: 0.8rem; font-weight: 600; color: ${s.net >= 0 ? 'var(--pos)' : 'var(--neg)'};">${s.net >= 0 ? '+' : '-'} ${format(Math.abs(s.net))}</span>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
           <span>Masuk ${format(s.inc)}</span>
           <span>Keluar ${format(s.exp)}</span>
         </div>
@@ -205,7 +205,7 @@ function renderThemePicker() {
         ${on ? '<i class="fa fa-circle-check" style="color: var(--pos); font-size: 1.2rem;"></i>' : ''}
       </div>`;
   };
-  const lbl = t => `<p style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin: 14px 0 8px;">${t}</p>`;
+  const lbl = t => `<p style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin: 14px 0 8px;">${t}</p>`;
   const grup = dark => THEMES.filter(t => t.dark === dark).map(t => row(t.id, t.nama, t.ic, t.sw)).join('');
   box.innerHTML = row('auto', 'Ikuti sistem', 'fa-mobile-screen') + lbl('Tema terang') + grup(false) + lbl('Tema gelap') + grup(true);
 }
@@ -389,17 +389,17 @@ function renderSaldoPicker() {
     <div onclick="selectAllSaldo()" style="${row} border-top: none;">
       ${box_(allOn)}
       <div style="flex: 1;"><strong style="font-size: 0.95rem;">Semua rekening</strong></div>
-      <span style="font-weight: 800; font-size: 0.9rem;">${format(total)}</span>
+      <span style="font-weight: 600; font-size: 0.9rem;">${format(total)}</span>
     </div>` +
     all.map(a => `
     <div onclick="toggleSaldoAcc('${a.id}')" style="${row}">
       ${box_(picked.has(a.id))}
       <div style="flex: 1;">
         <strong style="font-size: 0.95rem;">${a.nama}</strong>
-        <p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">${a.jenis}</p>
+        <p style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500; ">${a.jenis}</p>
       </div>
-      <span style="font-weight: 800; font-size: 0.85rem;">${format(a.saldoAkhir)}</span>
-      <button type="button" onclick="event.stopPropagation(); onlySaldoAcc('${a.id}')" style="background: var(--circle-bg); color: var(--text-muted); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; cursor: pointer;">Hanya ini</button>
+      <span style="font-weight: 600; font-size: 0.85rem;">${format(a.saldoAkhir)}</span>
+      <button type="button" onclick="event.stopPropagation(); onlySaldoAcc('${a.id}')" style="background: var(--circle-bg); color: var(--text-muted); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 500; cursor: pointer;">Hanya ini</button>
     </div>`).join('');
 }
 
@@ -562,8 +562,8 @@ function accountCardHtml(a, t) {
         ${nomor ? `
           <div style="background: var(--circle-bg); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
             <div style="min-width: 0;">
-              <p style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 2px;">${labelNomor}</p>
-              <p style="font-size: 0.95rem; font-weight: 700; letter-spacing: 1px; word-break: break-all;">${esc(nomor)}</p>
+              <p style="font-size: 0.72rem; font-weight: 500; color: var(--text-muted); margin-bottom: 2px;">${labelNomor}</p>
+              <p style="font-size: 0.95rem; font-weight: 500; letter-spacing: 1px; word-break: break-all;">${esc(nomor)}</p>
             </div>
             <button type="button" class="wl-btn" onclick="copyToClipboard('${jsq(nomor)}', this)"><i class="fa fa-copy"></i> Salin</button>
           </div>` : '<p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Tidak ada nomor tercatat</p>'}
@@ -865,14 +865,14 @@ function renderTrxHtml(t, index, prefix) {
             <i class="fa ${netral(t) ? 'fa-right-left' : (t.jenis === 'Pemasukan' ? 'fa-arrow-down' : 'fa-basket-shopping')}"></i>
           </div>
           <div>
-            <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--text-main);">${mainTitle}</h4>
-            ${subTitle ? `<p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-top: 1px;">${subTitle}</p>` : ''}
-            <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 1px;">${t.tanggal}</p>
+            <h4 style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">${mainTitle}</h4>
+            ${subTitle ? `<p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-top: 1px;">${subTitle}</p>` : ''}
+            <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;">${t.tanggal}</p>
           </div>
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="font-weight: 800; font-size: 0.95rem; color: ${t.jenis === 'Pemasukan' ? 'var(--pos)' : 'var(--neg)'};">
+          <div style="font-weight: 600; font-size: 0.95rem; color: ${t.jenis === 'Pemasukan' ? 'var(--pos)' : 'var(--neg)'};">
             ${t.jenis === 'Pemasukan' ? '+' : '-'} ${format(jumlahNum)}
           </div>
           <i class="fa fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
@@ -881,23 +881,23 @@ function renderTrxHtml(t, index, prefix) {
 
       <div class="trx-details-dropdown">
         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
-          <span style="color: var(--text-muted); font-weight: 600;">DARI / DOMPET</span>
-          <span style="font-weight: 700; color: var(--text-main);">${getAccountName(t.rekeningId)}</span>
+          <span style="color: var(--text-muted); font-weight: 500;">DARI / DOMPET</span>
+          <span style="font-weight: 500; color: var(--text-main);">${getAccountName(t.rekeningId)}</span>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
-          <span style="color: var(--text-muted); font-weight: 600;">KATEGORI</span>
-          <span style="font-weight: 700; color: var(--text-main);">${t.kategori}</span>
+          <span style="color: var(--text-muted); font-weight: 500;">KATEGORI</span>
+          <span style="font-weight: 500; color: var(--text-main);">${t.kategori}</span>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 12px;">
-          <span style="color: var(--text-muted); font-weight: 600;">TANGGAL</span>
-          <span style="font-weight: 700; color: var(--text-main);">${t.tanggal}</span>
+          <span style="color: var(--text-muted); font-weight: 500;">TANGGAL</span>
+          <span style="font-weight: 500; color: var(--text-main);">${t.tanggal}</span>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
-          <button type="button" onclick="openEditTrx('${t.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button type="button" onclick="openEditTrx('${t.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa fa-pen"></i> Ubah
           </button>
-          <button type="button" onclick="confirmDeleteTrx('${t.id}', '${mainTitle}')" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button type="button" onclick="confirmDeleteTrx('${t.id}', '${mainTitle}')" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa fa-trash"></i> Hapus
           </button>
         </div>
@@ -1291,7 +1291,7 @@ function showUndo(msg, onUndo) {
   span.textContent = msg;
   const btn = document.createElement('button');
   btn.textContent = 'Urungkan';
-  btn.style.cssText = 'background: none; border: none; color: var(--primary); font-weight: 800; font-size: 0.85rem; cursor: pointer;';
+  btn.style.cssText = 'background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.85rem; cursor: pointer;';
   btn.onclick = () => { el.remove(); onUndo(); };
   el.append(span, btn);
   document.body.appendChild(el);
@@ -1400,12 +1400,12 @@ function catRowHtml(c) {
   const pct = c.pct >= 1 ? Math.round(c.pct) + '%' : '<1%';
   return `
     <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
-      <span style="min-width: 46px; text-align: center; background: ${c.warna}; color: #000; font-size: 0.72rem; font-weight: 800; padding: 6px 0; border-radius: 6px;">${pct}</span>
+      <span style="min-width: 46px; text-align: center; background: ${c.warna}; color: #000; font-size: 0.72rem; font-weight: 600; padding: 6px 0; border-radius: 6px;">${pct}</span>
       <div style="flex: 1;">
-        <span style="font-size: 0.9rem; font-weight: 700;">${c.nama}</span>
-        ${c.n ? `<p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">${c.n} transaksi</p>` : ''}
+        <span style="font-size: 0.9rem; font-weight: 500;">${c.nama}</span>
+        ${c.n ? `<p style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">${c.n} transaksi</p>` : ''}
       </div>
-      <span style="font-size: 0.9rem; font-weight: 800;">${format(c.jumlah)}</span>
+      <span style="font-size: 0.9rem; font-weight: 600;">${format(c.jumlah)}</span>
     </div>`;
 }
 
@@ -1679,10 +1679,10 @@ function renderBudgets() {
       <div class="list-card" style="padding: 16px; margin-bottom: 10px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <strong style="font-size: 0.95rem;">${b.kategori}</strong>
-          <span style="font-size: 0.7rem; font-weight: 800; color: ${warna}; text-transform: uppercase;">${status} · ${Math.round(pct)}%</span>
+          <span style="font-size: 0.7rem; font-weight: 600; color: ${warna}; ">${status} · ${Math.round(pct)}%</span>
         </div>
         <div class="budget-track"><div class="budget-fill" style="width: ${Math.min(pct, 100)}%; background: ${warna};"></div></div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-top: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-top: 8px;">
           <span>${format(spent)} / ${format(b.batas)}</span>
           <span>${sisa >= 0 ? 'Sisa ' + format(sisa) : 'Lebih ' + format(-sisa)}</span>
         </div>
@@ -1701,7 +1701,7 @@ function renderBudgetManager() {
         <strong style="font-size: 0.9rem;">${b.kategori}</strong>
         <p style="font-size: 0.75rem; color: var(--text-muted);">${format(b.batas)} / bulan</p>
       </div>
-      <button type="button" onclick="removeBudget(${i})" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+      <button type="button" onclick="removeBudget(${i})" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer;">
         <i class="fa fa-trash"></i> Hapus
       </button>
     </div>`).join('');
@@ -1817,16 +1817,16 @@ function renderBills() {
     <div class="list-card" style="padding: 16px; margin-bottom: 10px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
         <strong style="font-size: 0.95rem;">${b.nama}</strong>
-        <span style="font-size: 0.7rem; font-weight: 800; color: ${s.warna}; text-transform: uppercase;">${s.label}</span>
+        <span style="font-size: 0.7rem; font-weight: 600; color: ${s.warna}; ">${s.label}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-bottom: 12px;">
         <span>Tiap tanggal ${b.tanggal} · ${b.kategori}</span>
-        <span style="color: var(--text-main); font-weight: 800;">${format(b.jumlah)}</span>
+        <span style="color: var(--text-main); font-weight: 600;">${format(b.jumlah)}</span>
       </div>
       <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
-        ${s.lv !== 'lunas' ? `<button type="button" onclick="openPayBill('${b.id}')" style="background: var(--primary); color: #000; border: none; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; cursor: pointer;"><i class="fa fa-check"></i> Bayar</button>` : ''}
-        <button type="button" onclick="openBill('${b.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="fa fa-pen"></i> Ubah</button>
-        <button type="button" onclick="removeBill('${b.id}')" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="fa fa-trash"></i> Hapus</button>
+        ${s.lv !== 'lunas' ? `<button type="button" onclick="openPayBill('${b.id}')" style="background: var(--primary); color: #000; border: none; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer;"><i class="fa fa-check"></i> Bayar</button>` : ''}
+        <button type="button" onclick="openBill('${b.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer;"><i class="fa fa-pen"></i> Ubah</button>
+        <button type="button" onclick="removeBill('${b.id}')" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer;"><i class="fa fa-trash"></i> Hapus</button>
       </div>
     </div>`).join('');
 }
@@ -1848,9 +1848,9 @@ function renderBillSummary() {
     <div class="list-card" onclick="openPage('bills')" style="cursor: pointer; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
       <div>
         <strong style="font-size: 0.9rem;">${b.nama}</strong>
-        <p style="font-size: 0.7rem; font-weight: 800; color: ${s.warna}; text-transform: uppercase; margin-top: 2px;">${s.label}</p>
+        <p style="font-size: 0.7rem; font-weight: 600; color: ${s.warna}; margin-top: 2px;">${s.label}</p>
       </div>
-      <span style="font-weight: 800; font-size: 0.9rem;">${format(b.jumlah)}</span>
+      <span style="font-weight: 600; font-size: 0.9rem;">${format(b.jumlah)}</span>
     </div>`).join('') +
     (urgent.length > 3 ? note('+ ' + (urgent.length - 3) + ' tagihan lainnya') : '');
 }
@@ -1996,8 +1996,8 @@ function renderDay() {
     if (t.jenis === 'Pemasukan') inc += n; else exp += n;
   });
 
-  const cap = 'font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;';
-  const val = 'font-size: 1.05rem; font-weight: 900; letter-spacing: -0.3px;';
+  const cap = 'font-size: 0.72rem; font-weight: 500; color: var(--text-muted); margin-bottom: 6px;';
+  const val = 'font-size: 1.05rem; font-weight: 700; letter-spacing: -0.3px;';
   document.getElementById('daySummary').innerHTML = `
     <div class="list-card" style="margin: 0; padding: 14px;">
       <p style="${cap}">Masuk</p>
@@ -2012,7 +2012,7 @@ function renderDay() {
   const dueBills = dayKey.slice(0, 7) === currentMonthKey()
     ? billList().map(b => ({ b, s: billStatus(b) })).filter(x => x.s.due.getDate() === d)
     : [];
-  const lbl = 'font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);';
+  const lbl = 'font-size: 0.7rem; font-weight: 600; color: var(--text-muted);';
 
   const billHtml = dueBills.length ? `
     <p style="${lbl} margin-bottom: 8px;">Tagihan</p>
@@ -2020,11 +2020,11 @@ function renderDay() {
       <div class="list-card" style="padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
         <div>
           <strong style="font-size: 0.9rem;">${b.nama}</strong>
-          <p style="font-size: 0.7rem; font-weight: 800; color: ${s.warna}; text-transform: uppercase; margin-top: 2px;">${s.label}</p>
+          <p style="font-size: 0.7rem; font-weight: 600; color: ${s.warna}; margin-top: 2px;">${s.label}</p>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-weight: 800; font-size: 0.9rem;">${format(b.jumlah)}</span>
-          ${s.lv !== 'lunas' ? `<button type="button" onclick="openPayBill('${b.id}')" style="background: var(--primary); color: #000; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; cursor: pointer;">Bayar</button>` : ''}
+          <span style="font-weight: 600; font-size: 0.9rem;">${format(b.jumlah)}</span>
+          ${s.lv !== 'lunas' ? `<button type="button" onclick="openPayBill('${b.id}')" style="background: var(--primary); color: #000; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">Bayar</button>` : ''}
         </div>
       </div>`).join('')}
     <p style="${lbl} margin: 14px 0 8px;">Transaksi</p>` : '';
@@ -2118,9 +2118,9 @@ function renderLevel() {
         <div class="lvl-avatar">${esc((name.charAt(0) || '?').toUpperCase())}</div>
         <span class="lvl-pill">Level ${st.level}</span>
       </div>
-      <h2 style="font-size: 1.4rem; font-weight: 900; margin-top: 20px;">${esc(name)}</h2>
-      <p style="color: var(--text-muted); font-weight: 600; font-size: 0.9rem;">${st.title}</p>
-      <p style="font-size: 0.8rem; font-weight: 800; margin-top: 8px;">${st.xp} / ${st.next} XP</p>
+      <h2 style="font-size: 1.4rem; font-weight: 700; margin-top: 20px;">${esc(name)}</h2>
+      <p style="color: var(--text-muted); font-weight: 500; font-size: 0.9rem;">${st.title}</p>
+      <p style="font-size: 0.8rem; font-weight: 600; margin-top: 8px;">${st.xp} / ${st.next} XP</p>
       <div class="budget-track" style="width: calc(100% - 56px); margin: 8px auto 0;"><div class="budget-fill" style="width: ${pct}%; background: var(--primary);"></div></div>
       <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 8px;">10 XP tiap hari kamu mencatat, +50 XP tiap 7 hari beruntun</p>
     </div>
@@ -2134,7 +2134,7 @@ function renderLevel() {
     </div>
     <div class="section-title-row" style="margin-bottom: 12px;">
       <h3 class="section-title">Pencapaian</h3>
-      <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">${got}/${st.badges.length}</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${got}/${st.badges.length}</span>
     </div>
     <div class="badge-grid">
       ${st.badges.map(b => `
@@ -2198,8 +2198,13 @@ function toggleModal(id) {
     el.style.display = 'flex';
     if (id === 'modalTrx') document.getElementById('tanggal').value = todayStr();
   } else {
-    el.classList.add('hidden');
-    el.style.display = 'none';
+    if (el.classList.contains('closing')) return;
+    el.classList.add('closing'); // animasi turun dulu (style.css), baru disembunyikan
+    setTimeout(() => {
+      el.classList.remove('closing');
+      el.classList.add('hidden');
+      el.style.display = 'none';
+    }, 280);
   }
 }
 
