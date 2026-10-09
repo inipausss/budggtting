@@ -288,6 +288,7 @@ function renderAllLocalUI() {
   renderTagihan();
   renderLevel();
   renderDebts();
+  renderBackupNag();
 
   // Laporan (ringkasan + daftar transaksi) ikut segar kalau sedang dibuka
   const an = document.getElementById('analytics');
@@ -952,6 +953,30 @@ function submitDebtPay() {
   if (debtSisa(d) <= 0) showToast('🎉 ' + d.nama + ' lunas!', 0);
 }
 
+// ===== PENGINGAT BACKUP: semua data hanya ada di HP ini =====
+const NAG_HARI = 7, NAG_TUNDA = 24 * 3600 * 1000;
+function renderBackupNag() {
+  const el = document.getElementById('backupNag');
+  if (!el) return;
+  let c = {}, tunda = 0;
+  try { c = JSON.parse(localStorage.getItem('budggt_cfg')) || {}; tunda = Number(localStorage.getItem('budggt_nag')) || 0; } catch (e) {}
+  const ada = (globalData.transactions || []).length > 0 || (globalData.accounts || []).length > 0;
+  const siap = !!(c.url && c.token);
+  const umur = c.lastTs ? (Date.now() - c.lastTs) / 86400000 : (c.last ? 0 : Infinity); // backup lama (tanpa lastTs) tidak dinilai sampai backup berikutnya
+  const perlu = ada && umur >= NAG_HARI && Date.now() - tunda > NAG_TUNDA;
+  el.classList.toggle('hidden', !perlu);
+  if (!perlu) return;
+  document.getElementById('nagText').innerText = !siap ? 'Atur backup supaya datamu aman kalau HP hilang atau rusak.'
+    : umur === Infinity ? 'Datamu belum pernah dibackup.' : 'Backup terakhir ' + Math.floor(umur) + ' hari lalu.';
+  const b = document.getElementById('nagBtn');
+  b.innerText = siap ? 'Backup' : 'Atur';
+  b.onclick = siap ? () => backupNow() : () => toggleModal('modalSettings');
+}
+function tundaNag() {
+  try { localStorage.setItem('budggt_nag', String(Date.now())); } catch (e) {}
+  renderBackupNag();
+}
+
 function toggleAccDropdown(index) {
   const card = document.getElementById(`acc-card-${index}`);
   if (card) card.classList.toggle('open');
@@ -1026,7 +1051,24 @@ function renderFullTransactions() {
     container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">${aktif ? 'Tidak ada transaksi yang cocok' : 'Tidak ada transaksi di bulan ini'}</p>`;
     return;
   }
-  container.innerHTML = list.map((t, index) => renderTrxHtml(t, index, 'full')).join("");
+  // dikelompokkan per tanggal (terbaru dulu); total harian tidak menghitung transaksi netral
+  const hari = k => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k || '')) return k || '-';
+    const sel = dayIdx(todayStr()) - dayIdx(k);
+    return sel === 0 ? 'Hari ini' : sel === 1 ? 'Kemarin' : new Date(k + 'T00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+  const net = {};
+  list.filter(t => !netral(t)).forEach(t => { net[t.tanggal] = (net[t.tanggal] || 0) + (t.jenis === 'Pemasukan' ? 1 : -1) * (Number(t.jumlah) || 0); });
+  let cur = null;
+  container.innerHTML = list.slice().sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || '')).map((t, i) => {
+    let head = '';
+    if (t.tanggal !== cur) {
+      cur = t.tanggal;
+      const n = net[cur] || 0;
+      head = `<div class="day-head"><span>${hari(cur)}</span>${n ? `<span style="color: ${n > 0 ? 'var(--pos)' : 'var(--neg)'};">${n > 0 ? '+' : '-'} ${format(Math.abs(n))}</span>` : ''}</div>`;
+    }
+    return head + renderTrxHtml(t, i, 'full');
+  }).join("");
 }
 
 function renderTrxHtml(t, index, prefix) {
