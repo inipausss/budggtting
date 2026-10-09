@@ -139,13 +139,6 @@ window.onload = () => {
   const elTgl = document.getElementById("tanggal");
   if (elTgl) elTgl.value = todayStr();
 
-  // Load tema
-  if (localStorage.getItem('theme') === 'dark') {
-    document.body.classList.add('dark-mode');
-    const icon = document.getElementById('themeIcon');
-    if (icon) icon.className = 'fa fa-sun';
-  }
-
   // 1. Tampilkan data dari cache lokal secara instan (0 detik)
   renderAllLocalUI();
 
@@ -155,19 +148,71 @@ window.onload = () => {
   initFormListeners();
 };
 
-// TOGGLE DARK MODE
-function toggleDarkMode() {
-  const body = document.body;
-  const icon = document.getElementById('themeIcon');
-  body.classList.toggle('dark-mode');
+// ===== TEMA =====
+// Warna tiap tema ada di style.css (body[data-theme]); di sini hanya daftar, pemilih, dan penerapannya.
+const THEMES = [
+  { id: 'terang', nama: 'Terang',     ic: 'fa-sun',    dark: false, sw: ['#ffffff', '#f1f5f9', '#ccff00'] },
+  { id: 'langit', nama: 'Langit',     ic: 'fa-cloud',  dark: false, sw: ['#f0f9ff', '#e0f2fe', '#38bdf8'] },
+  { id: 'sakura', nama: 'Sakura',     ic: 'fa-heart',  dark: false, sw: ['#fff5f9', '#fce7f3', '#f9a8d4'] },
+  { id: 'gelap',  nama: 'Gelap',      ic: 'fa-moon',   dark: true,  sw: ['#0f1115', '#181b20', '#ccff00'] },
+  { id: 'malam',  nama: 'Malam',      ic: 'fa-star',   dark: true,  sw: ['#0b1020', '#141b34', '#22d3ee'] },
+  { id: 'kopi',   nama: 'Kopi',       ic: 'fa-mug-hot', dark: true, sw: ['#17110d', '#241a14', '#fbbf24'] },
+  { id: 'oled',   nama: 'Hitam OLED', ic: 'fa-circle', dark: true,  sw: ['#000000', '#0d0d0d', '#4ade80'] }
+];
+const THEME_KEY = 'budggt_theme';
+let themePref = 'terang'; // id tema, atau 'auto' = ikuti sistem
+try { themePref = localStorage.getItem(THEME_KEY) || (localStorage.getItem('theme') === 'dark' ? 'gelap' : 'terang'); } catch (e) {}
 
-  if (body.classList.contains('dark-mode')) {
-    if (icon) icon.className = 'fa fa-sun';
-    localStorage.setItem('theme', 'dark');
-  } else {
-    if (icon) icon.className = 'fa fa-moon';
-    localStorage.setItem('theme', 'light');
-  }
+// warna aksen tema aktif, untuk grafik (canvas tidak bisa membaca var() CSS)
+function accent() { return getComputedStyle(document.body).getPropertyValue('--primary').trim() || '#ccff00'; }
+
+function applyTheme(pref) {
+  const sysDark = !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const id = pref === 'auto' ? (sysDark ? 'gelap' : 'terang') : pref;
+  const th = THEMES.find(t => t.id === id) || THEMES[0];
+  document.body.dataset.theme = th.id;
+  document.body.classList.toggle('dark-mode', th.dark);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = getComputedStyle(document.body).getPropertyValue('--app-bg').trim() || meta.content;
+  const nm = document.getElementById('themeName');
+  if (nm) nm.innerText = pref === 'auto' ? 'Ikuti sistem' : th.nama;
+  const an = document.getElementById('analytics');
+  if (an && !an.classList.contains('hidden')) renderRecap(); // warna grafik ikut aksen baru
+}
+
+function pickTheme(id) {
+  themePref = id;
+  try { localStorage.setItem(THEME_KEY, id); } catch (e) {}
+  applyTheme(id);
+  renderThemePicker();
+}
+
+function openTheme() {
+  renderThemePicker();
+  toggleModal('modalTheme');
+}
+
+function renderThemePicker() {
+  const box = document.getElementById('themeList');
+  if (!box) return;
+  const row = (id, nama, ic, sw) => {
+    const on = themePref === id;
+    return `
+      <div onclick="pickTheme('${id}')" style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; margin-bottom: 10px; border-radius: 16px; cursor: pointer; background: var(--circle-bg); border: 2px solid ${on ? 'var(--primary)' : 'var(--border-color)'};">
+        <div style="width: 40px; height: 40px; border-radius: 12px; background: var(--card-bg); display: flex; align-items: center; justify-content: center; color: var(--text-main);"><i class="fa ${ic}"></i></div>
+        <strong style="flex: 1; font-size: 0.95rem;">${nama}</strong>
+        ${sw ? `<span style="display: flex;">${sw.map((c, i) => `<span style="width: 22px; height: 22px; border-radius: 50%; background: ${c}; border: 1px solid rgba(128,128,128,0.45); margin-left: ${i ? -6 : 0}px;"></span>`).join('')}</span>` : ''}
+        ${on ? '<i class="fa fa-circle-check" style="color: #22c55e; font-size: 1.2rem;"></i>' : ''}
+      </div>`;
+  };
+  const lbl = t => `<p style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin: 14px 0 8px;">${t}</p>`;
+  const grup = dark => THEMES.filter(t => t.dark === dark).map(t => row(t.id, t.nama, t.ic, t.sw)).join('');
+  box.innerHTML = row('auto', 'Ikuti sistem', 'fa-mobile-screen') + lbl('Tema terang') + grup(false) + lbl('Tema gelap') + grup(true);
+}
+
+applyTheme(themePref); // sedini mungkin supaya tidak berkedip
+if (window.matchMedia) {
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (themePref === 'auto') applyTheme('auto'); });
 }
 
 // TOGGLE LOCK / HIDE BALANCE
@@ -190,7 +235,7 @@ function renderBalanceDisplay() {
     if (elExpense) elExpense.innerText = "Rp •••••••";
     if (lockIcon) {
       lockIcon.className = "fa fa-lock";
-      lockIcon.style.color = "#ccff00";
+      lockIcon.style.color = "#ffffff";
     }
   } else {
     elSaldo.innerText = format(rawSummary.saldo);
@@ -198,7 +243,7 @@ function renderBalanceDisplay() {
     if (elExpense) elExpense.innerText = format(rawSummary.expense);
     if (lockIcon) {
       lockIcon.className = "fa fa-lock-open";
-      lockIcon.style.color = "#94a3b8";
+      lockIcon.style.color = "rgba(255,255,255,0.75)";
     }
   }
 }
@@ -994,7 +1039,7 @@ function showUndo(msg, onUndo) {
   span.textContent = msg;
   const btn = document.createElement('button');
   btn.textContent = 'Urungkan';
-  btn.style.cssText = 'background: none; border: none; color: #ccff00; font-weight: 800; font-size: 0.85rem; cursor: pointer;';
+  btn.style.cssText = 'background: none; border: none; color: var(--primary); font-weight: 800; font-size: 0.85rem; cursor: pointer;';
   btn.onclick = () => { el.remove(); onUndo(); };
   el.append(span, btn);
   document.body.appendChild(el);
@@ -1237,7 +1282,7 @@ function renderTrend() {
     data: {
       labels,
       datasets: [
-        { label: 'Masuk', data: inc, backgroundColor: '#ccff00', borderRadius: 4 },
+        { label: 'Masuk', data: inc, backgroundColor: accent(), borderRadius: 4 },
         { label: 'Keluar', data: exp, backgroundColor: '#f43f5e', borderRadius: 4 }
       ]
     },
