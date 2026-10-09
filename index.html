@@ -129,9 +129,9 @@
         <div class="menu-circle t-red"><i class="fa fa-file-invoice-dollar"></i></div>
         <span class="menu-label">Tagihan</span>
       </button>
-      <button class="menu-item" onclick="alert('Fitur AI Advisor segera hadir!')">
-        <div class="menu-circle t-green"><i class="fa fa-robot"></i></div>
-        <span class="menu-label">AI Advisor</span>
+      <button class="menu-item" onclick="openPage('debts')">
+        <div class="menu-circle t-purple"><i class="fa fa-hand-holding-dollar"></i></div>
+        <span class="menu-label">Utang</span>
       </button>
     </div>
 
@@ -269,6 +269,14 @@
       <button onclick="openBill()" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
     </div>
     <div id="billList"></div>
+  </main>
+
+  <main id="debts" class="page hidden">
+    <div class="section-title-row" style="margin-bottom: 20px;">
+      <h2 style="font-size: 1.4rem; font-weight: 600;">Utang &amp; Piutang</h2>
+      <button onclick="openDebt()" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
+    </div>
+    <div id="debtBox"></div>
   </main>
 
   <main id="budgets" class="page hidden">
@@ -549,6 +557,46 @@
       <select id="goalMoveRekening" class="input-field"></select>
       <input type="text" id="goalMoveJumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
       <button onclick="submitGoalMove()" class="btn-primary">Simpan</button>
+    </div>
+  </div>
+
+  <div id="modalDebt" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 id="debtTitle" style="font-size: 1.15rem; font-weight: 600;">Tambah Utang / Piutang</h3>
+        <button onclick="toggleModal('modalDebt')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <input type="hidden" id="debtId">
+      <input type="hidden" id="debtTipe" value="utang">
+      <div class="seg">
+        <button type="button" class="seg-btn active" id="dt-utang" onclick="setDebtTipe('utang')">Utang saya</button>
+        <button type="button" class="seg-btn" id="dt-piutang" onclick="setDebtTipe('piutang')">Piutang</button>
+      </div>
+      <input id="debtNama" placeholder="Nama (cth: Budi, Paylater)" class="input-field">
+      <input type="text" id="debtJumlah" inputmode="numeric" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">Jatuh tempo (opsional)</p>
+      <input type="date" id="debtJatuh" class="input-field">
+      <input id="debtCatatan" placeholder="Catatan (opsional)" class="input-field">
+      <div id="debtWalletBox">
+        <p id="debtWalletLbl" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;"></p>
+        <select id="debtRekening" class="input-field"></select>
+      </div>
+      <button onclick="submitDebt()" class="btn-primary">Simpan</button>
+    </div>
+  </div>
+
+  <div id="modalDebtPay" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <h3 id="debtPayTitle" style="font-size: 1.15rem; font-weight: 600;">Bayar</h3>
+        <button onclick="toggleModal('modalDebtPay')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <p id="debtPayInfo" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;"></p>
+      <input type="hidden" id="debtPayId">
+      <input type="text" id="debtPayJumlah" inputmode="numeric" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <p id="debtPayLbl" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;"></p>
+      <select id="debtPayRekening" class="input-field"></select>
+      <button onclick="submitDebtPay()" class="btn-primary">Simpan</button>
     </div>
   </div>
 
