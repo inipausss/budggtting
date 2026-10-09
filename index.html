@@ -417,41 +417,60 @@
     </div>
   </div>
   
-  <div id="modalTrx" class="modal hidden">
-    <div class="modal-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="font-size: 1.25rem; font-weight: 600;">Catat Transaksi</h3>
-        <button onclick="toggleModal('modalTrx')" style="background:none; border:none; font-size: 1.4rem; cursor: pointer;">&times;</button>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-        <button type="button" class="btn-sec" id="btnCam" onclick="document.getElementById('scanCamera').click()"><i class="fa fa-camera"></i> Kamera</button>
-        <button type="button" class="btn-sec" id="btnGal" onclick="document.getElementById('scanGallery').click()"><i class="fa fa-image"></i> Galeri</button>
-      </div>
-      <p style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 15px;">— ATAU MANUAL —</p>
-
+  <div id="modalTrx" class="modal hidden" data-mode="Pengeluaran">
+    <div class="modal-content trx-page">
       <form id="trxForm">
-        <select id="rekening" class="input-field" required onchange="onJenisChange()"></select>
-  <select id="jenis" class="input-field" onchange="onJenisChange()">
-  <option value="Pengeluaran">Pengeluaran</option>
-  <option value="Pemasukan">Pemasukan</option>
-  <option value="Transfer">Pindah Saldo</option>
-</select>
-<select id="rekeningTujuan" class="input-field hidden"></select>
-        <input type="date" id="tanggal" class="input-field" required>
-        <input list="kategoriList" id="kategori" placeholder="Pilih atau Ketik Kategori..." class="input-field" required>
-        <datalist id="kategoriList">
-          <option value="Makanan">
-          <option value="Belanja">
-          <option value="Transport">
-          <option value="Tagihan">
-          <option value="Hiburan">
-          <option value="Kesehatan">
-          <option value="Investasi">
-          <option value="Lainnya">
-        </datalist>
-        <input type="text" id="keterangan" placeholder="Keterangan / Catatan (Opsional)" class="input-field">
-        <input type="text" id="jumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)" required>
-        <button type="submit" class="btn-primary">Simpan Transaksi</button>
+        <div class="tp-top">
+          <button type="button" class="icon-btn" onclick="toggleModal('modalTrx')" title="Tutup"><i class="fa fa-xmark"></i></button>
+          <h3>Catat Transaksi</h3>
+          <div class="tp-scan">
+            <button type="button" class="icon-btn" id="btnCam" title="Scan struk (kamera)" onclick="document.getElementById('scanCamera').click()"><i class="fa fa-camera"></i></button>
+            <button type="button" class="icon-btn" id="btnGal" title="Scan struk (galeri)" onclick="document.getElementById('scanGallery').click()"><i class="fa fa-image"></i></button>
+          </div>
+        </div>
+
+        <div class="tp-seg" id="tpSeg">
+          <button type="button" class="on" data-j="Pengeluaran" onclick="setTrxJenis('Pengeluaran')">Pengeluaran</button>
+          <button type="button" data-j="Pemasukan" onclick="setTrxJenis('Pemasukan')">Pemasukan</button>
+          <button type="button" data-j="Transfer" onclick="setTrxJenis('Transfer')">Transfer</button>
+        </div>
+        <select id="jenis" class="hidden" tabindex="-1">
+          <option value="Pengeluaran">Pengeluaran</option>
+          <option value="Pemasukan">Pemasukan</option>
+          <option value="Transfer">Pindah Saldo</option>
+        </select>
+
+        <div class="tp-mid">
+          <div id="tpCats" class="tp-cats"></div>
+          <input list="kategoriList" id="kategori" placeholder="Nama kategori baru..." class="input-field hidden" autocomplete="off">
+          <datalist id="kategoriList">
+            <option value="Makanan">
+            <option value="Belanja">
+            <option value="Transport">
+            <option value="Tagihan">
+            <option value="Hiburan">
+            <option value="Kesehatan">
+            <option value="Investasi">
+            <option value="Lainnya">
+          </datalist>
+          <div class="tp-wallets">
+            <label class="tp-w"><small id="tpDari">Dompet</small><select id="rekening" required onchange="onJenisChange()"></select></label>
+            <button type="button" class="tp-swap" onclick="swapTrx()" title="Tukar"><i class="fa fa-right-left"></i></button>
+            <label class="tp-w"><small>Ke</small><select id="rekeningTujuan"></select></label>
+          </div>
+        </div>
+
+        <div class="tp-bot">
+          <div class="tp-amt"><span>Rp</span><b id="amtShow">0</b></div>
+          <input type="text" id="jumlah" class="hidden" tabindex="-1">
+          <input type="text" id="keterangan" class="input-field" placeholder="Tambah catatan (opsional)">
+          <div class="tp-pad" onclick="padTap(event)">
+            <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button><button type="button" data-k="del" class="k-del" title="Hapus"><i class="fa fa-delete-left"></i></button>
+            <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button><button type="button" data-k="C" class="k-fn">C</button>
+            <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button><label class="k-date"><i class="fa fa-calendar"></i><span id="tpDate">Hari ini</span><input type="date" id="tanggal" required onchange="trxDateLabel()"></label>
+            <button type="button" data-k="0">0</button><button type="button" data-k="00">00</button><button type="button" data-k="000">000</button><button type="button" data-k="ok" class="k-ok" title="Simpan"><i class="fa fa-check"></i></button>
+          </div>
+        </div>
       </form>
     </div>
   </div>
