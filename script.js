@@ -259,6 +259,11 @@ function openPage(id) {
   const activeBtn = document.getElementById('btn-' + id);
   if (activeBtn) activeBtn.classList.add("active");
   
+  // halaman Budget tampil penuh: tanpa top bar dan nav bawah
+  const fokus = id === 'budgets' || id === 'budgetForm';
+  document.body.classList.toggle('focus-page', fokus);
+  if (fokus) window.scrollTo({ top: 0 });
+
   // Laporan selalu terbuka di Ringkasan, bulan berjalan
   if (id === 'analytics') { recapMonth = currentMonthKey(); setReportTab('ringkasan'); }
 }
@@ -316,25 +321,6 @@ function populateDropdown(accounts) {
   if (el && accounts) {
     el.innerHTML = accounts.map(a => `<option value="${a.id}">${a.nama}</option>`).join("");
   }
-}
-
-function prevMonthKey() {
-  const [y, m] = currentMonthKey().split('-').map(Number);
-  const d = new Date(y, m - 2, 1);
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-}
-
-function setDelta(el, cur, old, upIsGood) {
-  if (!el) return;
-  let text = 'Belum ada data bulan lalu', good = true;
-  if (old > 0) {
-    const pct = Math.round((cur - old) / old * 100);
-    text = (pct > 0 ? '+' : '') + pct + '% vs bulan lalu';
-    good = pct === 0 || (pct > 0) === upIsGood;
-  }
-  el.innerText = text;
-  el.style.background = good ? 'var(--pos-bg)' : 'var(--neg-bg)';
-  el.style.color = good ? 'var(--pos)' : 'var(--neg)';
 }
 
 // ===== PILIH REKENING UNTUK KARTU SALDO =====
@@ -431,14 +417,13 @@ function toggleSaldoAcc(id) {
 
 // UPDATE DASHBOARD RINGKASAN
 function updateDashboard(res) {
-  let inc = 0, exp = 0, sal = 0, fInc = 0, fExp = 0;
+  let sal = 0, fInc = 0, fExp = 0;
   const picked = saldoAccounts();
   const ids = new Set(picked.map(a => a.id));
 
   inMonth(res.transactions, currentMonthKey()).filter(t => !netral(t)).forEach(t => {
     const amt = Number(t.jumlah) || 0;
     const masuk = t.jenis === "Pemasukan";
-    if (masuk) inc += amt; else exp += amt;
     if (ids.has(t.rekeningId)) { if (masuk) fInc += amt; else fExp += amt; }
   });
   picked.forEach(a => { sal += Number(a.saldoAkhir) || 0; });
@@ -448,15 +433,6 @@ function updateDashboard(res) {
   renderBalanceDisplay();
   renderSaldoLabel();
 
-  // dua kartu di bawah tetap total semua rekening
-  const incEl = document.getElementById("dashTotalIncome");
-  const expEl = document.getElementById("dashTotalExpense");
-  if (incEl) incEl.innerText = format(inc);
-  if (expEl) expEl.innerText = format(exp);
-
-  const prev = monthTotals(prevMonthKey());
-  setDelta(incEl && incEl.nextElementSibling, inc, prev.inc, true);
-  setDelta(expEl && expEl.nextElementSibling, exp, prev.exp, false);
 }
 
 function getAccountName(rekeningId) {
@@ -929,7 +905,7 @@ function initFormListeners() {
       // 1. Update UI Detik ini juga (Instant)
       if (!globalData.transactions) globalData.transactions = [];
       const bdg = newTrx.jenis === 'Pengeluaran' ? findBudget(newTrx.kategori) : null;
-      const lvBefore = bdg ? budgetLevel(budgetPct(bdg)) : 0;
+      const lvBefore = bdg ? budgetLevel(bdg) : 0;
       globalData.transactions.unshift(newTrx);
       
       let targetAcc = (globalData.accountSummary || []).find(a => a.id === newTrx.rekeningId);
@@ -1637,116 +1613,242 @@ function renderCalendar(transactions) {
   container.innerHTML = html;
 }
 
-// ===== BUDGET PER KATEGORI =====
-const BUDGET_KUNING = 50;  // % mulai kuning
-const BUDGET_MERAH = 80;   // % mulai merah
+// ===== BUDGET: halaman sendiri; tiap budget punya nama, periode, banyak kategori, dan batas peringatan sendiri =====
+const BUDGET_KUNING = 50;  // % mulai kuning, dihitung relatif terhadap batas peringatan (50/80)
+const BUDGET_MERAH = 80;   // batas peringatan bawaan (%)
 const BUDGET_WARNA = ['var(--pos)', 'var(--warn)', 'var(--neg)']; // hijau, kuning, merah
 const BUDGET_STATUS = ['Aman', 'Hati-hati', 'Hampir habis'];
+const KAT_IKON = { makanan: 'fa-utensils', belanja: 'fa-bag-shopping', transport: 'fa-car-side', tagihan: 'fa-file-invoice', hiburan: 'fa-film', kesehatan: 'fa-heart-pulse', investasi: 'fa-chart-line', lainnya: 'fa-ellipsis' };
+const katIkon = k => KAT_IKON[(k || '').trim().toLowerCase()] || 'fa-tag';
+const dstr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
-function budgetList() { return globalData.budgets || []; }
+// budget lama {kategori, batas} dimigrasi di tempat ke format baru (id sama dengan yang dibuat gas-shim.js)
+function budgetList() {
+  const l = globalData.budgets || [];
+  l.forEach(b => {
+    if (b.cats) return;
+    const k = String(b.kategori || '').trim();
+    b.id = b.id || 'bud_' + k.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    b.nama = b.nama || k;
+    b.cats = k ? [k] : [];
+    b.periode = b.periode || 'bulanan';
+    b.alert = b.alert || BUDGET_MERAH;
+    delete b.kategori;
+  });
+  return l;
+}
 
+// ponytail: kalau 2 budget berbagi kategori, hanya yang pertama yang memunculkan peringatan
 function findBudget(kategori) {
   const k = (kategori || '').trim().toLowerCase();
-  return budgetList().find(b => b.kategori.trim().toLowerCase() === k);
+  return budgetList().find(b => b.cats.some(c => c.trim().toLowerCase() === k));
 }
 
-function spentFor(kategori) {
-  const k = (kategori || '').trim().toLowerCase();
-  return inMonth(globalData.transactions, currentMonthKey())
-    .filter(t => !netral(t) && t.jenis === 'Pengeluaran' && (t.kategori || '').trim().toLowerCase() === k)
-    .reduce((s, t) => s + (Number(t.jumlah) || 0), 0);
+// rentang periode berjalan: bulanan = tgl 1 s/d akhir bulan, mingguan = Senin s/d Minggu
+function budgetRange(b) {
+  const t = new Date();
+  if (b.periode === 'mingguan') {
+    const s = new Date(t.getFullYear(), t.getMonth(), t.getDate() - (t.getDay() + 6) % 7);
+    return [s, new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6)];
+  }
+  return [new Date(t.getFullYear(), t.getMonth(), 1), new Date(t.getFullYear(), t.getMonth() + 1, 0)];
 }
 
-function budgetPct(b) { return b.batas > 0 ? (spentFor(b.kategori) / b.batas) * 100 : 0; }
-function budgetLevel(pct) { return pct >= BUDGET_MERAH ? 2 : (pct >= BUDGET_KUNING ? 1 : 0); }
+function budgetRangeLabel(b) {
+  const f = d => d.getDate() + ' ' + BULAN[d.getMonth()].slice(0, 3);
+  const [s, e] = budgetRange(b);
+  return f(s) + ' – ' + f(e);
+}
 
+function spentFor(b) {
+  const [s, e] = budgetRange(b).map(dstr);
+  const cats = new Set(b.cats.map(c => c.trim().toLowerCase()));
+  return (globalData.transactions || [])
+    .filter(t => !netral(t) && t.jenis === 'Pengeluaran' && t.tanggal >= s && t.tanggal <= e && cats.has((t.kategori || '').trim().toLowerCase()))
+    .reduce((sum, t) => sum + (Number(t.jumlah) || 0), 0);
+}
+
+function budgetPct(b) { return b.batas > 0 ? spentFor(b) / b.batas * 100 : 0; }
+
+// 0 aman, 1 hati-hati, 2 hampir habis; batas peringatan diambil dari budget-nya
+function budgetLevel(b, pct) {
+  if (pct === undefined) pct = budgetPct(b);
+  const w = Number(b.alert) || BUDGET_MERAH;
+  return pct >= w ? 2 : (pct >= w * BUDGET_KUNING / BUDGET_MERAH ? 1 : 0);
+}
+
+function budgetCardHtml(b) {
+  const spent = spentFor(b);
+  const pct = b.batas > 0 ? spent / b.batas * 100 : 0;
+  const lv = budgetLevel(b, pct);
+  const warna = BUDGET_WARNA[lv];
+  const sisa = b.batas - spent;
+  const status = pct >= 100 ? 'Melebihi budget' : BUDGET_STATUS[lv];
+  return `
+    <div class="list-card" onclick="openBudgetForm('${b.id}')" style="cursor: pointer;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px;">
+        <strong style="font-size: 1rem;">${esc(b.nama)}</strong>
+        <span style="font-size: 0.75rem; font-weight: 500; color: ${warna}; white-space: nowrap;">${status} · ${Math.round(pct)}%</span>
+      </div>
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px;">${b.periode === 'mingguan' ? 'Mingguan' : 'Bulanan'} · ${budgetRangeLabel(b)} · ${b.cats.map(esc).join(', ')}</p>
+      <div class="budget-track"><div class="budget-fill" style="width: ${Math.min(pct, 100)}%; background: ${warna};"></div></div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-top: 10px;">
+        <span>${format(spent)} / ${format(b.batas)}</span>
+        <span>${sisa >= 0 ? 'Sisa ' + format(sisa) : 'Lebih ' + format(-sisa)}</span>
+      </div>
+    </div>`;
+}
+
+// dashboard (3 teratas) + halaman Budget
 function renderBudgets() {
-  const box = document.getElementById('budgetContainer');
-  if (!box) return;
   const list = budgetList();
+  const box = document.getElementById('budgetContainer');
+  if (box) {
+    box.innerHTML = list.length
+      ? list.slice(0, 3).map(budgetCardHtml).join('') +
+        (list.length > 3 ? `<p onclick="openPage('budgets')" style="text-align: center; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; padding: 4px 0;">Lihat semua (${list.length}) budget</p>` : '')
+      : `<p style="text-align: center; color: var(--text-muted); padding: 12px 0; font-size: 0.85rem;">Belum ada budget. Tap "Atur" untuk membuat.</p>`;
+  }
+  renderBudgetPage(list);
+}
+
+function renderBudgetPage(list) {
+  const body = document.getElementById('budgetPageBody');
+  if (!body) return;
   if (list.length === 0) {
-    box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 12px 0; font-size: 0.85rem;">Belum ada budget. Tap "Atur" untuk membuat.</p>`;
+    body.innerHTML = `
+      <div class="wl-empty" style="margin-top: 40px; border: none;">
+        <i class="fa fa-chart-pie" style="font-size: 3rem;"></i>
+        <p style="margin: 14px 0 6px; font-size: 1rem;">Belum ada budget</p>
+        <small>Batasi pengeluaran per kategori, per minggu atau per bulan</small>
+        <button type="button" class="btn-primary" onclick="openBudgetForm()" style="width: auto; padding: 14px 28px; margin-top: 22px;">Buat Budget</button>
+      </div>`;
     return;
   }
-  box.innerHTML = list.map(b => {
-    const spent = spentFor(b.kategori);
-    const pct = budgetPct(b);
-    const lv = budgetLevel(pct);
-    const warna = BUDGET_WARNA[lv];
-    const sisa = b.batas - spent;
-    const status = pct >= 100 ? 'Melebihi budget' : BUDGET_STATUS[lv];
-    return `
-      <div class="list-card" style="padding: 16px; margin-bottom: 10px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <strong style="font-size: 0.95rem;">${b.kategori}</strong>
-          <span style="font-size: 0.7rem; font-weight: 600; color: ${warna}; ">${status} · ${Math.round(pct)}%</span>
+  const batas = list.reduce((s, b) => s + (Number(b.batas) || 0), 0);
+  const spent = list.reduce((s, b) => s + spentFor(b), 0);
+  const pct = batas > 0 ? spent / batas * 100 : 0;
+  const lv = budgetLevel({ alert: BUDGET_MERAH }, pct);
+  const warna = BUDGET_WARNA[lv];
+  const sisa = batas - spent;
+  const arc = 'M10 60 A50 50 0 0 1 110 60';
+  body.innerHTML = `
+    <div class="bgt-sum">
+      <p class="bgt-month">${monthLabel(currentMonthKey())}</p>
+      <div class="bgt-top">
+        <div>
+          <p class="bgt-cap">${sisa >= 0 ? 'Masih bisa dibelanjakan' : 'Melebihi total budget'}</p>
+          <h2 class="bgt-big">${format(Math.abs(sisa))}</h2>
+          <p class="bgt-cap">dari ${list.length} budget aktif</p>
         </div>
-        <div class="budget-track"><div class="budget-fill" style="width: ${Math.min(pct, 100)}%; background: ${warna};"></div></div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-top: 8px;">
-          <span>${format(spent)} / ${format(b.batas)}</span>
-          <span>${sisa >= 0 ? 'Sisa ' + format(sisa) : 'Lebih ' + format(-sisa)}</span>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function renderBudgetManager() {
-  const box = document.getElementById('budgetManager');
-  if (!box) return;
-  const list = budgetList();
-  if (list.length === 0) { box.innerHTML = ''; return; }
-  box.innerHTML = list.map((b, i) => `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--border-color);">
-      <div onclick="editBudget(${i})" style="cursor: pointer; flex: 1;">
-        <strong style="font-size: 0.9rem;">${b.kategori}</strong>
-        <p style="font-size: 0.75rem; color: var(--text-muted);">${format(b.batas)} / bulan</p>
+        <span class="bgt-badge" style="color: ${warna}; background: color-mix(in srgb, ${warna} 12%, transparent);"><i class="fa ${lv === 0 ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${pct >= 100 ? 'Melebihi' : BUDGET_STATUS[lv]}</span>
       </div>
-      <button type="button" onclick="removeBudget(${i})" style="background: var(--neg-bg); color: var(--neg); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer;">
-        <i class="fa fa-trash"></i> Hapus
-      </button>
-    </div>`).join('');
+      <div class="bgt-gauge">
+        <svg viewBox="0 0 120 68"><path d="${arc}" fill="none" stroke="var(--border-color)" stroke-width="12" stroke-linecap="round"/>${pct > 0 ? `<path d="${arc}" fill="none" stroke="${warna}" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="${Math.min(pct, 100)} 100"/>` : ''}</svg>
+        <div><b>${Math.round(pct)}%</b><span class="bgt-cap">terpakai</span></div>
+      </div>
+      <p class="bgt-line"><b>${format(spent)}</b> / ${format(batas)}</p>
+    </div>` + list.map(budgetCardHtml).join('');
 }
 
-function editBudget(i) {
-  const b = budgetList()[i];
-  if (!b) return;
-  document.getElementById('budKategori').value = b.kategori;
-  document.getElementById('budBatas').value = formatRupiahInput(b.batas);
+// ----- form tambah / ubah budget -----
+let bfCats = [];        // kategori terpilih
+let bfExtra = [];       // kategori baru yang diketik di form
+let bfPeriode = 'bulanan';
+
+function setBudgetPeriode(p) {
+  bfPeriode = p === 'mingguan' ? 'mingguan' : 'bulanan';
+  document.getElementById('bfp-bulanan').classList.toggle('active', bfPeriode === 'bulanan');
+  document.getElementById('bfp-mingguan').classList.toggle('active', bfPeriode === 'mingguan');
+  document.getElementById('bfPeriodeHint').innerText = bfPeriode === 'mingguan' ? 'Dihitung ulang tiap Senin.' : 'Dihitung ulang tiap tanggal 1.';
 }
 
-function submitBudget() {
-  const kategori = document.getElementById('budKategori').value.trim();
-  const batas = Number(document.getElementById('budBatas').value.replace(/\./g, '')) || 0;
-  if (!kategori) { alert('Isi kategori yang mau di-budget'); return; }
-  if (batas <= 0) { alert('Isi batas budget lebih dari 0'); return; }
+function openBudgetForm(id) {
+  const b = id ? budgetList().find(x => x.id === id) : null;
+  if (id && !b) return;
+  document.getElementById('bfTitle').innerText = b ? 'Ubah Budget' : 'Budget Baru';
+  document.getElementById('bfId').value = b ? b.id : '';
+  document.getElementById('bfBatas').value = b ? formatRupiahInput(b.batas) : '';
+  document.getElementById('bfNama').value = b ? b.nama : '';
+  document.getElementById('bfAlert').value = b ? b.alert : BUDGET_MERAH;
+  document.getElementById('bfKatBaru').value = '';
+  document.getElementById('bfHapus').classList.toggle('hidden', !b);
+  bfCats = b ? b.cats.slice() : [];
+  bfExtra = [];
+  setBudgetPeriode(b ? b.periode : 'bulanan');
+  renderBudgetChips();
+  openPage('budgetForm');
+}
 
-  if (!globalData.budgets) globalData.budgets = [];
-  const ada = findBudget(kategori);
-  if (ada) { ada.kategori = kategori; ada.batas = batas; }
-  else globalData.budgets.push({ kategori, batas });
+// kategori yang masuk akal untuk budget: bawaan, sudah dipakai di budget, dan yang pernah jadi pengeluaran
+function katPengeluaran() {
+  const out = [];
+  document.querySelectorAll('#kategoriList option').forEach(o => out.push(o.value));
+  budgetList().forEach(b => out.push(...b.cats));
+  (globalData.transactions || []).forEach(t => { if (!netral(t) && t.jenis === 'Pengeluaran') out.push(t.kategori); });
+  return out;
+}
+
+function renderBudgetChips() {
+  const known = new Map();
+  [...katPengeluaran(), ...bfCats, ...bfExtra].forEach(k => { k = (k || '').trim(); if (k && !known.has(k.toLowerCase())) known.set(k.toLowerCase(), k); });
+  const on = new Set(bfCats.map(c => c.trim().toLowerCase()));
+  document.getElementById('bfChips').innerHTML = [...known.values()].map(k => `
+    <button type="button" class="cat-chip ${on.has(k.toLowerCase()) ? 'on' : ''}" onclick="toggleBudgetCat('${jsq(k)}')">
+      <span class="cat-ic"><i class="fa ${on.has(k.toLowerCase()) ? 'fa-check' : katIkon(k)}"></i></span>
+      <span class="cat-nm">${esc(k)}</span>
+    </button>`).join('');
+}
+
+function toggleBudgetCat(k) {
+  const low = k.trim().toLowerCase();
+  const ada = bfCats.some(c => c.trim().toLowerCase() === low);
+  bfCats = ada ? bfCats.filter(c => c.trim().toLowerCase() !== low) : bfCats.concat(k);
+  renderBudgetChips();
+}
+
+function addBudgetCat() {
+  const el = document.getElementById('bfKatBaru');
+  const k = el.value.trim();
+  if (!k) return;
+  if (!bfCats.some(c => c.trim().toLowerCase() === k.toLowerCase())) bfCats.push(k);
+  bfExtra.push(k);
+  el.value = '';
+  renderBudgetChips();
+}
+
+function submitBudgetForm() {
+  const id = document.getElementById('bfId').value;
+  const batas = Number(document.getElementById('bfBatas').value.replace(/\./g, '')) || 0;
+  const alertPct = Math.min(100, Math.max(1, parseInt(document.getElementById('bfAlert').value, 10) || BUDGET_MERAH));
+  if (batas <= 0) { alert('Isi batas nominal lebih dari 0'); return; }
+  if (bfCats.length === 0) { alert('Pilih minimal 1 kategori'); return; }
+  const nama = document.getElementById('bfNama').value.trim() || bfCats.slice(0, 2).join(' & ');
+
+  const item = { id: id || 'bud_' + Date.now(), nama, batas, periode: bfPeriode, cats: bfCats.slice(), alert: alertPct };
+  const list = (globalData.budgets = globalData.budgets || []);
+  const i = list.findIndex(x => x.id === item.id);
+  if (i > -1) list[i] = item; else list.push(item);
 
   localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
-  document.getElementById('budKategori').value = '';
-  document.getElementById('budBatas').value = '';
   renderBudgets();
-  renderBudgetManager();
-
+  openPage('budgets');
   google.script.run
     .withFailureHandler(err => alert('Gagal simpan budget: ' + err.message))
-    .setBudget({ kategori, batas });
+    .setBudget(item);
 }
 
-function removeBudget(i) {
-  const b = budgetList()[i];
-  if (!b) return;
-  if (!confirm(`Hapus budget "${b.kategori}"?`)) return;
-  globalData.budgets.splice(i, 1);
+function removeBudgetForm() {
+  const id = document.getElementById('bfId').value;
+  const b = budgetList().find(x => x.id === id);
+  if (!b || !confirm(`Hapus budget "${b.nama}"?`)) return;
+  globalData.budgets = globalData.budgets.filter(x => x.id !== id);
   localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
   renderBudgets();
-  renderBudgetManager();
+  openPage('budgets');
   google.script.run
     .withFailureHandler(err => alert('Gagal hapus budget: ' + err.message))
-    .deleteBudget(b.kategori);
+    .deleteBudget(id);
 }
 
 function showToast(msg, lv) {
@@ -1764,11 +1866,11 @@ function warnBudget(kategori, lvBefore) {
   const b = findBudget(kategori);
   if (!b) return;
   const pct = budgetPct(b);
-  const lv = budgetLevel(pct);
-  if (lv > lvBefore || (pct >= 100 && lv === 2 && lvBefore === 2 && false)) {
+  const lv = budgetLevel(b, pct);
+  if (lv > lvBefore) {
     const teks = pct >= 100
-      ? `⚠️ Budget ${b.kategori} sudah melebihi batas (${Math.round(pct)}%)!`
-      : `Budget ${b.kategori} sudah terpakai ${Math.round(pct)}%`;
+      ? `⚠️ Budget ${b.nama} sudah melebihi batas (${Math.round(pct)}%)!`
+      : `Budget ${b.nama} sudah terpakai ${Math.round(pct)}%`;
     showToast(teks, lv);
   }
 }
@@ -1946,7 +2048,7 @@ function submitPayBill() {
   if (!rekeningId) { alert('Pilih rekening'); return; }
 
   const bdg = findBudget(b.kategori);
-  const lvBefore = bdg ? budgetLevel(budgetPct(bdg)) : 0;
+  const lvBefore = bdg ? budgetLevel(bdg) : 0;
 
   const trx = { tanggal: todayStr(), jenis: 'Pengeluaran', kategori: b.kategori, keterangan: b.nama, jumlah, rekeningId };
   (globalData.transactions = globalData.transactions || []).unshift(Object.assign({ id: 'temp_' + Date.now() }, trx));
@@ -2152,7 +2254,7 @@ function daftarKategori() {
   const set = new Map();
   const add = k => { k = (k || '').trim(); if (k && !set.has(k.toLowerCase())) set.set(k.toLowerCase(), k); };
   document.querySelectorAll('#kategoriList option').forEach(o => add(o.value));
-  budgetList().forEach(b => add(b.kategori));
+  budgetList().forEach(b => b.cats.forEach(add));
   (globalData.transactions || []).forEach(t => { if (!netral(t)) add(t.kategori); });
   return [...set.values()];
 }
@@ -2163,7 +2265,7 @@ function matchKategori(raw) {
   if (!r) return '';
   const known = new Set();
   document.querySelectorAll('#kategoriList option').forEach(o => known.add(o.value));
-  budgetList().forEach(b => known.add(b.kategori));
+  budgetList().forEach(b => b.cats.forEach(c => known.add(c)));
   (globalData.transactions || []).forEach(t => { if (t.kategori && !netral(t)) known.add(t.kategori); });
 
   const list = [...known];
@@ -2193,7 +2295,6 @@ function toggleModal(id) {
   if (!el) return;
 
   if (el.classList.contains('hidden')) {
-    if (id === 'modalBudget') renderBudgetManager();
     el.classList.remove('hidden');
     el.style.display = 'flex';
     if (id === 'modalTrx') document.getElementById('tanggal').value = todayStr();
