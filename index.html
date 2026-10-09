@@ -188,7 +188,7 @@
 
   <main id="accounts" class="page hidden">
     <div class="section-title-row" style="margin-bottom: 20px;">
-      <h2 style="font-size: 1.4rem; font-weight: 800;">Rekening Saya</h2>
+      <h2 style="font-size: 1.4rem; font-weight: 800;">Dompet Saya</h2>
       <div style="display: flex; gap: 8px;">
         <button onclick="openTransfer()" class="btn-sec" style="width: auto; padding: 8px 14px; font-size: 0.85rem;"><i class="fa fa-right-left"></i> Pindah</button>
         <button onclick="toggleModal('modalAccount')" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
@@ -464,6 +464,39 @@
         <button onclick="toggleModal('modalEditAccount')" class="btn-sec">Batal</button>
         <button onclick="submitEditAccount()" class="btn-primary">Simpan</button>
       </div>
+    </div>
+  </div>
+
+  <div id="modalGoal" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 id="goalTitle" style="font-size: 1.15rem; font-weight: 800;">Tambah Savings Goal</h3>
+        <button onclick="toggleModal('modalGoal')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <input type="hidden" id="goalId">
+      <input id="goalNama" placeholder="Nama tujuan (cth: Liburan, Laptop, Dana Darurat)" class="input-field">
+      <input type="text" id="goalTarget" placeholder="Target dana (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <label style="display: flex; align-items: flex-start; gap: 10px; margin: 2px 0 16px; cursor: pointer;">
+        <input type="checkbox" id="goalKunci" style="width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary);">
+        <span style="font-size: 0.85rem; font-weight: 700;"><i class="fa fa-lock"></i> Kunci tabungan<br><small style="color: var(--text-muted); font-weight: 500;">Tidak bisa ditarik sebelum target tercapai</small></span>
+      </label>
+      <button onclick="submitGoal()" class="btn-primary">Simpan Goal</button>
+    </div>
+  </div>
+
+  <div id="modalGoalMove" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <h3 id="goalMoveTitle" style="font-size: 1.15rem; font-weight: 800;">Setor</h3>
+        <button onclick="toggleModal('modalGoalMove')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <p id="goalMoveInfo" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;"></p>
+      <input type="hidden" id="goalMoveId">
+      <input type="hidden" id="goalMoveMode">
+      <p id="goalMoveLbl" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;"></p>
+      <select id="goalMoveRekening" class="input-field"></select>
+      <input type="text" id="goalMoveJumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
+      <button onclick="submitGoalMove()" class="btn-primary">Simpan</button>
     </div>
   </div>
 
