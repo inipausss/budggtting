@@ -74,6 +74,7 @@
       <span>Budggt.</span>
     </div>
     <div class="top-actions">
+      <button class="lvl-chip" id="lvlChip" title="Level" onclick="openPage('profile')">Lv 1</button>
       <button class="icon-btn" title="Tagihan" onclick="openPage('bills')" style="position: relative;"><i class="fa fa-bell"></i><span id="billDot" class="bill-dot hidden"></span></button>
       <button class="icon-btn" title="Pilih Tema" onclick="openTheme()">
         <i class="fa fa-palette"></i>
@@ -275,6 +276,7 @@
   </main>
 
   <main id="profile" class="page hidden">
+    <div id="levelBox"></div>
     <div class="section-title-row" style="margin-bottom: 20px;">
       <h2 style="font-size: 1.4rem; font-weight: 800;">Preferensi</h2>
     </div>
