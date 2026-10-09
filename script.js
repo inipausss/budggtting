@@ -891,12 +891,14 @@ function initFormListeners() {
   if (document.getElementById("jenis").value === "Transfer") { submitTransfer(); return; }
       
       const rawJumlah = Number(document.getElementById("jumlah").value.replace(/\./g, '')) || 0;
+      if (rawJumlah <= 0) { showToast("Isi jumlahnya dulu", 2); return; }
+      if (!document.getElementById("kategori").value.trim()) { showToast("Pilih kategori dulu", 2); return; }
       const ketVal = document.getElementById("keterangan").value.trim();
       const newTrx = {
         id: "temp_" + Date.now(),
         tanggal: document.getElementById("tanggal").value,
         jenis: document.getElementById("jenis").value,
-        kategori: document.getElementById("kategori").value,
+        kategori: document.getElementById("kategori").value.trim(),
         keterangan: ketVal,
         jumlah: rawJumlah,
         rekeningId: document.getElementById("rekening").value
@@ -921,6 +923,7 @@ function initFormListeners() {
       toggleModal('modalTrx');
       e.target.reset();
       document.getElementById("tanggal").value = todayStr();
+      onJenisChange();
 
       // 2. Eksekusi simpan ke Google Sheets di background
       google.script.run
@@ -1153,21 +1156,119 @@ function submitEditAccount() {
 const KATEGORI_NETRAL = ['Transfer', 'Koreksi Saldo', KAT_SETOR, KAT_TARIK]; // tidak dihitung sebagai pemasukan/pengeluaran
 function netral(t) { return KATEGORI_NETRAL.includes(t.kategori); }
 
+// ===== Halaman Catat Transaksi (layar penuh): kategori berikon + numpad sendiri =====
+// ponytail: #jenis/#kategori/#jumlah tetap elemen form biasa (disembunyikan), jadi submit, scan struk, Pindah, dan "tambah di tanggal ini" tidak diubah
+const KAT_MASUK = ['Gaji', 'Bonus', 'Bisnis', 'Investasi', 'Hadiah', 'Lainnya'];
+const KAT_WARNA = ['#f97316', '#8b5cf6', '#0ea5e9', '#3b82f6', '#22c55e', '#ec4899', '#14b8a6', '#ef4444'];
+const katWarna = k => KAT_WARNA[[...k].reduce((a, c) => a + c.charCodeAt(0), 0) % KAT_WARNA.length];
+let trxKatBaru = false; // true = pengguna mengetik kategori sendiri
+
+function trxCats(j) {
+  const inc = j === 'Pemasukan';
+  const out = new Map();
+  const add = k => { k = (k || '').trim(); if (k && !out.has(k.toLowerCase())) out.set(k.toLowerCase(), k); };
+  if (inc) KAT_MASUK.forEach(add);
+  else {
+    document.querySelectorAll('#kategoriList option').forEach(o => add(o.value));
+    budgetList().forEach(b => b.cats.forEach(add));
+  }
+  (globalData.transactions || []).forEach(t => { if (!netral(t) && (t.jenis === 'Pemasukan') === inc) add(t.kategori); });
+  return [...out.values()];
+}
+
+function renderTrxCats() {
+  const j = document.getElementById('jenis').value;
+  const kat = document.getElementById('kategori');
+  if (j === 'Transfer') { kat.classList.add('hidden'); return; }
+  const cur = kat.value.trim().toLowerCase();
+  const list = trxCats(j);
+  if (cur && !trxKatBaru && !list.some(k => k.toLowerCase() === cur)) list.push(kat.value.trim()); // mis. hasil scan struk
+  document.getElementById('tpCats').innerHTML = list.map(k => `
+    <button type="button" class="tc ${!trxKatBaru && k.toLowerCase() === cur ? 'on' : ''}" style="--c:${katWarna(k)}" onclick="pickTrxKat('${jsq(k)}')">
+      <span class="ic"><i class="fa ${katIkon(k)}"></i></span><span class="nm">${esc(k)}</span>
+    </button>`).join('') + `
+    <button type="button" class="tc ${trxKatBaru ? 'on' : ''}" style="--c:#64748b" onclick="newTrxKat()">
+      <span class="ic"><i class="fa fa-plus"></i></span><span class="nm">Baru</span>
+    </button>`;
+  kat.classList.toggle('hidden', !trxKatBaru);
+}
+
+function pickTrxKat(k) {
+  document.getElementById('kategori').value = k;
+  trxKatBaru = false;
+  renderTrxCats();
+}
+
+function newTrxKat() {
+  trxKatBaru = true;
+  document.getElementById('kategori').value = '';
+  renderTrxCats();
+  document.getElementById('kategori').focus();
+}
+
+function setTrxJenis(j) {
+  document.getElementById('jenis').value = j;
+  document.getElementById('kategori').value = ''; // kategori Pengeluaran dan Pemasukan beda daftar
+  trxKatBaru = false;
+  onJenisChange();
+}
+
 function onJenisChange() {
-  const isTrf = document.getElementById('jenis').value === 'Transfer';
+  const j = document.getElementById('jenis').value;
+  const isTrf = j === 'Transfer';
   const tujuan = document.getElementById('rekeningTujuan');
   const kat = document.getElementById('kategori');
-  tujuan.classList.toggle('hidden', !isTrf);
-  kat.classList.toggle('hidden', isTrf);
+  document.getElementById('modalTrx').dataset.mode = j;
+  document.querySelectorAll('#tpSeg button').forEach(b => b.classList.toggle('on', b.dataset.j === j));
+  document.getElementById('tpDari').textContent = isTrf ? 'Dari' : 'Dompet';
   if (isTrf) {
     kat.value = 'Transfer';
     const dari = document.getElementById('rekening').value;
-    tujuan.innerHTML = '<option value="">→ Ke rekening tujuan...</option>' +
+    const prev = tujuan.value;
+    tujuan.innerHTML = '<option value="">Pilih tujuan...</option>' +
       (globalData.accounts || []).filter(a => a.id !== dari)
         .map(a => `<option value="${a.id}">${a.nama}</option>`).join('');
+    tujuan.value = prev; // kosong kalau pilihan lama sudah tidak valid
   } else if (kat.value === 'Transfer') {
     kat.value = '';
   }
+  renderTrxCats();
+  showAmt();
+  trxDateLabel();
+}
+
+function swapTrx() {
+  const a = document.getElementById('rekening'), b = document.getElementById('rekeningTujuan');
+  const dari = a.value, ke = b.value;
+  if (!ke) return;
+  a.value = ke;
+  onJenisChange();
+  b.value = dari;
+}
+
+function showAmt() {
+  document.getElementById('amtShow').textContent = document.getElementById('jumlah').value || '0';
+}
+
+function trxDateLabel() {
+  const v = document.getElementById('tanggal').value;
+  document.getElementById('tpDate').textContent = !v ? '-' : v === todayStr() ? 'Hari ini'
+    : new Date(v + 'T00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+}
+
+// numpad: angka masuk ke #jumlah (hidden), tampilan besar ikut diperbarui
+function padTap(e) {
+  const btn = e.target.closest('[data-k]');
+  if (!btn) return;
+  const k = btn.dataset.k;
+  if (k === 'ok') { document.getElementById('trxForm').requestSubmit(); return; }
+  const j = document.getElementById('jumlah');
+  let d = j.value.replace(/\./g, '');
+  if (k === 'del') d = d.slice(0, -1);
+  else if (k === 'C') d = '';
+  else d = (d + k).replace(/^0+/, '').slice(0, 12);
+  j.value = formatRupiahInput(d);
+  showAmt();
 }
 
 function openTransfer() {
@@ -1285,7 +1386,7 @@ function handleReceipt(e) {
   let originalHTML = '';
   if (btn) {
     originalHTML = btn.innerHTML;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Memproses...';
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
     btn.disabled = true;
   }
 
@@ -1316,6 +1417,7 @@ function handleReceipt(e) {
           document.getElementById("jenis").value = "Pengeluaran";
                     onJenisChange();
           if (res.tanggal) document.getElementById("tanggal").value = res.tanggal;
+          trxDateLabel();
         })
         .withFailureHandler(err => {
           if (btn) {
@@ -1618,7 +1720,7 @@ const BUDGET_KUNING = 50;  // % mulai kuning, dihitung relatif terhadap batas pe
 const BUDGET_MERAH = 80;   // batas peringatan bawaan (%)
 const BUDGET_WARNA = ['var(--pos)', 'var(--warn)', 'var(--neg)']; // hijau, kuning, merah
 const BUDGET_STATUS = ['Aman', 'Hati-hati', 'Hampir habis'];
-const KAT_IKON = { makanan: 'fa-utensils', belanja: 'fa-bag-shopping', transport: 'fa-car-side', tagihan: 'fa-file-invoice', hiburan: 'fa-film', kesehatan: 'fa-heart-pulse', investasi: 'fa-chart-line', lainnya: 'fa-ellipsis' };
+const KAT_IKON = { makanan: 'fa-utensils', belanja: 'fa-bag-shopping', transport: 'fa-car-side', tagihan: 'fa-file-invoice', hiburan: 'fa-film', kesehatan: 'fa-heart-pulse', investasi: 'fa-chart-line', lainnya: 'fa-ellipsis', gaji: 'fa-money-bill-wave', bonus: 'fa-star', bisnis: 'fa-store', hadiah: 'fa-gift' };
 const katIkon = k => KAT_IKON[(k || '').trim().toLowerCase()] || 'fa-tag';
 const dstr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
@@ -2142,6 +2244,7 @@ function renderDay() {
 function addForDay() {
   toggleModal('modalTrx');
   document.getElementById('tanggal').value = dayKey; // toggleModal mengisi hari ini, ditimpa di sini
+  trxDateLabel();
 }
 
 
@@ -2297,7 +2400,7 @@ function toggleModal(id) {
   if (el.classList.contains('hidden')) {
     el.classList.remove('hidden');
     el.style.display = 'flex';
-    if (id === 'modalTrx') document.getElementById('tanggal').value = todayStr();
+    if (id === 'modalTrx') { document.getElementById('tanggal').value = todayStr(); trxKatBaru = false; onJenisChange(); }
   } else {
     if (el.classList.contains('closing')) return;
     el.classList.add('closing'); // animasi turun dulu (style.css), baru disembunyikan
