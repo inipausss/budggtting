@@ -801,3 +801,51 @@
   .badge strong { display: block; font-size: 0.72rem; font-weight: 800; }
   .badge small { display: block; font-size: 0.62rem; color: var(--text-muted); margin-top: 2px; }
   .badge.locked { opacity: 0.45; }
+  /* ===== Halaman Dompet: kartu ringkasan, grup per tipe, Savings Goals ===== */
+  .wallet-hero {
+    background: radial-gradient(circle at 92% -8%, rgba(255, 255, 255, 0.3), transparent 48%), var(--hero);
+    border-radius: 28px;
+    padding: 24px 18px 18px;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  }
+  .wh-label { font-size: 0.8rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
+  .wh-total { font-size: clamp(1.6rem, 9vw, 2.2rem); font-weight: 900; letter-spacing: -1px; margin: 6px 0 12px; word-break: break-word; }
+  .wh-delta { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .wh-pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 20px;
+    font-size: 0.8rem; font-weight: 800; background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  .wh-sub { font-size: 0.75rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
+  .wh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+  .wh-tile { background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 18px; padding: 12px 14px; min-width: 0; }
+  .wh-tile p { font-size: 0.68rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); margin-bottom: 6px; }
+  .wh-tile b { display: block; font-size: 0.92rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .wl-section { margin-bottom: 26px; }
+  .wl-head { margin-bottom: 12px; }
+  .wl-total { font-size: 0.8rem; font-weight: 800; color: var(--text-muted); }
+  .wl-ic { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex: none; }
+  .wl-name { font-size: 1rem; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wl-lock { font-size: 0.7rem; color: #22c55e; margin-left: 4px; }
+  .wl-sub { color: var(--text-muted); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+  .wl-cap { font-size: 0.62rem; font-weight: 600; color: var(--text-muted); }
+  .wl-bal { font-size: 1.05rem; font-weight: 900; color: var(--text-main); }
+  .wl-empty {
+    text-align: center; color: var(--text-muted); padding: 18px 12px; margin-bottom: 12px;
+    border: 1px dashed var(--border-color); border-radius: var(--radius-md);
+  }
+  .wl-empty i { font-size: 1.3rem; margin-bottom: 6px; opacity: 0.6; }
+  .wl-empty p { font-size: 0.85rem; font-weight: 700; }
+  .wl-empty small { font-size: 0.72rem; }
+  .wl-actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px; }
+  .wl-btn {
+    background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color);
+    padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+  }
+  .wl-btn.p { background: var(--primary); color: #000; border-color: transparent; font-weight: 800; }
+  .wl-btn.d { background: rgba(244, 63, 94, 0.12); color: #f43f5e; border-color: transparent; }
+  .acc-card.open .acc-details { max-height: 220px; }
