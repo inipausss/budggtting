@@ -465,63 +465,314 @@ function getAccountName(rekeningId) {
   return acc ? acc.nama : 'Dompet Utama';
 }
 
-// RENDER REKENING / DOMPET
-function renderAccounts(list) {
-  let grid = document.getElementById("accountGrid");
-  if (!grid) return;
-  if (!list || list.length === 0) {
-    grid.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">Belum ada rekening/dompet terdaftar</p>`;
-    return;
-  }
-  
-  grid.innerHTML = list.map((a, index) => {
-    let labelNomor = a.jenis === 'Bank' ? 'NOMOR REKENING' : 'NOMOR HP';
-    let nomorVal = (a.nomor && a.nomor !== '-' && a.nomor !== 'undefined') ? a.nomor : '-';
+// ===== DOMPET: kartu ringkasan, daftar per tipe, dan Savings Goals =====
+const KAT_SETOR = 'Setoran Tabungan'; // setor ke goal: uang pindah dari dompet (bukan pengeluaran biasa)
+const KAT_TARIK = 'Tarik Tabungan';   // tarik dari goal: uang balik ke dompet (bukan pemasukan biasa)
+const GOAL_WARNA = '#f59e0b';
 
-    return `
-      <div class="acc-card" id="acc-card-${index}">
-        <div class="acc-header" onclick="toggleAccDropdown(${index})">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 40px; height: 40px; border-radius: 12px; background: var(--circle-bg); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--primary);">
-              <i class="fa ${a.jenis === 'Bank' ? 'fa-building-columns' : 'fa-wallet'}"></i>
-            </div>
-            <div>
-              <h4 style="font-size: 1rem; font-weight: 800; color: var(--text-main);">${a.nama}</h4>
-              <p style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; font-weight: 700;">${a.jenis}</p>
-            </div>
-          </div>
-          
-          <div style="display: flex; align-items: center; gap: 14px;">
-            <h3 style="font-size: 1.05rem; font-weight: 900; color: var(--text-main);">${format(a.saldoAkhir)}</h3>
-            <i class="fa fa-chevron-down" style="font-size: 0.8rem; color: var(--text-muted);"></i>
+const TIPE_DOMPET = [
+  { jenis: 'Dompet Tunai',   judul: 'Tunai',         sub: 'CASH',     ic: 'fa-money-bill-wave',      warna: '#22c55e', kosong: 'dompet tunai' },
+  { jenis: 'Bank',           judul: 'Rekening Bank', sub: 'BANK',     ic: 'fa-building-columns',     warna: '#3b82f6', kosong: 'rekening bank' },
+  { jenis: 'Dompet Digital', judul: 'E-Wallet',      sub: 'E-WALLET', ic: 'fa-mobile-screen-button', warna: '#a855f7', kosong: 'e-wallet' }
+];
+
+// aman dipakai di dalam onclick="fn('...')" (nama dengan tanda petik tidak merusak tombol)
+const jsq = s => esc(String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+
+function goalList() { return globalData.goals || []; }
+function tipeDompet(a) { return TIPE_DOMPET.find(t => t.jenis === a.jenis) || TIPE_DOMPET[1]; }
+
+function walletStats() {
+  const acc = globalData.accountSummary || [];
+  let saldo = 0, utang = 0;
+  acc.forEach(a => { const s = Number(a.saldoAkhir) || 0; saldo += s; if (s < 0) utang += -s; });
+  const tabungan = goalList().reduce((s, g) => s + (Number(g.terkumpul) || 0), 0);
+  const tagihan = billList().filter(b => billStatus(b).lv !== 'lunas').reduce((s, b) => s + (Number(b.jumlah) || 0), 0);
+
+  // perubahan 30 hari terakhir = pemasukan - pengeluaran (Transfer, Koreksi, dan setor/tarik tabungan tidak dihitung)
+  const hari = dayIdx(todayStr());
+  let delta = 0;
+  (globalData.transactions || [])
+    .filter(t => !netral(t) && /^\d{4}-\d{2}-\d{2}$/.test(t.tanggal || ''))
+    .forEach(t => {
+      const d = dayIdx(t.tanggal);
+      if (d > hari - 30 && d <= hari) delta += (t.jenis === 'Pemasukan' ? 1 : -1) * (Number(t.jumlah) || 0);
+    });
+  const kekayaan = saldo + tabungan;
+  const dulu = kekayaan - delta;
+  return { saldo, utang, tabungan, tagihan, delta, kekayaan, pct: dulu > 0 ? delta / dulu * 100 : 0 };
+}
+
+function walletHeroHtml() {
+  const s = walletStats();
+  const naik = s.delta >= 0;
+  const tile = (lbl, val) => `<div class="wh-tile"><p>${lbl}</p><b>${format(val)}</b></div>`;
+  return `
+    <div class="wallet-hero">
+      <p class="wh-label">Saldo Tersedia (IDR)</p>
+      <h2 class="wh-total">${format(s.saldo)}</h2>
+      <div class="wh-delta">
+        <span class="wh-pill"><i class="fa ${naik ? 'fa-arrow-up' : 'fa-arrow-down'}"></i> ${naik ? '+' : '-'}${Math.abs(s.pct).toFixed(1)}%</span>
+        <span class="wh-sub">(${naik ? '+' : '-'}${format(Math.abs(s.delta))}) 30 hari terakhir</span>
+      </div>
+      <div class="wh-grid">
+        ${tile('Kekayaan Bersih', s.kekayaan)}
+        ${tile('Utang / Minus', s.utang)}
+        ${tile('Tabungan Aktif', s.tabungan)}
+        ${tile('Tagihan Mendatang', s.tagihan)}
+      </div>
+    </div>`;
+}
+
+function walletHeadHtml(judul, total, aksi, tip) {
+  return `
+    <div class="section-title-row wl-head">
+      <h3 class="section-title">${judul}</h3>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="wl-total">${format(total)}</span>
+        <button type="button" class="icon-btn" title="${tip}" onclick="${aksi}"><i class="fa fa-plus"></i></button>
+      </div>
+    </div>`;
+}
+
+function accountCardHtml(a, t) {
+  const labelNomor = a.jenis === 'Bank' ? 'NOMOR REKENING' : (a.jenis === 'Dompet Digital' ? 'NOMOR HP' : 'KETERANGAN');
+  const nomor = (a.nomor && a.nomor !== '-' && a.nomor !== 'undefined') ? a.nomor : '';
+  const saldo = Number(a.saldoAkhir) || 0;
+  return `
+    <div class="acc-card" id="acc-card-${a.id}">
+      <div class="acc-header" onclick="toggleAccDropdown('${a.id}')">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <div class="wl-ic" style="background: ${t.warna}26; color: ${t.warna};"><i class="fa ${t.ic}"></i></div>
+          <div style="min-width: 0;">
+            <h4 class="wl-name">${esc(a.nama)}</h4>
+            <p class="wl-sub">${t.sub} • IDR</p>
           </div>
         </div>
-
-        <div class="acc-details">
-          ${nomorVal !== '-' ? `
-            <div style="background: var(--circle-bg); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <p style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 2px;">${labelNomor}</p>
-                <p style="font-size: 0.95rem; font-weight: 700; letter-spacing: 1px; color: var(--text-main);">${nomorVal}</p>
-              </div>
-              <button type="button" onclick="copyToClipboard('${nomorVal}', this)" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                <i class="fa fa-copy"></i> Salin
-              </button>
-            </div>
-          ` : '<p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Tidak ada nomor tercatat</p>'}
-
-          <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px;">
-            <button type="button" onclick="openEditAcc('${a.id}')" style="background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
-              <i class="fa fa-pen"></i> Ubah
-            </button>
-            <button type="button" onclick="confirmDeleteAcc('${a.id}', '${a.nama}')" style="background: rgba(244,63,94,0.12); color: #f43f5e; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
-              <i class="fa fa-trash"></i> Hapus Dompet
-            </button>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="text-align: right;">
+            <p class="wl-cap">Saldo</p>
+            <h3 class="wl-bal" style="${saldo < 0 ? 'color: #f43f5e;' : ''}">${format(saldo)}</h3>
           </div>
+          <i class="fa fa-chevron-down" style="font-size: 0.8rem; color: var(--text-muted);"></i>
         </div>
       </div>
-    `;
-  }).join("");
+
+      <div class="acc-details">
+        ${nomor ? `
+          <div style="background: var(--circle-bg); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <div style="min-width: 0;">
+              <p style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 2px;">${labelNomor}</p>
+              <p style="font-size: 0.95rem; font-weight: 700; letter-spacing: 1px; word-break: break-all;">${esc(nomor)}</p>
+            </div>
+            <button type="button" class="wl-btn" onclick="copyToClipboard('${jsq(nomor)}', this)"><i class="fa fa-copy"></i> Salin</button>
+          </div>` : '<p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Tidak ada nomor tercatat</p>'}
+        <div class="wl-actions">
+          <button type="button" class="wl-btn" onclick="openEditAcc('${a.id}')"><i class="fa fa-pen"></i> Ubah</button>
+          <button type="button" class="wl-btn d" onclick="confirmDeleteAcc('${a.id}', '${jsq(a.nama)}')"><i class="fa fa-trash"></i> Hapus Dompet</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function goalCardHtml(g) {
+  const got = Number(g.terkumpul) || 0, target = Number(g.target) || 0;
+  const pct = target > 0 ? Math.min(100, got / target * 100) : 0;
+  const done = target > 0 && got >= target;
+  const terkunci = !!g.kunci && !done;
+  const warna = done ? '#84cc16' : GOAL_WARNA;
+  return `
+    <div class="acc-card" id="acc-card-g_${g.id}">
+      <div class="acc-header" onclick="toggleAccDropdown('g_${g.id}')">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <div class="wl-ic" style="background: ${GOAL_WARNA}26; color: ${GOAL_WARNA};"><i class="fa fa-piggy-bank"></i></div>
+          <div style="min-width: 0;">
+            <h4 class="wl-name">${esc(g.nama)}${g.kunci ? ` <i class="fa ${terkunci ? 'fa-lock' : 'fa-lock-open'} wl-lock"></i>` : ''}</h4>
+            <p class="wl-sub">SAVINGS GOALS • IDR</p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="text-align: right;">
+            <p class="wl-cap">Saldo Tabungan</p>
+            <h3 class="wl-bal">${format(got)}</h3>
+            <p class="wl-cap">Target ${format(target)}</p>
+          </div>
+          <i class="fa fa-chevron-down" style="font-size: 0.8rem; color: var(--text-muted);"></i>
+        </div>
+      </div>
+
+      <div class="budget-track" style="margin-top: 12px;"><div class="budget-fill" style="width: ${pct}%; background: ${warna};"></div></div>
+      <div class="wl-cap" style="display: flex; justify-content: space-between; margin-top: 6px;">
+        <span>${Math.floor(pct)}%${done ? ' · Target tercapai 🎉' : ''}</span>
+        <span>${done ? '' : 'Kurang ' + format(target - got)}</span>
+      </div>
+
+      <div class="acc-details">
+        <div class="wl-actions" style="justify-content: flex-start; flex-wrap: wrap;">
+          <button type="button" class="wl-btn p" onclick="openGoalMove('${g.id}', 'setor')"><i class="fa fa-arrow-down"></i> Setor</button>
+          <button type="button" class="wl-btn" onclick="openGoalMove('${g.id}', 'tarik')"><i class="fa fa-arrow-up"></i> Tarik</button>
+          <button type="button" class="wl-btn" onclick="openGoal('${g.id}')"><i class="fa fa-pen"></i> Ubah</button>
+          <button type="button" class="wl-btn d" onclick="removeGoal('${g.id}')"><i class="fa fa-trash"></i> Hapus</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// RENDER HALAMAN DOMPET (dipanggil renderAllLocalUI)
+function renderAccounts(list) {
+  const grid = document.getElementById('accountGrid');
+  if (!grid) return;
+  list = list || [];
+
+  const sections = TIPE_DOMPET.map(t => {
+    const items = list.filter(a => tipeDompet(a) === t);
+    const total = items.reduce((s, a) => s + (Number(a.saldoAkhir) || 0), 0);
+    return `<div class="wl-section">` +
+      walletHeadHtml(t.judul, total, `openAddAcc('${t.jenis}')`, 'Tambah ' + t.kosong) +
+      (items.length
+        ? items.map(a => accountCardHtml(a, t)).join('')
+        : `<div class="wl-empty"><i class="fa ${t.ic}"></i><p>Belum ada ${t.kosong}</p><small>Tap + di kanan atas untuk menambah</small></div>`) +
+      `</div>`;
+  }).join('');
+
+  const goals = goalList();
+  const goalTotal = goals.reduce((s, g) => s + (Number(g.terkumpul) || 0), 0);
+  const goalSection = `<div class="wl-section">` +
+    walletHeadHtml('Savings Goals', goalTotal, 'openGoal()', 'Tambah target tabungan') +
+    (goals.length
+      ? goals.map(goalCardHtml).join('')
+      : `<div class="wl-empty"><i class="fa fa-piggy-bank"></i><p>Belum ada savings goal</p><small>Tap + untuk bikin target tabungan (liburan, gadget, dana darurat)</small></div>`) +
+    `</div>`;
+
+  grid.innerHTML = walletHeroHtml() + sections + goalSection;
+}
+
+// tombol + di tiap grup: buka form rekening dengan tipe yang sudah terpilih
+function openAddAcc(jenis) {
+  const el = document.getElementById('accJenis');
+  if (el && jenis) { el.value = jenis; updateAccountLabel(jenis); }
+  toggleModal('modalAccount');
+}
+
+// ===== SAVINGS GOALS =====
+function openGoal(id) {
+  const g = id ? goalList().find(x => x.id === id) : null;
+  if (id && !g) return;
+  document.getElementById('goalTitle').innerText = g ? 'Ubah Savings Goal' : 'Tambah Savings Goal';
+  document.getElementById('goalId').value = g ? g.id : '';
+  document.getElementById('goalNama').value = g ? g.nama : '';
+  document.getElementById('goalTarget').value = g ? formatRupiahInput(g.target) : '';
+  document.getElementById('goalKunci').checked = g ? !!g.kunci : false;
+  toggleModal('modalGoal');
+}
+
+function submitGoal() {
+  const id = document.getElementById('goalId').value;
+  const nama = document.getElementById('goalNama').value.trim();
+  const target = Number(document.getElementById('goalTarget').value.replace(/\./g, '')) || 0;
+  const kunci = document.getElementById('goalKunci').checked;
+
+  if (!nama) { alert('Isi nama tujuan tabungan (cth: Liburan)'); return; }
+  if (target <= 0) { alert('Isi target dana lebih dari 0'); return; }
+
+  let g;
+  if (id) {
+    g = goalList().find(x => x.id === id);
+    if (!g) return;
+    Object.assign(g, { nama, target, kunci });
+  } else {
+    g = { id: 'goal_' + Date.now(), nama, target, terkumpul: 0, kunci };
+    (globalData.goals = globalData.goals || []).push(g);
+  }
+
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  toggleModal('modalGoal');
+  renderAllLocalUI();
+
+  google.script.run
+    .withFailureHandler(err => alert('Gagal simpan savings goal: ' + err.message))
+    .setGoal(g);
+}
+
+function removeGoal(id) {
+  const g = goalList().find(x => x.id === id);
+  if (!g) return;
+  if ((Number(g.terkumpul) || 0) > 0) {
+    alert('Saldo "' + g.nama + '" masih ' + format(g.terkumpul) + '. Tarik dulu ke dompet, baru goal ini bisa dihapus.');
+    return;
+  }
+  if (!confirm('Hapus savings goal "' + g.nama + '"?')) return;
+  globalData.goals = globalData.goals.filter(x => x.id !== id);
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  renderAllLocalUI();
+  google.script.run
+    .withFailureHandler(err => alert('Gagal hapus savings goal: ' + err.message))
+    .deleteGoal(id);
+}
+
+function openGoalMove(id, mode) {
+  const g = goalList().find(x => x.id === id);
+  if (!g) return;
+  const setor = mode !== 'tarik';
+  const got = Number(g.terkumpul) || 0, target = Number(g.target) || 0;
+
+  if ((globalData.accountSummary || []).length === 0) { alert('Tambah dompet dulu supaya ada sumber / tujuan dananya'); return; }
+  if (!setor) {
+    if (got <= 0) { alert('Belum ada saldo di "' + g.nama + '"'); return; }
+    if (g.kunci && got < target) { alert('"' + g.nama + '" terkunci sampai target tercapai (kurang ' + format(target - got) + ')'); return; }
+  }
+
+  document.getElementById('goalMoveId').value = g.id;
+  document.getElementById('goalMoveMode').value = setor ? 'setor' : 'tarik';
+  document.getElementById('goalMoveTitle').innerText = (setor ? 'Setor ke ' : 'Tarik dari ') + g.nama;
+  document.getElementById('goalMoveInfo').innerText = 'Terkumpul ' + format(got) + ' dari target ' + format(target);
+  document.getElementById('goalMoveLbl').innerText = setor ? 'Ambil dari dompet' : 'Masukkan ke dompet';
+  document.getElementById('goalMoveRekening').innerHTML = (globalData.accountSummary || [])
+    .map(a => `<option value="${a.id}">${esc(a.nama)} · ${format(a.saldoAkhir)}</option>`).join('');
+  document.getElementById('goalMoveJumlah').value = '';
+  toggleModal('modalGoalMove');
+}
+
+function submitGoalMove() {
+  const g = goalList().find(x => x.id === document.getElementById('goalMoveId').value);
+  if (!g) return;
+  const setor = document.getElementById('goalMoveMode').value !== 'tarik';
+  const jumlah = Number(document.getElementById('goalMoveJumlah').value.replace(/\./g, '')) || 0;
+  const rekeningId = document.getElementById('goalMoveRekening').value;
+  const acc = (globalData.accountSummary || []).find(a => a.id === rekeningId);
+  const before = Number(g.terkumpul) || 0;
+
+  if (jumlah <= 0) { alert('Isi jumlahnya dulu'); return; }
+  if (!acc) { alert('Pilih dompet'); return; }
+  if (setor && jumlah > (Number(acc.saldoAkhir) || 0)) { alert('Saldo ' + acc.nama + ' tidak cukup (' + format(acc.saldoAkhir) + ')'); return; }
+  if (!setor && jumlah > before) { alert('Saldo tabungan hanya ' + format(before)); return; }
+
+  const trx = {
+    tanggal: todayStr(),
+    jenis: setor ? 'Pengeluaran' : 'Pemasukan',
+    kategori: setor ? KAT_SETOR : KAT_TARIK,
+    keterangan: (setor ? 'Ke tabungan ' : 'Dari tabungan ') + g.nama,
+    jumlah, rekeningId
+  };
+
+  // update instan
+  (globalData.transactions = globalData.transactions || []).unshift(Object.assign({ id: 'temp_' + Date.now() }, trx));
+  acc.saldoAkhir = (Number(acc.saldoAkhir) || 0) + (setor ? -jumlah : jumlah);
+  g.terkumpul = before + (setor ? jumlah : -jumlah);
+  const baruTercapai = setor && g.target > 0 && before < g.target && g.terkumpul >= g.target;
+
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  toggleModal('modalGoalMove');
+  renderAllLocalUI();
+  if (baruTercapai) showToast('🎉 Target "' + g.nama + '" tercapai!', 1);
+
+  google.script.run
+    .withFailureHandler(err => alert('Gagal simpan savings goal: ' + err.message))
+    .setGoal(g);
+  google.script.run
+    .withSuccessHandler(() => loadData())
+    .withFailureHandler(err => alert('Gagal mencatat transaksi tabungan: ' + err.message))
+    .addTransaction(Object.assign({}, trx, { jumlah: String(jumlah) }));
 }
 
 function toggleAccDropdown(index) {
@@ -923,7 +1174,7 @@ function submitEditAccount() {
 }
 
 // ===== PINDAH SALDO (transfer antar rekening) =====
-const KATEGORI_NETRAL = ['Transfer', 'Koreksi Saldo']; // tidak dihitung sebagai pemasukan/pengeluaran
+const KATEGORI_NETRAL = ['Transfer', 'Koreksi Saldo', KAT_SETOR, KAT_TARIK]; // tidak dihitung sebagai pemasukan/pengeluaran
 function netral(t) { return KATEGORI_NETRAL.includes(t.kategori); }
 
 function onJenisChange() {
