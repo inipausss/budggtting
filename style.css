@@ -1145,3 +1145,51 @@
   #fullTrxContainer .day-head:first-child { padding-top: 4px; }
   .nag { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; margin-bottom: 0; }
   .nag p { font-size: 0.8rem; font-weight: 500; line-height: 1.4; }
+
+  /* ===== TEMA EMAS + polesan premium =====
+     ponytail: polesan di bawah sengaja memakai color-mix(); browser lama melewatinya dan tetap memakai gaya sebelumnya */
+  body[data-theme="emas"] {
+    --bg-main: #050506; --app-bg: #0a0a0c; --card-bg: #141416;
+    --text-main: #f4efe4; --text-muted: #9c9588;
+    --primary: #d4af6a; --primary-hover: #c29b52;
+    --border-color: #25221c; --circle-bg: #1b1a1c; --circle-icon: #e9dcc0;
+    --hero: linear-gradient(135deg, #0e0c08 0%, #2b2213 48%, #7a5f2b 100%);
+    --pos: #86d4a0; --neg: #f0928f; --warn: #e8c45f;
+  }
+  body[data-theme="emas"] :is(.main-card, .wallet-hero) {
+    background: radial-gradient(circle at 90% -12%, rgba(255, 224, 150, 0.30), transparent 52%), var(--hero);
+    border-color: rgba(212, 175, 106, 0.28);
+  }
+
+  /* angka rapi (lebar sama) dan lebih rapat */
+  .balance-value, .wh-total, .wh-tile b, .flow-col h4, .wl-bal, .trx-nominal, .tp-amt b, .bgt-big, .stat-tile b { font-variant-numeric: tabular-nums; }
+  .balance-value, .wh-total, .tp-amt b { letter-spacing: -0.04em; }
+
+  /* kartu hero: kilau tipis di tepi atas + bayangan dalam */
+  .main-card, .wallet-hero { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 20px 40px -14px rgba(0, 0, 0, 0.5); }
+
+  /* tema gelap: kartu dibatasi garis rambut + kilau atas, bukan tanpa garis */
+  body.dark-mode :is(.list-card, .acc-card, .trx-card-item, .calendar-card, .category-bar-item, .stat-tile, .badge, .icon-btn, .lvl-chip) {
+    border-color: color-mix(in srgb, var(--text-main) 8%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-main) 5%, transparent);
+  }
+
+  /* bar navigasi kaca */
+  .bottom-nav {
+    background: color-mix(in srgb, var(--card-bg) 74%, transparent);
+    border-color: color-mix(in srgb, var(--text-main) 9%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+  }
+
+  /* aksen dipakai hemat: tab/chip/segmen aktif memakai warna tipis, aksen penuh hanya untuk aksi utama */
+  .nav-tab.active { background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--text-main); }
+  body.dark-mode .nav-tab.active i { color: var(--primary); }
+  .seg-btn.active, .tp-seg button.on {
+    background: color-mix(in srgb, var(--primary) 18%, var(--card-bg)); color: var(--text-main);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 50%, transparent);
+  }
+
+  /* kalender: nominal kecil tidak patah huruf */
+  .cal-nominal { word-break: normal; white-space: nowrap; font-size: 0.6rem; }
+
+  @media (prefers-reduced-motion: reduce) { .bottom-nav { -webkit-backdrop-filter: none; backdrop-filter: none; } }
