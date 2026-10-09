@@ -117,7 +117,7 @@
       <h3 class="section-title">Menu Utama</h3>
     </div>
     <div class="menu-grid">
-      <button class="menu-item" onclick="toggleModal('modalBudget')">
+      <button class="menu-item" onclick="openPage('budgets')">
         <div class="menu-circle t-orange"><i class="fa fa-percent"></i></div>
         <span class="menu-label">Budget</span>
       </button>
@@ -143,7 +143,7 @@
 
     <div class="section-title-row">
       <h3 class="section-title">Budget Bulan Ini</h3>
-      <button onclick="toggleModal('modalBudget')" class="btn-primary" style="width: auto; padding: 6px 14px; font-size: 0.8rem;"><i class="fa fa-sliders"></i> Atur</button>
+      <button onclick="openPage('budgets')" class="btn-primary" style="width: auto; padding: 6px 14px; font-size: 0.8rem;"><i class="fa fa-sliders"></i> Atur</button>
     </div>
     <div id="budgetContainer" style="margin-bottom: 28px;"></div>
     
@@ -162,22 +162,6 @@
         <div class="cal-day-name">MG</div>
       </div>
       <div class="cal-grid" id="calendarGridContainer" style="margin-top: 6px;"></div>
-    </div>
-
-    <div class="list-card" style="padding: 24px;">
-      <p style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-bottom: 8px;">Total Pemasukan</p>
-      <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px;" id="dashTotalIncome">Rp 0</h2>
-      <div style="display: inline-flex; align-items: center; background: var(--pos-bg); color: var(--pos); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500;">
-        +100% vs periode lalu
-      </div>
-    </div>
-
-    <div class="list-card" style="padding: 24px;">
-      <p style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-bottom: 8px;">Total Pengeluaran</p>
-      <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px; color: var(--neg);" id="dashTotalExpense">Rp 0</h2>
-      <div style="display: inline-flex; align-items: center; background: var(--neg-bg); color: var(--neg); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500;">
-        +100% vs periode lalu
-      </div>
     </div>
 
     <div class="section-title-row">
@@ -285,6 +269,50 @@
       <button onclick="openBill()" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;"><i class="fa fa-plus"></i> Tambah</button>
     </div>
     <div id="billList"></div>
+  </main>
+
+  <main id="budgets" class="page hidden">
+    <div class="sub-head">
+      <button class="icon-btn" onclick="openPage('dashboard')"><i class="fa fa-chevron-left"></i></button>
+      <h2>Budget</h2>
+      <button class="icon-btn" onclick="openBudgetForm()"><i class="fa fa-plus"></i></button>
+    </div>
+    <div id="budgetPageBody"></div>
+  </main>
+
+  <main id="budgetForm" class="page hidden">
+    <div class="sub-head">
+      <button class="icon-btn" onclick="openPage('budgets')"><i class="fa fa-xmark"></i></button>
+      <h2 id="bfTitle">Budget Baru</h2>
+      <button class="icon-btn bf-save" onclick="submitBudgetForm()"><i class="fa fa-check"></i></button>
+    </div>
+    <input type="hidden" id="bfId">
+
+    <label class="bf-lbl" style="margin-top: 0;">Batas nominal</label>
+    <div class="bf-amount"><span>Rp</span><input type="text" inputmode="numeric" id="bfBatas" placeholder="0" oninput="this.value = formatRupiahInput(this.value)"></div>
+
+    <label class="bf-lbl">Nama budget</label>
+    <input id="bfNama" class="input-field" placeholder="cth: Makan di luar (boleh dikosongkan)">
+
+    <label class="bf-lbl">Periode</label>
+    <div class="seg" style="margin-bottom: 8px;">
+      <button type="button" class="seg-btn active" id="bfp-bulanan" onclick="setBudgetPeriode('bulanan')">Bulanan</button>
+      <button type="button" class="seg-btn" id="bfp-mingguan" onclick="setBudgetPeriode('mingguan')">Mingguan</button>
+    </div>
+    <p class="bf-hint" id="bfPeriodeHint"></p>
+
+    <label class="bf-lbl">Kategori <small>pilih satu atau lebih</small></label>
+    <div id="bfChips" class="cat-grid"></div>
+    <div class="bf-add">
+      <input id="bfKatBaru" class="input-field" placeholder="Kategori lain, cth: Bensin" onkeydown="if (event.key === 'Enter') { event.preventDefault(); addBudgetCat(); }">
+      <button type="button" class="btn-sec" onclick="addBudgetCat()">Tambah</button>
+    </div>
+
+    <label class="bf-lbl">Ingatkan saat terpakai</label>
+    <div class="bf-amount small"><input type="number" inputmode="numeric" id="bfAlert" min="1" max="100" value="80"><span>%</span></div>
+    <p class="bf-hint">Muncul peringatan saat pengeluaran kategori ini mencapai persentase tersebut.</p>
+
+    <button type="button" id="bfHapus" class="bf-del hidden" onclick="removeBudgetForm()"><i class="fa fa-trash"></i> Hapus budget</button>
   </main>
 
   <main id="analyticsDetail" class="page hidden">
@@ -524,20 +552,6 @@
         <input type="text" id="editJumlah" placeholder="Jumlah (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)" required>
         <button type="submit" class="btn-primary" style="margin-top: 10px;">Simpan Perubahan</button>
       </form>
-    </div>
-  </div>
-
-  <div id="modalBudget" class="modal hidden">
-    <div class="modal-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 1.15rem; font-weight: 600;">Atur Budget</h3>
-        <button onclick="toggleModal('modalBudget')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
-      </div>
-      <input list="kategoriList" id="budKategori" placeholder="Kategori (cth: Makanan)" class="input-field">
-      <input type="text" id="budBatas" placeholder="Batas per bulan (Rp)" class="input-field" oninput="this.value = formatRupiahInput(this.value)">
-      <button onclick="submitBudget()" class="btn-primary">Simpan Budget</button>
-      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 10px 0;">Kalau kategori sudah punya budget, nilainya akan diperbarui. Tap budget di bawah untuk mengubah.</p>
-      <div id="budgetManager"></div>
     </div>
   </div>
 
