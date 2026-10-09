@@ -56,7 +56,7 @@
       font-weight: 700;
       text-overflow: ellipsis;
     }
-    .chip.on { border-color: var(--primary); background-color: rgba(204, 255, 0, 0.12); }
+    .chip.on { border-color: var(--primary); background-color: rgba(204, 255, 0, 0.12); background-color: color-mix(in srgb, var(--primary) 14%, var(--card-bg)); }
   </style>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -75,8 +75,8 @@
     </div>
     <div class="top-actions">
       <button class="icon-btn" title="Tagihan" onclick="openPage('bills')" style="position: relative;"><i class="fa fa-bell"></i><span id="billDot" class="bill-dot hidden"></span></button>
-      <button class="icon-btn" title="Ganti Mode" onclick="toggleDarkMode()" id="themeToggle">
-        <i id="themeIcon" class="fa fa-moon"></i>
+      <button class="icon-btn" title="Pilih Tema" onclick="openTheme()">
+        <i class="fa fa-palette"></i>
       </button>
     </div>
   </header>
@@ -90,7 +90,7 @@
     <div class="main-card">
       <div class="card-top-tag">
         <span class="tag-pill"><i class="fa fa-bolt"></i> Sekilas Hari Ini</span>
-        <button id="lockBtn" onclick="toggleBalanceVisibility()" style="background: none; border: none; color: #94a3b8; font-size: 1rem; cursor: pointer; padding: 4px;">
+        <button id="lockBtn" onclick="toggleBalanceVisibility()" style="background: none; border: none; color: rgba(255,255,255,0.75); font-size: 1rem; cursor: pointer; padding: 4px;">
           <i id="lockIcon" class="fa fa-lock-open"></i>
         </button>
       </div>
@@ -102,11 +102,11 @@
       </button>
       <div class="flow-row">
         <div class="flow-col income">
-          <p>Pemasukan</p>
+          <p><span class="flow-ic"><i class="fa fa-arrow-down"></i></span> Pemasukan</p>
           <h4 id="sumIncome">Rp 0</h4>
         </div>
         <div class="flow-col expense">
-          <p>Pengeluaran</p>
+          <p><span class="flow-ic"><i class="fa fa-arrow-up"></i></span> Pengeluaran</p>
           <h4 id="sumExpense">Rp 0</h4>
         </div>
       </div>
@@ -115,18 +115,22 @@
     <div class="section-title-row">
       <h3 class="section-title">Menu Utama</h3>
     </div>
-    <div style="display: flex; justify-content: flex-start; gap: 16px; margin-bottom: 28px;">
-      <button class="menu-item" onclick="alert('Fitur AI Advisor segera hadir!')">
-        <div class="menu-circle"><i class="fa fa-robot"></i></div>
-        <span class="menu-label">AI Advisor</span>
+    <div class="menu-grid">
+      <button class="menu-item" onclick="toggleModal('modalBudget')">
+        <div class="menu-circle t-orange"><i class="fa fa-percent"></i></div>
+        <span class="menu-label">Budget</span>
       </button>
       <button class="menu-item" onclick="openPage('analytics')">
-        <div class="menu-circle"><i class="fa fa-chart-simple"></i></div>
+        <div class="menu-circle t-blue"><i class="fa fa-chart-simple"></i></div>
         <span class="menu-label">Laporan</span>
       </button>
-        <button class="menu-item" onclick="openPage('bills')">
-        <div class="menu-circle"><i class="fa fa-file-invoice-dollar"></i></div>
+      <button class="menu-item" onclick="openPage('bills')">
+        <div class="menu-circle t-red"><i class="fa fa-file-invoice-dollar"></i></div>
         <span class="menu-label">Tagihan</span>
+      </button>
+      <button class="menu-item" onclick="alert('Fitur AI Advisor segera hadir!')">
+        <div class="menu-circle t-green"><i class="fa fa-robot"></i></div>
+        <span class="menu-label">AI Advisor</span>
       </button>
     </div>
 
@@ -289,6 +293,10 @@
       </form>
     </div>
 
+    <div class="list-card" style="padding: 16px 24px;">
+      <button type="button" class="btn-sec" onclick="openTheme()"><i class="fa fa-palette"></i> Tema: <span id="themeName"></span></button>
+    </div>
+
     <!-- Backup ke Google Sheets -->
     <div class="list-card" style="padding: 24px;">
       <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">URL Web App Backup</label>
@@ -331,12 +339,23 @@
   </main>
   
   <nav class="bottom-nav">
-    <button class="nav-tab active" id="btn-dashboard" onclick="openPage('dashboard')"><i class="fa fa-table-cells-large"></i></button>
-    <button class="nav-tab" id="btn-accounts" onclick="openPage('accounts')"><i class="fa fa-wallet"></i></button>
+    <button class="nav-tab active" id="btn-dashboard" onclick="openPage('dashboard')"><i class="fa fa-table-cells-large"></i><span>Beranda</span></button>
+    <button class="nav-tab" id="btn-accounts" onclick="openPage('accounts')"><i class="fa fa-wallet"></i><span>Dompet</span></button>
     <button class="nav-add-btn" onclick="toggleModal('modalTrx')"><i class="fa fa-plus"></i></button>
-    <button class="nav-tab" id="btn-analytics" onclick="openPage('analytics')"><i class="fa fa-chart-simple"></i></button>
-    <button class="nav-tab" id="btn-profile" onclick="openPage('profile')"><i class="fa fa-user"></i></button>
+    <button class="nav-tab" id="btn-analytics" onclick="openPage('analytics')"><i class="fa fa-chart-simple"></i><span>Laporan</span></button>
+    <button class="nav-tab" id="btn-profile" onclick="openPage('profile')"><i class="fa fa-user"></i><span>Profil</span></button>
   </nav>
+
+  <div id="modalTheme" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <h3 style="font-size: 1.15rem; font-weight: 800;">Pilih Tema</h3>
+        <button onclick="toggleModal('modalTheme')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Atur tampilan Budggt. di perangkatmu</p>
+      <div id="themeList"></div>
+    </div>
+  </div>
 
   <div id="modalDay" class="modal hidden">
         <div class="modal-content">
