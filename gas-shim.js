@@ -2,7 +2,7 @@
 (function () {
   const DB = 'budggt_db', CFG = 'budggt_cfg';
   const $ = id => document.getElementById(id);
-  const empty = () => ({ accounts: [], transactions: [], budgets: [], bills: [], goals: [] });
+  const empty = () => ({ accounts: [], transactions: [], budgets: [], bills: [], goals: [], debts: [] });
   const load = () => { try { return JSON.parse(localStorage.getItem(DB)) || empty(); } catch (e) { return empty(); } };
   const save = d => localStorage.setItem(DB, JSON.stringify(d));
   const cfg = () => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } };
@@ -37,7 +37,7 @@
         });
         return { id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAkhir: s };
       });
-      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: (d.budgets || []).map(normB), bills: d.bills || [], goals: d.goals || [] };
+      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: (d.budgets || []).map(normB), bills: d.bills || [], goals: d.goals || [], debts: d.debts || [] };
     },
     addAccount(a) {
       const d = load();
@@ -134,6 +134,22 @@
       };
       const i = d.goals.findIndex(x => x.id === item.id);
       if (i > -1) d.goals[i] = item; else d.goals.push(item);
+      save(d);
+    },
+    setDebt(x) {
+      const d = load();
+      d.debts = d.debts || [];
+      const item = {
+        id: x.id || uid(), nama: String(x.nama || '').trim(), tipe: x.tipe === 'piutang' ? 'piutang' : 'utang',
+        jumlah: Number(x.jumlah) || 0, terbayar: Number(x.terbayar) || 0, jatuh: x.jatuh || '', catatan: String(x.catatan || '').trim()
+      };
+      const i = d.debts.findIndex(y => y.id === item.id);
+      if (i > -1) d.debts[i] = item; else d.debts.push(item);
+      save(d);
+    },
+    deleteDebt(id) {
+      const d = load();
+      d.debts = (d.debts || []).filter(x => x.id !== id);
       save(d);
     },
     deleteGoal(id) {
