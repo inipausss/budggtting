@@ -120,7 +120,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 800;
+    font-weight: 600;
     font-size: 1.3rem;
     letter-spacing: -0.5px;
     color: var(--text-main);
@@ -135,7 +135,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.1rem;
-    font-weight: 900;
+    font-weight: 700;
     color: #000;
   }
 
@@ -170,7 +170,7 @@
 
   .greeting-section h1 {
     font-size: 1.7rem;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: -0.5px;
     color: var(--text-main);
   }
@@ -212,7 +212,7 @@
     align-items: center;
     gap: 6px;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 500;
     letter-spacing: 1px;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.9);
@@ -230,7 +230,7 @@
 
   .balance-value {
     font-size: 1.8rem;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: -0.5px;
   }
 
@@ -260,7 +260,7 @@
     align-items: center;
     gap: 8px;
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 500;
     color: rgba(255, 255, 255, 0.88);
     margin-bottom: 8px;
   }
@@ -278,7 +278,7 @@
 
   .flow-col h4 {
     font-size: 1rem;
-    font-weight: 800;
+    font-weight: 600;
     color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
@@ -295,7 +295,7 @@
 
   .section-title {
     font-size: 1.15rem;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--text-main);
   }
 
@@ -339,7 +339,7 @@
 
   .menu-label {
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-muted);
   }
 
@@ -385,7 +385,7 @@
   }
 
   .trx-nominal {
-    font-weight: 700;
+    font-weight: 500;
     font-size: 0.95rem;
   }
 
@@ -424,8 +424,8 @@
   }
 
   .nav-tab span {
-    font-size: 0.62rem;
-    font-weight: 700;
+    font-size: 0.72rem;
+    font-weight: 500;
   }
 
   .nav-tab.active {
@@ -497,7 +497,7 @@
     padding: 14px;
     background: var(--primary);
     color: #000000;
-    font-weight: 800;
+    font-weight: 600;
     font-size: 1rem;
     border: none;
     border-radius: var(--radius-sm);
@@ -509,7 +509,7 @@
     padding: 14px;
     background: var(--circle-bg);
     color: var(--text-muted);
-    font-weight: 700;
+    font-weight: 500;
     font-size: 1rem;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
@@ -531,7 +531,7 @@
     align-items: center;
     margin-bottom: 8px;
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 500;
   }
 
   .category-bar-track {
@@ -575,7 +575,7 @@
 
   .cal-day-name {
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--text-muted);
     text-transform: uppercase;
     padding-bottom: 6px;
@@ -607,7 +607,7 @@
 
   .cal-date-num {
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-muted);
     align-self: flex-start;
     padding-left: 2px;
@@ -615,7 +615,7 @@
 
   .cal-nominal {
     font-size: 0.55rem;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--neg);
     word-break: break-all;
     line-height: 1;
@@ -715,7 +715,7 @@
     padding: 14px 16px;
     border-radius: var(--radius-sm);
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 500;
     color: #fff;
     z-index: 10000;
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
@@ -754,11 +754,11 @@
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 0.8rem;
-    font-weight: 700;
+    font-weight: 500;
     cursor: pointer;
     margin: 8px 0 20px 0;
   }
-  .saldo-chip i:last-child { font-size: 0.65rem; }
+  .saldo-chip i:last-child { font-size: 0.72rem; }
 
   /* Ubin menu berwarna */
   .menu-circle.t-orange { background: rgba(249, 115, 22, 0.16); color: #f97316; border-color: transparent; }
@@ -770,7 +770,7 @@
   .lvl-chip {
     height: 38px; padding: 0 12px; border-radius: 19px;
     border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main);
-    font-size: 0.75rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+    font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap;
   }
   .lvl-hero { text-align: center; padding: 8px 0 22px; }
   .lvl-ring {
@@ -780,11 +780,11 @@
   .lvl-avatar {
     width: 88px; height: 88px; border-radius: 50%; background: var(--card-bg);
     display: flex; align-items: center; justify-content: center;
-    font-size: 2.2rem; font-weight: 900; color: var(--text-main);
+    font-size: 2.2rem; font-weight: 700; color: var(--text-main);
   }
   .lvl-pill {
     position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%);
-    background: var(--primary); color: #000; font-size: 0.7rem; font-weight: 900;
+    background: var(--primary); color: #000; font-size: 0.7rem; font-weight: 700;
     padding: 4px 12px; border-radius: 12px; white-space: nowrap;
   }
   .stat-grid, .badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px; }
@@ -796,10 +796,10 @@
     width: 38px; height: 38px; border-radius: 50%; margin: 0 auto 8px;
     display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
   }
-  .stat-tile b { display: block; font-size: 1.25rem; font-weight: 900; }
-  .stat-tile em { font-style: normal; font-size: 0.68rem; font-weight: 600; color: var(--text-muted); }
-  .badge strong { display: block; font-size: 0.72rem; font-weight: 800; }
-  .badge small { display: block; font-size: 0.62rem; color: var(--text-muted); margin-top: 2px; }
+  .stat-tile b { display: block; font-size: 1.25rem; font-weight: 700; }
+  .stat-tile em { font-style: normal; font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
+  .badge strong { display: block; font-size: 0.72rem; font-weight: 600; }
+  .badge small { display: block; font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
   .badge.locked { opacity: 0.45; }
   /* ===== Halaman Dompet: kartu ringkasan, grup per tipe, Savings Goals ===== */
   .wallet-hero {
@@ -812,41 +812,41 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
   }
-  .wh-label { font-size: 0.8rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
-  .wh-total { font-size: clamp(1.6rem, 9vw, 2.2rem); font-weight: 900; letter-spacing: -1px; margin: 6px 0 12px; word-break: break-word; }
+  .wh-label { font-size: 0.8rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); }
+  .wh-total { font-size: clamp(1.6rem, 9vw, 2.2rem); font-weight: 700; letter-spacing: -1px; margin: 6px 0 12px; word-break: break-word; }
   .wh-delta { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
   .wh-pill {
     display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 20px;
-    font-size: 0.8rem; font-weight: 800; background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 0.8rem; font-weight: 600; background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);
   }
-  .wh-sub { font-size: 0.75rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
+  .wh-sub { font-size: 0.75rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); }
   .wh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
   .wh-tile { background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 18px; padding: 12px 14px; min-width: 0; }
-  .wh-tile p { font-size: 0.68rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); margin-bottom: 6px; }
-  .wh-tile b { display: block; font-size: 0.92rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wh-tile p { font-size: 0.72rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); margin-bottom: 6px; }
+  .wh-tile b { display: block; font-size: 0.92rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .wl-section { margin-bottom: 26px; }
   .wl-head { margin-bottom: 12px; }
-  .wl-total { font-size: 0.8rem; font-weight: 800; color: var(--text-muted); }
+  .wl-total { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
   .wl-ic { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex: none; }
-  .wl-name { font-size: 1rem; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wl-name { font-size: 1rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .wl-lock { font-size: 0.7rem; color: var(--pos); margin-left: 4px; }
-  .wl-sub { color: var(--text-muted); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
-  .wl-cap { font-size: 0.62rem; font-weight: 600; color: var(--text-muted); }
-  .wl-bal { font-size: 1.05rem; font-weight: 900; color: var(--text-main); }
+  .wl-sub { color: var(--text-muted); font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+  .wl-cap { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
+  .wl-bal { font-size: 1.05rem; font-weight: 700; color: var(--text-main); }
   .wl-empty {
     text-align: center; color: var(--text-muted); padding: 18px 12px; margin-bottom: 12px;
     border: 1px dashed var(--border-color); border-radius: var(--radius-md);
   }
   .wl-empty i { font-size: 1.3rem; margin-bottom: 6px; opacity: 0.6; }
-  .wl-empty p { font-size: 0.85rem; font-weight: 700; }
+  .wl-empty p { font-size: 0.85rem; font-weight: 500; }
   .wl-empty small { font-size: 0.72rem; }
   .wl-actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 10px; }
   .wl-btn {
     background: var(--circle-bg); color: var(--text-main); border: 1px solid var(--border-color);
-    padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+    padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer;
   }
-  .wl-btn.p { background: var(--primary); color: #000; border-color: transparent; font-weight: 800; }
+  .wl-btn.p { background: var(--primary); color: #000; border-color: transparent; font-weight: 600; }
   .wl-btn.d { background: var(--neg-bg); color: var(--neg); border-color: transparent; }
   .acc-card.open .acc-details { max-height: 220px; }
 
@@ -859,3 +859,140 @@
   body[data-theme="kopi"]   { --pos: #86efac; }
   body[data-theme="oled"]   { --pos: #4ade80; }
   body { --pos-bg: color-mix(in srgb, var(--pos) 10%, transparent); --neg-bg: color-mix(in srgb, var(--neg) 10%, transparent); }
+
+  /* ===== Polish: tipografi lebih ringan + ruang napas (referensi: layout bersih, jarak lega) ===== */
+  strong, b, h1, h2, h3, h4 { font-weight: 600; }
+  .app-container { padding-left: 24px; padding-right: 24px; padding-bottom: 150px; }
+  .top-bar { margin-bottom: 32px; }
+  .greeting-section { margin-bottom: 28px; }
+  .greeting-section h1 { font-size: 1.6rem; letter-spacing: -0.3px; }
+  .section-title { font-size: 1.1rem; font-weight: 600; }
+  .section-title-row { margin-bottom: 20px; }
+
+  /* dashboard: jarak antar-bagian lega, judul ke isi rapat */
+  #dashboard { gap: 20px; }
+  #dashboard .section-title-row { margin-bottom: 0; }
+  #dashboard > .list-card { margin-bottom: 0; }
+
+  /* kartu utama */
+  .main-card { padding: 28px 24px; }
+  .card-top-tag { margin-bottom: 18px; }
+  .tag-pill { text-transform: none; letter-spacing: 0.2px; font-size: 0.8rem; font-weight: 500; }
+  .balance-value { font-size: 2rem; font-weight: 600; letter-spacing: -0.5px; }
+  .saldo-chip { margin: 14px 0 24px; padding: 8px 14px; font-weight: 500; }
+  .flow-row { gap: 14px; }
+  .flow-col { padding: 16px 18px; }
+  .flow-col p { margin-bottom: 12px; font-weight: 400; }
+  .flow-col h4 { font-size: 1.05rem; font-weight: 600; }
+
+  /* kartu & daftar */
+  .list-card, .acc-card, .trx-card-item { padding: 20px; margin-bottom: 16px; }
+  .trx-item { padding: 16px 0; }
+  .calendar-card { padding: 24px; }
+  .cal-grid { gap: 8px; }
+  .menu-grid { gap: 12px; }
+  .menu-label { font-weight: 500; }
+  .nav-tab span { font-weight: 500; }
+
+  /* halaman Dompet */
+  .wallet-hero { padding: 32px 24px 24px; margin-bottom: 40px; }
+  .wh-label { font-size: 0.85rem; font-weight: 400; }
+  .wh-total { font-weight: 600; margin: 8px 0 18px; }
+  .wh-pill { font-weight: 500; }
+  .wh-sub { font-weight: 400; }
+  .wh-delta { margin-bottom: 26px; }
+  .wh-grid { gap: 12px; }
+  .wh-tile { padding: 16px 18px; }
+  .wh-tile p { font-size: 0.75rem; font-weight: 400; margin-bottom: 8px; }
+  .wh-tile b { font-size: 1rem; font-weight: 600; }
+  .wl-section { margin-bottom: 40px; }
+  .wl-head { margin-bottom: 16px; }
+  .wl-total { font-weight: 500; }
+  .wl-ic { width: 48px; height: 48px; }
+  .wl-name { font-weight: 500; }
+  .wl-sub { font-size: 0.72rem; font-weight: 400; }
+  .wl-cap { font-size: 0.75rem; font-weight: 400; }
+  .wl-bal { font-weight: 600; }
+  .wl-empty { padding: 28px 16px; }
+  .wl-actions { padding-top: 14px; gap: 10px; }
+  .wl-btn { font-weight: 500; padding: 8px 16px; }
+  .acc-card.open .acc-details { padding-top: 16px; max-height: 240px; }
+
+  /* tema gelap: kartu tanpa garis, dibedakan lewat warna latar saja */
+  body.dark-mode :is(.list-card, .acc-card, .trx-card-item, .calendar-card, .category-bar-item, .stat-tile, .badge, .icon-btn, .lvl-chip) { border-color: transparent; }
+
+  /* ===== Tipografi & spacing: bold hanya untuk angka utama, label dibuat ringan, ruang antar elemen dilonggarkan ===== */
+  /* ponytail: sebagian besar style ada inline di JS/HTML, jadi dirapikan lewat selector atribut; kalau nanti inline-nya dipindah ke class, blok ini bisa dihapus */
+  body { line-height: 1.5; letter-spacing: -0.005em; }
+  h1, h2, h3, h4, strong, b { font-weight: 600; }
+  [style*="font-weight: 900"], [style*="font-weight: 800"], [style*="font-weight:800"] { font-weight: 600 !important; }
+  [style*="font-weight: 700"], [style*="font-weight: 600"] { font-weight: 500 !important; }
+  [style*="text-transform: uppercase"] { text-transform: none !important; letter-spacing: 0 !important; }
+  [style*="font-size: 0.62rem"], [style*="font-size: 0.65rem"], [style*="font-size: 0.68rem"], [style*="font-size: 0.7rem"] { font-size: 0.75rem !important; }
+
+  .app-container { padding-left: 24px; padding-right: 24px; }
+  .app-container .chips { margin: 0 -24px 16px; padding: 0 24px 2px; }
+  .top-bar { margin-bottom: 28px; }
+  .greeting-section { margin-bottom: 24px; }
+  .greeting-section h1 { font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; }
+  .greeting-section p { font-weight: 400; }
+  .section-title-row { margin-bottom: 20px; }
+  .section-title { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; }
+
+  .main-card { padding: 28px 24px; margin-bottom: 36px; }
+  .tag-pill { font-size: 0.8rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
+  .balance-value { font-size: 2.1rem; font-weight: 500; letter-spacing: -0.03em; }
+  .flow-row { gap: 14px; margin-top: 8px; }
+  .flow-col { padding: 16px 18px; }
+  .flow-col p { font-weight: 400; margin-bottom: 10px; }
+  .flow-col h4 { font-weight: 600; }
+  .saldo-chip { font-weight: 500; margin: 12px 0 24px; }
+
+  .menu-grid { gap: 14px; margin-bottom: 36px; }
+  .menu-label { font-weight: 500; }
+  .list-card { padding: 20px; margin-bottom: 16px; }
+  .list-card[style*="padding: 16px"], .list-card[style*="padding: 14px 16px"], .list-card[style*="padding: 12px 14px"] { padding: 20px !important; margin-bottom: 14px !important; }
+  .list-card[style*="margin: 0; padding: 14px"] { padding: 18px !important; margin-bottom: 0 !important; }
+  #recapSummary, #daySummary { gap: 14px !important; margin-bottom: 20px !important; }
+  .calendar-card { padding: 24px 20px; margin-bottom: 36px; }
+  .cal-grid { gap: 8px; }
+
+  .trx-item { padding: 16px 0; }
+  .trx-card-item, .acc-card { padding: 20px; margin-bottom: 14px; }
+  .trx-nominal { font-weight: 600; }
+  .category-bar-item { padding: 18px 20px; margin-bottom: 14px; }
+
+  .nav-tab span { font-weight: 500; }
+  .btn-primary { font-weight: 600; padding: 16px; }
+  .btn-sec { font-weight: 500; padding: 16px; }
+  .input-field { padding: 16px 18px; margin-bottom: 14px; }
+  .modal-content { padding: 28px 24px; }
+  .lvl-chip { font-weight: 600; }
+  .seg-btn { font-weight: 500; }
+  .seg-btn.active { font-weight: 600; }
+
+  /* Dompet */
+  .wallet-hero { padding: 32px 22px 24px; margin-bottom: 40px; }
+  .wh-label { font-weight: 400; }
+  .wh-total { font-weight: 500; letter-spacing: -0.03em; margin: 8px 0 18px; }
+  .wh-pill { font-weight: 600; }
+  .wh-sub { font-weight: 400; }
+  .wh-delta { margin-bottom: 26px; }
+  .wh-grid { gap: 12px; }
+  .wh-tile { padding: 16px 18px; }
+  .wh-tile p { font-weight: 400; margin-bottom: 8px; }
+  .wh-tile b { font-weight: 600; }
+  .wl-section { margin-bottom: 40px; }
+  .wl-head { margin-bottom: 16px; }
+  .wl-total { font-weight: 500; }
+  .wl-name { font-weight: 600; }
+  .wl-sub { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.75rem; margin-top: 4px; }
+  .wl-cap { font-weight: 400; font-size: 0.72rem; }
+  .wl-bal { font-weight: 600; }
+  .wl-empty { padding: 28px 16px; }
+  .wl-empty p { font-weight: 500; margin: 4px 0; }
+  .wl-btn { font-weight: 500; padding: 8px 16px; }
+  .wl-btn.p { font-weight: 600; }
+  .wl-actions { gap: 10px; padding-top: 14px; }
+  .acc-card.open .acc-details { max-height: 260px; }
+  #trxTable.list-card, #fullTrxContainer.list-card { padding: 0; background: none; border: none; }
