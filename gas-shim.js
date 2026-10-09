@@ -6,6 +6,12 @@
   const load = () => { try { return JSON.parse(localStorage.getItem(DB)) || empty(); } catch (e) { return empty(); } };
   const save = d => localStorage.setItem(DB, JSON.stringify(d));
   const cfg = () => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } };
+  // budget lama {kategori, batas} otomatis diubah ke format baru; id harus sama dengan migrasi di script.js
+  const normB = b => b.cats ? b : {
+    id: b.id || 'bud_' + String(b.kategori || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+    nama: b.nama || String(b.kategori || '').trim(), batas: Number(b.batas) || 0, periode: 'bulanan',
+    cats: b.kategori ? [String(b.kategori).trim()] : [], alert: 80
+  };
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2));
 
   async function remote(action, extra) {
@@ -31,7 +37,7 @@
         });
         return { id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAkhir: s };
       });
-      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: d.budgets || [], bills: d.bills || [], goals: d.goals || [] };
+      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: (d.budgets || []).map(normB), bills: d.bills || [], goals: d.goals || [] };
     },
     addAccount(a) {
       const d = load();
@@ -86,19 +92,18 @@
 
     setBudget(b) {
       const d = load();
-      d.budgets = d.budgets || [];
-      const nama = String(b.kategori || '').trim();
-      const key = nama.toLowerCase();
-      const batas = Number(b.batas) || 0;
-      const i = d.budgets.findIndex(x => x.kategori.trim().toLowerCase() === key);
-      if (i > -1) d.budgets[i] = { kategori: nama, batas };
-      else d.budgets.push({ kategori: nama, batas });
+      d.budgets = (d.budgets || []).map(normB);
+      const item = {
+        id: b.id || uid(), nama: String(b.nama || '').trim(), batas: Number(b.batas) || 0,
+        periode: b.periode === 'mingguan' ? 'mingguan' : 'bulanan', cats: (b.cats || []).map(String), alert: Number(b.alert) || 80
+      };
+      const i = d.budgets.findIndex(x => x.id === item.id);
+      if (i > -1) d.budgets[i] = item; else d.budgets.push(item);
       save(d);
     },
-    deleteBudget(kategori) {
+    deleteBudget(id) {
       const d = load();
-      const key = String(kategori || '').trim().toLowerCase();
-      d.budgets = (d.budgets || []).filter(x => x.kategori.trim().toLowerCase() !== key);
+      d.budgets = (d.budgets || []).map(normB).filter(x => x.id !== id);
       save(d);
     },
 
