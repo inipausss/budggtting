@@ -616,13 +616,13 @@
   .cal-nominal {
     font-size: 0.55rem;
     font-weight: 800;
-    color: #f43f5e;
+    color: var(--neg);
     word-break: break-all;
     line-height: 1;
   }
 
   .cal-nominal.income {
-    color: var(--primary);
+    color: var(--pos);
   }
 
   /* Styling Kartu Rekening dengan Dropdown Animasi */
@@ -830,7 +830,7 @@
   .wl-total { font-size: 0.8rem; font-weight: 800; color: var(--text-muted); }
   .wl-ic { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex: none; }
   .wl-name { font-size: 1rem; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .wl-lock { font-size: 0.7rem; color: #22c55e; margin-left: 4px; }
+  .wl-lock { font-size: 0.7rem; color: var(--pos); margin-left: 4px; }
   .wl-sub { color: var(--text-muted); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
   .wl-cap { font-size: 0.62rem; font-weight: 600; color: var(--text-muted); }
   .wl-bal { font-size: 1.05rem; font-weight: 900; color: var(--text-main); }
@@ -847,5 +847,15 @@
     padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
   }
   .wl-btn.p { background: var(--primary); color: #000; border-color: transparent; font-weight: 800; }
-  .wl-btn.d { background: rgba(244, 63, 94, 0.12); color: #f43f5e; border-color: transparent; }
+  .wl-btn.d { background: var(--neg-bg); color: var(--neg); border-color: transparent; }
   .acc-card.open .acc-details { max-height: 220px; }
+
+  /* ===== Warna status per tema (kontras >= 4.5:1; teks hijau/merah/kuning tidak lagi hardcode) ===== */
+  :root { --pos: #4d7c0f; --neg: #e11d48; --warn: #a16207; }
+  body.dark-mode { --pos: #a3e635; --neg: #fb7185; --warn: #facc15; }
+  body[data-theme="langit"] { --pos: #0f766e; --text-muted: #4a6a87; }
+  body[data-theme="sakura"] { --pos: #15803d; --neg: #be123c; --text-muted: #8a5473; }
+  body[data-theme="malam"]  { --pos: #22d3ee; }
+  body[data-theme="kopi"]   { --pos: #86efac; }
+  body[data-theme="oled"]   { --pos: #4ade80; }
+  body { --pos-bg: color-mix(in srgb, var(--pos) 10%, transparent); --neg-bg: color-mix(in srgb, var(--neg) 10%, transparent); }
