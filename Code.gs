@@ -47,8 +47,10 @@ function backup(d) {
     (d.goals || []).map(function (g) {
       return [g.id, g.nama, Number(g.target) || 0, Number(g.terkumpul) || 0, g.kunci ? 1 : 0, me];
     }));
-  writeSheet('Budgets', ['Kategori', 'Batas', 'User Email'],
-    (d.budgets || []).map(function (b) { return [b.kategori, Number(b.batas) || 0, me]; }));
+  writeSheet('Budgets', ['ID', 'Nama', 'Batas', 'Periode', 'Kategori', 'Alert', 'User Email'],
+    (d.budgets || []).map(function (b) {
+      return [b.id || '', b.nama || '', Number(b.batas) || 0, b.periode || 'bulanan', JSON.stringify(b.cats || [b.kategori]), Number(b.alert) || 80, me];
+    }), ['E']);
   writeSheet('Bills', ['ID', 'Nama', 'Jumlah', 'Kategori', 'Rekening ID', 'Tanggal', 'Lunas', 'User Email'],
     (d.bills || []).map(function (b) {
       return [b.id, b.nama, Number(b.jumlah) || 0, b.kategori, b.rekeningId || '', Number(b.tanggal) || 1, b.lunas || '', me];
@@ -77,7 +79,16 @@ function restore() {
       goals: rows('Goals').map(function (r) {
         return { id: r[0], nama: String(r[1]), target: Number(r[2]) || 0, terkumpul: Number(r[3]) || 0, kunci: r[4] === true || Number(r[4]) === 1 };
       }),
-      budgets: rows('Budgets').map(function (r) { return { kategori: String(r[0]), batas: Number(r[1]) || 0 }; }),
+      budgets: (function () {
+        var sh = ss.getSheetByName('Budgets');
+        var legacy = sh && String(sh.getRange(1, 1).getValue()) === 'Kategori'; // format lama: Kategori | Batas
+        return rows('Budgets').map(function (r) {
+          if (legacy) return { kategori: String(r[0]), batas: Number(r[1]) || 0 };
+          var cats;
+          try { cats = JSON.parse(r[4]); } catch (e) { cats = String(r[4]).split('|'); }
+          return { id: String(r[0]), nama: String(r[1]), batas: Number(r[2]) || 0, periode: r[3] === 'mingguan' ? 'mingguan' : 'bulanan', cats: cats, alert: Number(r[5]) || 80 };
+        });
+      })(),
       bills: rows('Bills').map(function (r) {
         return {
           id: r[0], nama: String(r[1]), jumlah: Number(r[2]) || 0, kategori: String(r[3]), rekeningId: r[4] ? String(r[4]) : '',
