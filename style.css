@@ -1011,3 +1011,9 @@
   @media (prefers-reduced-motion: reduce) {
     .page, .modal, .modal-content, .toast { animation: none !important; }
   }
+
+  /* Animasi tutup modal (kelas .closing dipasang toggleModal, durasi harus <= 280ms di script.js) */
+  @keyframes fadeOut   { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes sheetDown { from { transform: none; } to { transform: translateY(100%); } }
+  .modal.closing                { animation: fadeOut 0.26s ease-in forwards; pointer-events: none; }
+  .modal.closing .modal-content { animation: sheetDown 0.28s cubic-bezier(0.64, 0, 0.78, 0) forwards; }
