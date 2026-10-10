@@ -164,15 +164,61 @@ const THEME_KEY = 'budggt_theme';
 let themePref = 'emas'; // id tema, atau 'auto' = ikuti sistem
 try { themePref = localStorage.getItem(THEME_KEY) || (localStorage.getItem('theme') === 'dark' ? 'gelap' : 'emas'); } catch (e) {}
 
+// ----- tema kustom: pilih mode + warna aksen + warna latar, sisanya diturunkan otomatis -----
+const CUSTOM_KEY = 'budggt_theme_custom';
+let themeCustom = { dark: true, accent: '#a78bfa', bg: null };
+try { Object.assign(themeCustom, JSON.parse(localStorage.getItem(CUSTOM_KEY) || '{}')); } catch (e) {}
+const CUSTOM_VARS = ['--primary', '--primary-hover', '--bg-main', '--app-bg', '--card-bg', '--border-color', '--circle-bg', '--circle-icon', '--text-main', '--text-muted', '--hero'];
+const CUSTOM_AKSEN = ['#ccff00', '#fbbf24', '#fb923c', '#f87171', '#f472b6', '#c084fc', '#a78bfa', '#60a5fa', '#22d3ee', '#4ade80'];
+const CUSTOM_BG = {
+  true:  ['#0f1115', '#000000', '#0b1020', '#17110d', '#0d1a14', '#1a0f1a'],
+  false: ['#ffffff', '#f0f9ff', '#fff5f9', '#f7fee7', '#fffbeb', '#f5f3ff']
+};
+function lum(h) {
+  const n = parseInt(h.slice(1), 16), f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(n >> 16 & 255) + 0.7152 * f(n >> 8 & 255) + 0.0722 * f(n & 255);
+}
+// teks di atas warna aksen selalu hitam, jadi aksen yang terlalu gelap dicerahkan sedikit
+function aksenAman(h) {
+  for (let i = 0; i < 12 && lum(h) < 0.28; i++) {
+    const n = parseInt(h.slice(1), 16);
+    h = '#' + [n >> 16 & 255, n >> 8 & 255, n & 255].map(c => Math.round(c + (255 - c) * 0.12).toString(16).padStart(2, '0')).join('');
+  }
+  return h;
+}
+function customVars() {
+  const d = themeCustom.dark, a = aksenAman(themeCustom.accent), bg = themeCustom.bg || CUSTOM_BG[d][0];
+  const mix = (c, p, w) => `color-mix(in srgb, ${c} ${p}%, ${w})`;
+  return {
+    '--primary': a, '--primary-hover': mix(a, 85, '#000'), '--app-bg': bg,
+    '--bg-main': d ? mix(bg, 55, '#000') : mix(bg, 97, '#000'),
+    '--card-bg': d ? mix(bg, 92, '#fff') : mix(bg, 40, '#fff'),
+    '--border-color': d ? mix(bg, 82, '#fff') : mix(bg, 88, '#000'),
+    '--circle-bg': d ? mix(bg, 86, '#fff') : mix(bg, 96, '#000'),
+    '--circle-icon': d ? '#e5e7eb' : '#334155',
+    '--text-main': d ? '#f3f4f6' : '#0f172a', '--text-muted': d ? '#9ca3af' : '#64748b',
+    '--hero': `linear-gradient(135deg, ${mix(a, 30, '#000')} 0%, ${mix(a, 62, '#000')} 55%, ${a} 100%)`
+  };
+}
+function setCustom(k, v, render = true) {
+  if (k === 'dark' && v !== themeCustom.dark) themeCustom.bg = null;
+  themeCustom[k] = v; themePref = 'kustom';
+  try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(themeCustom)); localStorage.setItem(THEME_KEY, 'kustom'); } catch (e) {}
+  applyTheme('kustom');
+  if (render) renderThemePicker();
+}
+
 // warna aksen tema aktif, untuk grafik (canvas tidak bisa membaca var() CSS)
 function accent() { return getComputedStyle(document.body).getPropertyValue('--primary').trim() || '#ccff00'; }
 
 function applyTheme(pref) {
   const sysDark = !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   const id = pref === 'auto' ? (sysDark ? 'gelap' : 'terang') : pref;
-  const th = THEMES.find(t => t.id === id) || THEMES[0];
+  const th = id === 'kustom' ? { id: themeCustom.dark ? 'gelap' : 'terang', nama: 'Kustom', dark: themeCustom.dark } : (THEMES.find(t => t.id === id) || THEMES[0]);
   document.body.dataset.theme = th.id;
   document.body.classList.toggle('dark-mode', th.dark);
+  const cv = id === 'kustom' ? customVars() : {};
+  CUSTOM_VARS.forEach(v => cv[v] ? document.body.style.setProperty(v, cv[v]) : document.body.style.removeProperty(v));
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = getComputedStyle(document.body).getPropertyValue('--app-bg').trim() || meta.content;
   const nm = document.getElementById('themeName');
@@ -208,7 +254,20 @@ function renderThemePicker() {
   };
   const lbl = t => `<p style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin: 14px 0 8px;">${t}</p>`;
   const grup = dark => THEMES.filter(t => t.dark === dark).map(t => row(t.id, t.nama, t.ic, t.sw)).join('');
-  box.innerHTML = row('auto', 'Ikuti sistem', 'fa-mobile-screen') + lbl('Tema terang') + grup(false) + lbl('Tema gelap') + grup(true);
+  const c = themeCustom, sw = (col, on, fn) => `<span onclick="${fn}" style="width: 32px; height: 32px; border-radius: 50%; background: ${col}; cursor: pointer; flex-shrink: 0; border: 2px solid ${on ? 'var(--text-main)' : 'rgba(128,128,128,0.4)'}; box-shadow: ${on ? '0 0 0 2px var(--card-bg) inset' : 'none'};"></span>`;
+  const bgNow = c.bg || CUSTOM_BG[c.dark][0];
+  const seg = (on, t, fn) => `<button onclick="${fn}" style="flex: 1; padding: 9px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; font-weight: 600; font-size: 0.82rem; background: ${on ? 'var(--primary)' : 'var(--circle-bg)'}; color: ${on ? '#000' : 'var(--text-main)'};">${t}</button>`;
+  const picker = (val, key) => `<label style="width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; cursor: pointer; overflow: hidden; position: relative; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); border: 2px solid rgba(128,128,128,0.4);"><input type="color" value="${val}" oninput="setCustom('${key}', this.value, false)" onchange="setCustom('${key}', this.value)" style="position: absolute; inset: -8px; opacity: 0; width: 60px; height: 60px; cursor: pointer;"></label>`;
+  const editor = `
+    <div style="padding: 14px; border-radius: 16px; background: var(--circle-bg); border: 2px solid ${themePref === 'kustom' ? 'var(--primary)' : 'var(--border-color)'};">
+      <strong style="font-size: 0.95rem;"><i class="fa fa-palette"></i> Buat sendiri ${themePref === 'kustom' ? '<i class="fa fa-circle-check" style="color: var(--pos); margin-left: 4px;"></i>' : ''}</strong>
+      <div style="display: flex; gap: 8px; margin: 12px 0;">${seg(!c.dark, 'Terang', "setCustom('dark', false)")}${seg(c.dark, 'Gelap', "setCustom('dark', true)")}</div>
+      <p style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Warna aksen</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">${CUSTOM_AKSEN.map(a => sw(a, themePref === 'kustom' && c.accent.toLowerCase() === a, `setCustom('accent', '${a}')`)).join('')}${picker(c.accent, 'accent')}</div>
+      <p style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Warna latar</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px;">${CUSTOM_BG[c.dark].map(b => sw(b, themePref === 'kustom' && bgNow.toLowerCase() === b, `setCustom('bg', '${b}')`)).join('')}${picker(bgNow, 'bg')}</div>
+    </div>`;
+  box.innerHTML = row('auto', 'Ikuti sistem', 'fa-mobile-screen') + lbl('Tema terang') + grup(false) + lbl('Tema gelap') + grup(true) + lbl('Warna sendiri') + editor;
 }
 
 applyTheme(themePref); // sedini mungkin supaya tidak berkedip
