@@ -1274,3 +1274,31 @@
   .cp-col input { position: absolute; inset: -8px; width: 60px; height: 60px; opacity: 0; cursor: pointer; }
   .dd-menu.gm { right: auto; }
   .saldo-chip { line-height: 1.15; }
+
+  /* ===== kartu saldo lebih ramping (kira-kira 2:1), dipakai Beranda & Dompet ===== */
+  .main-card { padding: 16px 18px; margin-bottom: 28px; }
+  .card-top-tag { min-height: 32px; margin-bottom: 6px; }
+  .card-top-tag .saldo-chip { margin: 0; padding: 5px 12px; font-size: 0.78rem; }
+  .main-card .balance-value { font-size: clamp(1.6rem, 8vw, 1.95rem); line-height: 1.15; }
+  .main-card .flow-row { gap: 10px; margin-top: 12px; }
+  .main-card .flow-col { padding: 10px 12px; border-radius: 16px; }
+  .main-card .flow-col p { margin-bottom: 6px; font-size: 0.7rem; }
+  .main-card .flow-col h4 { font-size: 0.98rem; }
+  .main-card .flow-ic { width: 22px; height: 22px; font-size: 0.62rem; }
+  #accounts .greeting-section { margin-bottom: 44px; }
+  /* sedikit lebih landai lagi, mendekati rasio 2:1 */
+  .main-card { padding: 14px 16px; }
+  .card-top-tag { min-height: 30px; margin-bottom: 4px; }
+  .main-card .flow-row { margin-top: 10px; }
+  .main-card .flow-col { padding: 8px 12px; }
+  .main-card .flow-col p { margin-bottom: 4px; }
+
+  /* kartu saldo ringkas (Beranda & Dompet) */
+  .main-card { padding: 14px 16px 16px; margin-bottom: 24px; border-radius: 26px; }
+  .card-top-tag { min-height: 34px; margin-bottom: 6px; }
+  .main-card .saldo-chip { margin: 0; padding: 6px 12px; font-size: 0.78rem; }
+  .main-card .balance-value { font-size: clamp(1.9rem, 9.5vw, 2.3rem); font-weight: 600; letter-spacing: -0.03em; }
+  .main-card .flow-row { gap: 10px; margin-top: 12px; }
+  .main-card .flow-col { padding: 10px 12px; border-radius: 18px; }
+  .main-card .flow-col p { margin-bottom: 6px; }
+  .main-card .flow-col h4 { font-size: 1rem; }
