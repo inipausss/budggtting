@@ -2,7 +2,7 @@
 (function () {
   const DB = 'budggt_db', CFG = 'budggt_cfg';
   const $ = id => document.getElementById(id);
-  const empty = () => ({ accounts: [], transactions: [], budgets: [], bills: [], goals: [], debts: [], kategori: [] });
+  const empty = () => ({ accounts: [], akunHapus: [], transactions: [], budgets: [], bills: [], goals: [], debts: [], kategori: [] });
   const load = () => { try { return JSON.parse(localStorage.getItem(DB)) || empty(); } catch (e) { return empty(); } };
   const save = d => localStorage.setItem(DB, JSON.stringify(d));
   const cfg = () => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } };
@@ -13,6 +13,62 @@
     cats: b.kategori ? [String(b.kategori).trim()] : [], alert: 80
   };
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2));
+
+  // ===== logika kategori: dipakai api di bawah DAN atur.js, supaya data di layar dan di penyimpanan selalu sama =====
+  const low = s => String(s == null ? '' : s).trim().toLowerCase();
+
+  // tambah / perbarui catatan kategori; field yang tidak dikirim tetap seperti semula
+  function upsertKat(d, x) {
+    d.kategori = d.kategori || [];
+    const nama = String(x.nama || '').trim();
+    if (!nama) return;
+    const jenis = x.jenis === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran';
+    const i = d.kategori.findIndex(y => y.jenis === jenis && low(y.nama) === low(nama));
+    const old = i > -1 ? d.kategori[i] : {};
+    const item = {
+      nama, jenis,
+      ikon: x.ikon !== undefined ? String(x.ikon || '') : (old.ikon || ''),
+      hidden: x.hidden !== undefined ? !!x.hidden : !!old.hidden
+    };
+    const u = x.urut !== undefined ? x.urut : old.urut;
+    if (u !== undefined && u !== null && u !== '' && isFinite(Number(u))) item.urut = Number(u);
+    const w = x.warna !== undefined ? x.warna : old.warna;
+    if (w) item.warna = String(w);
+    if (i > -1) d.kategori[i] = item; else d.kategori.push(item);
+  }
+
+  // urutan = posisi di daftar names (0, 1, 2, ...)
+  function urutKat(d, jenis, names) {
+    (names || []).forEach((n, i) => upsertKat(d, { nama: n, jenis, urut: i }));
+  }
+
+  // ganti nama kategori: transaksi lama, budget, dan tagihan ikut memakai nama baru (tidak ada yang hilang)
+  function ubahNamaKat(d, p) {
+    const jenis = p.jenis === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran', inc = jenis === 'Pemasukan';
+    const lama = low(p.lama), baru = String(p.baru || '').trim();
+    if (!lama || !baru) return;
+    (d.transactions || []).forEach(t => {
+      if (low(t.kategori) === lama && (t.jenis === 'Pemasukan') === inc) t.kategori = baru;
+    });
+    if (!inc) {
+      (d.budgets || []).forEach(b => {
+        if (Array.isArray(b.cats)) {
+          const seen = {};
+          b.cats = b.cats.map(c => low(c) === lama ? baru : c).filter(c => !seen[low(c)] && (seen[low(c)] = 1));
+        } else if (low(b.kategori) === lama) b.kategori = baru;
+      });
+      (d.bills || []).forEach(b => { if (low(b.kategori) === lama) b.kategori = baru; });
+    }
+    d.kategori = d.kategori || [];
+    if (lama !== low(baru)) {
+      // nama lama disembunyikan supaya tidak muncul lagi sebagai kategori bawaan
+      const o = d.kategori.find(r => r.jenis === jenis && low(r.nama) === lama);
+      if (o) o.hidden = true; else d.kategori.push({ nama: String(p.lama).trim(), jenis, ikon: '', hidden: true });
+    }
+    upsertKat(d, { nama: baru, jenis, ikon: p.ikon, hidden: false, warna: p.warna });
+    urutKat(d, jenis, p.order);
+  }
+  window.KatLogic = { upsertKat, urutKat, ubahNamaKat };
 
   async function remote(action, extra) {
     const c = cfg();
@@ -37,17 +93,22 @@
         });
         return { id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAkhir: s };
       });
-      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: (d.budgets || []).map(normB), bills: d.bills || [], goals: d.goals || [], debts: d.debts || [], kategori: d.kategori || [] };
+      return { user: 'Pengguna', accounts: d.accounts, akunHapus: d.akunHapus || [], accountSummary, transactions: d.transactions, budgets: (d.budgets || []).map(normB), bills: d.bills || [], goals: d.goals || [], debts: d.debts || [], kategori: d.kategori || [] };
     },
     addAccount(a) {
       const d = load();
       d.accounts.push({ id: uid(), nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAwal: Number(a.saldoAwal) || 0 });
       save(d);
     },
+    // rekening dihapus, tapi transaksinya TETAP ada (riwayat dan laporan utuh); nama rekening disimpan di akunHapus
     deleteAccount(id) {
       const d = load();
-      d.accounts = d.accounts.filter(a => a.id !== id);
-      d.transactions = d.transactions.filter(t => t.rekeningId !== id);
+      const a = d.accounts.find(x => x.id === id);
+      if (a) {
+        d.akunHapus = (d.akunHapus || []).filter(x => x.id !== id)
+          .concat([{ id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAwal: Number(a.saldoAwal) || 0 }]);
+      }
+      d.accounts = d.accounts.filter(x => x.id !== id);
       save(d);
     },
     updateAccount(a) {
@@ -147,12 +208,20 @@
       if (i > -1) d.debts[i] = item; else d.debts.push(item);
       save(d);
     },
-    setKategori(x) { // catatan kategori buatan sendiri / yang disembunyikan; kunci = jenis + nama
+    setKategori(x) { // catatan kategori buatan sendiri / disembunyikan / diurutkan; kunci = jenis + nama
       const d = load();
-      d.kategori = d.kategori || [];
-      const item = { nama: String(x.nama || '').trim(), jenis: x.jenis === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran', ikon: String(x.ikon || ''), hidden: !!x.hidden };
-      const i = d.kategori.findIndex(y => y.jenis === item.jenis && y.nama.toLowerCase() === item.nama.toLowerCase());
-      if (i > -1) d.kategori[i] = item; else d.kategori.push(item);
+      upsertKat(d, x);
+      save(d);
+    },
+    setKategoriBanyak(list) { // simpan banyak catatan sekaligus (mis. urutan baru)
+      const d = load();
+      (list || []).forEach(x => upsertKat(d, x));
+      save(d);
+    },
+    renameKategori(p) { // ganti nama kategori + ikut mengubah transaksi, budget, tagihan
+      const d = load();
+      d.budgets = (d.budgets || []).map(normB);
+      ubahNamaKat(d, p);
       save(d);
     },
     deleteDebt(id) {
@@ -218,6 +287,11 @@
     info();
     $('cfgProfil').value = c.profil || '';
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+
+    // muat atur.js (atur kategori, hapus rekening aman) SETELAH script.js selesai, supaya index.html tidak perlu diubah
+    const s = document.createElement('script');
+    s.src = 'atur.js';
+    document.head.appendChild(s);
   });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 })();
