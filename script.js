@@ -797,9 +797,10 @@ function walletHeroHtml() {
   // sengaja memakai kelas & susunan yang sama dengan kartu di Beranda supaya ukuran dan posisinya identik
   return `
     <div class="main-card">
-      <div class="card-top-tag"><span class="tag-pill"><i class="fa fa-wallet"></i> Saldo Tersedia</span></div>
+      <div class="card-top-tag">
+        <span class="saldo-chip" style="cursor: default;"><i class="fa fa-wallet"></i> Saldo · <i class="fa ${naik ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i> ${naik ? '+' : '-'}${Math.abs(s.pct).toFixed(1)}% (30 hari)</span>
+      </div>
       <div class="balance-row"><h2 class="balance-value">${format(s.saldo)}</h2></div>
-      <div class="saldo-chip" style="cursor: default;"><i class="fa ${naik ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i> <span>${naik ? '+' : '-'}${Math.abs(s.pct).toFixed(1)}% · 30 hari terakhir</span></div>
       <div class="flow-row">
         ${tile('fa-gem', 'Kekayaan', s.kekayaan)}
         ${tile('fa-piggy-bank', 'Tabungan', s.tabungan)}
