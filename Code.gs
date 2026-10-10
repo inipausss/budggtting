@@ -32,13 +32,15 @@ function writeSheet(name, head, rows, textCols) {
 
 function backup(d) {
   d = d || {};
-  var accounts = d.accounts || [], transactions = d.transactions || [];
+  var accounts = d.accounts || [], transactions = d.transactions || [], arsip = d.akunHapus || [];
   if (!accounts.length && !transactions.length) {
     return { ok: false, error: 'Data di HP kosong, backup dibatalkan (Restore dulu kalau ini HP baru)' };
   }
   var me = Session.getEffectiveUser().getEmail() || 'me';
-  writeSheet('Accounts', ['ID', 'Nama', 'Jenis', 'Nomor', 'Saldo Awal', 'User Email'],
-    accounts.map(function (a) { return [a.id, a.nama, a.jenis, a.nomor || '', Number(a.saldoAwal) || 0, me]; }), ['D']);
+  // kolom Arsip: 0 = rekening aktif, 1 = rekening yang sudah dihapus (transaksinya tetap disimpan)
+  writeSheet('Accounts', ['ID', 'Nama', 'Jenis', 'Nomor', 'Saldo Awal', 'User Email', 'Arsip'],
+    accounts.map(function (a) { return [a.id, a.nama, a.jenis, a.nomor || '', Number(a.saldoAwal) || 0, me, 0]; })
+      .concat(arsip.map(function (a) { return [a.id, a.nama, a.jenis, a.nomor || '', Number(a.saldoAwal) || 0, me, 1]; })), ['D']);
   writeSheet('Transactions', ['ID', 'Tanggal', 'Jenis', 'Kategori', 'Keterangan', 'Jumlah', 'Rekening ID', 'User Email'],
     transactions.slice().reverse().map(function (t) {
       return [t.id, t.tanggal, t.jenis, t.kategori, t.keterangan || '', Number(t.jumlah) || 0, t.rekeningId, me];
@@ -59,8 +61,11 @@ function backup(d) {
     (d.debts || []).map(function (x) {
       return [x.id, x.nama, x.tipe, Number(x.jumlah) || 0, Number(x.terbayar) || 0, x.jatuh || '', x.catatan || '', me];
     }), ['F']);
-  writeSheet('Categories', ['Nama', 'Jenis', 'Ikon', 'Tersembunyi', 'User Email'],
-    (d.kategori || []).map(function (k) { return [k.nama, k.jenis, k.ikon || '', k.hidden ? 1 : 0, me]; }));
+  // Urut = posisi kategori di daftar, Warna = warna ikon (tetap walau nama diganti)
+  writeSheet('Categories', ['Nama', 'Jenis', 'Ikon', 'Tersembunyi', 'User Email', 'Urut', 'Warna'],
+    (d.kategori || []).map(function (k) {
+      return [k.nama, k.jenis, k.ikon || '', k.hidden ? 1 : 0, me, typeof k.urut === 'number' ? k.urut : '', k.warna || ''];
+    }));
   return { ok: true };
 }
 
@@ -70,11 +75,15 @@ function restore() {
     var s = ss.getSheetByName(n);
     return s && s.getLastRow() > 1 ? s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues() : [];
   }
+  var accRows = rows('Accounts');
   return {
     ok: true,
     data: {
-      accounts: rows('Accounts').map(function (r) {
+      accounts: accRows.filter(function (r) { return !r[6]; }).map(function (r) {
         return { id: r[0], nama: r[1], jenis: r[2], nomor: r[3] ? String(r[3]) : '', saldoAwal: Number(r[4]) || 0 };
+      }),
+      akunHapus: accRows.filter(function (r) { return !!r[6]; }).map(function (r) {
+        return { id: r[0], nama: String(r[1]), jenis: r[2], nomor: r[3] ? String(r[3]) : '', saldoAwal: Number(r[4]) || 0 };
       }),
       transactions: rows('Transactions').reverse().map(function (r) {
         return {
@@ -102,7 +111,10 @@ function restore() {
         };
       }),
       kategori: rows('Categories').map(function (r) {
-        return { nama: String(r[0]), jenis: r[1] === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran', ikon: r[2] ? String(r[2]) : '', hidden: r[3] === true || Number(r[3]) === 1 };
+        var k = { nama: String(r[0]), jenis: r[1] === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran', ikon: r[2] ? String(r[2]) : '', hidden: r[3] === true || Number(r[3]) === 1 };
+        if (typeof r[5] === 'number') k.urut = r[5];
+        if (r[6]) k.warna = String(r[6]);
+        return k;
       }),
       bills: rows('Bills').map(function (r) {
         return {
