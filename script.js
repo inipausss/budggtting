@@ -23,6 +23,15 @@ function monthLabel(key) {
 // ===== LAPORAN (Ringkasan + Transaksi, satu state bulan bersama) =====
 let recapMonth = currentMonthKey();
 let reportTab = 'ringkasan'; // 'ringkasan' | 'transaksi'
+let recapJenis = 'Pengeluaran'; // 'Pengeluaran' | 'Pemasukan': jenis yang dirinci di Ringkasan
+let recapTopMode = 'kategori'; // 'kategori' | 'transaksi'
+
+function setRecapJenis(j) {
+  recapJenis = j === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran';
+  ['Pemasukan', 'Pengeluaran'].forEach(k => { const b = document.getElementById('rj-' + k); if (b) b.classList.toggle('active', k === recapJenis); });
+  renderRecap();
+}
+function setRecapTop(m) { recapTopMode = m; renderRecapDetails(); }
 
 function shiftRecap(delta) {
   const [y, m] = recapMonth.split('-').map(Number);
@@ -95,9 +104,120 @@ function renderRecap() {
     </div>`;
 
   renderFlowChart();
+  renderRecapDetails();
   renderTrend();
   renderRecapHistory();
   renderFullTransactions();
+}
+
+// ===== DETAIL RINGKASAN: perbandingan bulan, tren saldo, rata-rata, peta aktivitas, top =====
+let cmpChart, netChart;
+const daysIn = key => { const [y, m] = key.split('-').map(Number); return new Date(y, m, 0).getDate(); };
+const prevKey = key => { const [y, m] = key.split('-').map(Number); const d = new Date(y, m - 2, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const cssVar = n => getComputedStyle(document.body).getPropertyValue(n).trim();
+
+// jumlah per hari (indeks 0 = tanggal 1); pilih: fungsi yang memberi nilai (+/-) tiap transaksi
+function perHari(key, nilai) {
+  const a = Array(daysIn(key)).fill(0);
+  inMonth(globalData.transactions, key).filter(t => !netral(t)).forEach(t => {
+    const d = Number((t.tanggal || '').slice(8, 10));
+    if (d >= 1 && d <= a.length) a[d - 1] += nilai(t);
+  });
+  return a;
+}
+const kumulatif = a => { let s = 0; return a.map(v => (s += v)); };
+
+function lineChart(old, canvasId, series, fill) {
+  const el = document.getElementById(canvasId);
+  if (old) old.destroy();
+  if (!el) return null;
+  const muted = cssVar('--text-muted'), grid = cssVar('--border-color');
+  return new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: { labels: series[0].data.map((_, i) => i + 1), datasets: series.map((s, i) => ({
+      data: s.data, borderColor: s.color, borderWidth: i ? 1.5 : 2.5, borderDash: i ? [5, 4] : [], pointRadius: 0, tension: 0.3,
+      fill: !i && fill, backgroundColor: !i && fill ? `color-mix(in srgb, ${s.color} 14%, transparent)` : 'transparent', spanGaps: false
+    })) },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { title: it => 'Tgl ' + it[0].label, label: c => ' ' + format(c.parsed.y) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: muted, font: { size: 10 }, maxRotation: 0, callback: (v, i) => (i === 0 || (i + 1) % 10 === 1) ? i + 1 : '' } },
+        y: { grid: { color: grid }, border: { display: false }, ticks: { color: muted, font: { size: 10 }, maxTicksLimit: 4, callback: v => (v < 0 ? '-' : '') + formatShort(Math.abs(v)) } }
+      }
+    }
+  });
+}
+
+function renderRecapDetails() {
+  if (typeof Chart === 'undefined') return;
+  const exp = recapJenis === 'Pengeluaran';
+  const warna = cssVar(exp ? '--neg' : '--pos'), muted = cssVar('--text-muted');
+  const isNow = recapMonth === currentMonthKey();
+  const nDays = daysIn(recapMonth), today = new Date().getDate();
+  const upto = isNow ? today : nDays; // hari yang sudah berjalan
+  const nilai = t => t.jenis === recapJenis ? (Number(t.jumlah) || 0) : 0;
+
+  // 1) perbandingan kumulatif dengan bulan lalu
+  const cur = kumulatif(perHari(recapMonth, nilai)), prev = kumulatif(perHari(prevKey(recapMonth), nilai));
+  const curS = cur.map((v, i) => i < upto ? v : null), prevS = Array.from({ length: nDays }, (_, i) => prev[Math.min(i, prev.length - 1)] ?? 0);
+  const a = cur[upto - 1] || 0, b = prevS[upto - 1] || 0;
+  const bd = document.getElementById('cmpBadge'), sub = document.getElementById('cmpSub');
+  if (b <= 0 && a <= 0) { bd.innerHTML = ''; sub.innerText = 'Belum ada data untuk dibandingkan.'; }
+  else if (b <= 0) { bd.innerHTML = ''; sub.innerText = 'Bulan lalu belum ada ' + recapJenis.toLowerCase() + '.'; }
+  else {
+    const pct = (a - b) / b * 100, naik = pct >= 0, baik = exp ? !naik : naik;
+    bd.innerHTML = `<i class="fa fa-arrow-${naik ? 'trend-up' : 'trend-down'}"></i> ${Math.abs(pct).toFixed(0)}%`;
+    bd.style.color = baik ? 'var(--pos)' : 'var(--neg)'; bd.style.background = baik ? 'var(--pos-bg)' : 'var(--neg-bg)';
+    sub.innerText = recapJenis + (naik ? ' lebih tinggi' : ' lebih rendah') + ' dari bulan lalu pada tanggal yang sama.';
+  }
+  document.getElementById('cmpDotA').style.background = warna;
+  cmpChart = lineChart(cmpChart, 'chartCmp', [{ data: curS, color: warna }, { data: prevS, color: muted }], false);
+
+  // 2) tren saldo bersih (pemasukan - pengeluaran)
+  const net = t => t.jenis === 'Pemasukan' ? (Number(t.jumlah) || 0) : -(Number(t.jumlah) || 0);
+  const nc = kumulatif(perHari(recapMonth, net)), np = kumulatif(perHari(prevKey(recapMonth), net));
+  const ncS = nc.map((v, i) => i < upto ? v : null), npS = Array.from({ length: nDays }, (_, i) => np[Math.min(i, np.length - 1)] ?? 0);
+  const nb = document.getElementById('netBadge'), last = nc[upto - 1] || 0;
+  nb.innerText = (last < 0 ? '- ' : '') + format(Math.abs(last)); nb.style.color = last >= 0 ? 'var(--pos)' : 'var(--neg)'; nb.style.background = last >= 0 ? 'var(--pos-bg)' : 'var(--neg-bg)';
+  netChart = lineChart(netChart, 'chartNet', [{ data: ncS, color: cssVar('--primary') }, { data: npS, color: muted }], true);
+
+  // 3) rata-rata harian + proyeksi
+  const total = cur[nDays - 1] || 0, avg = total / Math.max(upto, 1);
+  document.getElementById('recapAvg').innerHTML = `
+    <div style="display: flex; justify-content: space-between; gap: 12px;">
+      <div><p class="rd-sub">Rata-rata Harian</p><b class="rd-big">${format(Math.round(avg))}</b></div>
+      <div style="text-align: right;"><p class="rd-sub">${isNow ? 'Proyeksi Total' : 'Total Bulan Ini'}</p><b class="rd-big">${format(Math.round(isNow ? avg * nDays : total))}</b></div>
+    </div>
+    ${isNow ? `<p class="rd-note"><i class="fa fa-circle-info"></i> Berdasarkan kebiasaanmu sejauh bulan ini.</p>` : ''}`;
+
+  // 4) peta aktivitas
+  const harian = perHari(recapMonth, nilai), maks = Math.max(...harian, 0);
+  const [y, m] = recapMonth.split('-').map(Number), geser = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+  const lv = v => v <= 0 ? 0 : Math.min(4, Math.ceil(v / maks * 4));
+  const warnaLv = l => l ? `color-mix(in srgb, ${warna} ${[0, 22, 40, 62, 90][l]}%, transparent)` : 'var(--circle-bg)';
+  let cells = '<i></i>'.repeat(geser);
+  harian.forEach((v, i) => { const l = lv(v); cells += `<div class="heat-c" style="background: ${warnaLv(l)}; color: ${l >= 3 ? '#fff' : 'var(--text-main)'};"><span>${i + 1}</span>${v > 0 ? `<em>${formatShort(v)}</em>` : ''}</div>`; });
+  document.getElementById('recapHeat').innerHTML = `
+    <h3 class="rd-title">Peta Aktivitas</h3>
+    <div class="heat-h">${['S', 'S', 'R', 'K', 'J', 'S', 'M'].map(d => `<span>${d}</span>`).join('')}</div>
+    <div class="heat">${cells}</div>
+    <div class="heat-leg">Sedikit ${[1, 2, 3, 4].map(l => `<i style="background: ${warnaLv(l)};"></i>`).join('')} Banyak</div>`;
+
+  // 5) top 5
+  let rows;
+  if (recapTopMode === 'transaksi') {
+    rows = inMonth(globalData.transactions, recapMonth).filter(t => !netral(t) && t.jenis === recapJenis)
+      .sort((x, z) => (Number(z.jumlah) || 0) - (Number(x.jumlah) || 0)).slice(0, 5)
+      .map(t => ({ nama: (t.keterangan || '').trim() || t.kategori || '-', sub: t.kategori + ' · ' + t.tanggal.slice(8, 10) + '/' + t.tanggal.slice(5, 7), jumlah: Number(t.jumlah) || 0 }));
+  } else {
+    rows = catData(recapMonth).list.slice(0, 5).map(c => ({ nama: c.nama, sub: c.n + ' transaksi', jumlah: c.jumlah }));
+  }
+  const tb = (k, t) => `<button type="button" class="${recapTopMode === k ? 'on' : ''}" onclick="setRecapTop('${k}')">${t}</button>`;
+  document.getElementById('recapTop').innerHTML = `
+    <div class="rd-head"><h3 class="rd-title">Top ${exp ? 'Pengeluaran' : 'Pemasukan'}</h3><div class="rd-tog">${tb('kategori', 'Kategori')}${tb('transaksi', 'Transaksi')}</div></div>
+    ${rows.length ? rows.map((r, i) => `<div class="top-r"><span class="top-n">${i + 1}</span><div style="flex: 1; min-width: 0;"><strong>${esc(r.nama)}</strong><p class="rd-sub">${esc(r.sub)}</p></div><b>${format(r.jumlah)}</b></div>`).join('') : `<p class="rd-sub" style="text-align: center; padding: 16px 0;">Belum ada data.</p>`}`;
 }
 
 function renderRecapHistory() {
@@ -1985,11 +2105,11 @@ function catPalette(n) {
 const catLainnya = () => catGelap() ? '#52525b' : '#94a3b8';
 const CAT_TOP = 3; // di halaman Laporan hanya 5 teratas, sisanya digabung
 
-function catData(key) {
+function catData(key, jenis = recapJenis) {
   const map = new Map();
   let total = 0;
   inMonth(globalData.transactions, key)
-    .filter(t => !netral(t) && t.jenis === 'Pengeluaran')
+        .filter(t => !netral(t) && t.jenis === jenis)
     .forEach(t => {
       const n = Number(t.jumlah) || 0;
       const nama = (t.kategori || '').trim() || 'Lainnya';
@@ -2027,6 +2147,9 @@ function renderFlowChart() {
   const canvasEl = document.getElementById('chartFlow');
   if (!canvasEl) return;
 
+  const jl = recapJenis === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran';
+  const ct = document.getElementById('catTitle'); if (ct) ct.innerText = jl + ' per Kategori';
+  const cl = document.getElementById('catCenterLbl'); if (cl) cl.innerText = jl;
   const { list, total } = catData(recapMonth);
   let rows = list;
   if (list.length > CAT_TOP + 1) {
@@ -2048,7 +2171,7 @@ function renderFlowChart() {
   if (total <= 0) {
     if (card) card.style.display = 'none';
     if (btn) btn.style.display = 'none';
-    if (legend) legend.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 15px 0; font-size: 0.85rem;">Belum ada data pengeluaran bulan ini</p>`;
+    if (legend) legend.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 15px 0; font-size: 0.85rem;">Belum ada data ${recapJenis.toLowerCase()} bulan ini</p>`;
     return;
   }
 
@@ -2095,13 +2218,14 @@ function renderCatDetail() {
   const box = document.getElementById('catDetailList');
   const canvasEl = document.getElementById('chartCatDetail');
   document.getElementById('catDetailMonth').innerText = monthLabel(recapMonth);
+  document.getElementById('catDetailTitle').innerText = 'Detail ' + recapJenis;
   document.getElementById('catDetailTotal').innerText = format(total);
 
   if (catDetailChart) { catDetailChart.destroy(); catDetailChart = null; }
 
   if (total <= 0) {
     card.style.display = 'none';
-    box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada pengeluaran di bulan ini</p>`;
+    box.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">Belum ada ${recapJenis.toLowerCase()} di bulan ini</p>`;
     return;
   }
 
