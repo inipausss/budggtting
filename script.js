@@ -313,8 +313,8 @@ function customVars() {
     '--primary': a, '--primary-hover': mix(a, 85, '#000'), '--app-bg': bg,
     '--bg-main': d ? mix(bg, 55, '#000') : mix(bg, 97, '#000'),
     // permukaan netral (tanpa rona), lebih terang dari latar supaya kartu jelas terpisah; aksen hanya untuk hal penting
-    '--card-bg': d ? mix(bg, 89, '#fff') : mix(bg, 40, '#fff'),
-    '--border-color': d ? mix(bg, 80, '#fff') : mix(bg, 88, '#000'),
+    '--card-bg': d ? mix(bg, 92, '#fff') : mix(bg, 40, '#fff'),
+    '--border-color': d ? mix(bg, 84, '#fff') : mix(bg, 88, '#000'),
     '--circle-bg': d ? mix(bg, 84, '#fff') : mix(bg, 96, '#000'),
     '--pos': d ? '#4caf50' : '#15803d',
     '--neg': d ? '#f44336' : '#dc2626',
@@ -868,7 +868,7 @@ function goalCardHtml(g) {
   const pct = target > 0 ? Math.min(100, got / target * 100) : 0;
   const done = target > 0 && got >= target;
   const terkunci = !!g.kunci && !done;
-  const warna = done ? 'var(--pos)' : GOAL_WARNA;
+  const warna = done ? 'var(--pos)' : 'var(--primary)';
   return `
     <div class="acc-card" id="acc-card-g_${g.id}">
       <div class="acc-header" onclick="toggleAccDropdown('g_${g.id}')">
@@ -1108,7 +1108,7 @@ function debtCardHtml(d) {
           <p class="wl-cap">dari ${format(total)}</p>
         </div>
       </div>
-      <div class="budget-track" style="margin-top: 12px;"><div class="budget-fill" style="width: ${pct}%; background: ${warna};"></div></div>
+      <div class="budget-track" style="margin-top: 12px;"><div class="budget-fill" style="width: ${pct}%; background: var(--primary);"></div></div>
       ${d.catatan ? `<p class="wl-cap" style="margin-top: 8px;">${esc(d.catatan)}</p>` : ''}
       <div class="wl-actions" style="justify-content: flex-start; flex-wrap: wrap; margin-top: 14px;">
         ${sisa > 0 ? `<button type="button" class="wl-btn p" onclick="openDebtPay('${d.id}')"><i class="fa ${utang ? 'fa-arrow-up' : 'fa-arrow-down'}"></i> ${utang ? 'Bayar' : 'Terima'}</button>` : ''}
@@ -2380,8 +2380,8 @@ function renderTrend() {
     data: {
       labels,
       datasets: [
-        { label: 'Masuk', data: inc, backgroundColor: accent(), borderRadius: 4 },
-        { label: 'Keluar', data: exp, backgroundColor: getComputedStyle(document.body).getPropertyValue('--neg').trim() || '#e11d48', borderRadius: 4 }
+        { label: 'Masuk', data: inc, backgroundColor: cssVar('--pos'), borderRadius: 4 },
+        { label: 'Keluar', data: exp, backgroundColor: cssVar('--neg'), borderRadius: 4 }
       ]
     },
     options: {
@@ -2485,7 +2485,8 @@ function renderCalendar(transactions) {
 // ===== BUDGET: halaman sendiri; tiap budget punya nama, periode, banyak kategori, dan batas peringatan sendiri =====
 const BUDGET_KUNING = 50;  // % mulai kuning, dihitung relatif terhadap batas peringatan (50/80)
 const BUDGET_MERAH = 80;   // batas peringatan bawaan (%)
-const BUDGET_WARNA = ['var(--pos)', 'var(--warn)', 'var(--neg)']; // hijau, kuning, merah
+const BUDGET_WARNA = ['var(--primary)', 'var(--warn)', 'var(--neg)']; // aman = warna aksen tema, lalu kuning, merah
+const BUDGET_TEKS = ['var(--ink-accent)', 'var(--warn)', 'var(--neg)']; // versi yang terbaca sebagai teks
 const BUDGET_STATUS = ['Aman', 'Hati-hati', 'Hampir habis'];
 const KAT_IKON = { makanan: 'fa-utensils', belanja: 'fa-bag-shopping', transport: 'fa-car-side', tagihan: 'fa-file-invoice', hiburan: 'fa-film', kesehatan: 'fa-heart-pulse', investasi: 'fa-chart-line', lainnya: 'fa-ellipsis', gaji: 'fa-money-bill-wave', bonus: 'fa-star', bisnis: 'fa-store', hadiah: 'fa-gift' };
 const katIkon = k => {
@@ -2554,14 +2555,14 @@ function budgetCardHtml(b) {
   const spent = spentFor(b);
   const pct = b.batas > 0 ? spent / b.batas * 100 : 0;
   const lv = budgetLevel(b, pct);
-  const warna = BUDGET_WARNA[lv];
+  const warna = BUDGET_WARNA[lv], teks = BUDGET_TEKS[lv];
   const sisa = b.batas - spent;
   const status = pct >= 100 ? 'Melebihi budget' : BUDGET_STATUS[lv];
   return `
     <div class="list-card" onclick="openBudgetForm('${b.id}')" style="cursor: pointer;">
       <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px;">
         <strong style="font-size: 1rem;">${esc(b.nama)}</strong>
-        <span style="font-size: 0.75rem; font-weight: 500; color: ${warna}; white-space: nowrap;">${status} · ${Math.round(pct)}%</span>
+        <span style="font-size: 0.75rem; font-weight: 500; color: ${teks}; white-space: nowrap;">${status} · ${Math.round(pct)}%</span>
       </div>
       <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px;">${b.periode === 'mingguan' ? 'Mingguan' : 'Bulanan'} · ${budgetRangeLabel(b)} · ${b.cats.map(esc).join(', ')}</p>
       <div class="budget-track"><div class="budget-fill" style="width: ${Math.min(pct, 100)}%; background: ${warna};"></div></div>
@@ -2602,7 +2603,7 @@ function renderBudgetPage(list) {
   const spent = list.reduce((s, b) => s + spentFor(b), 0);
   const pct = batas > 0 ? spent / batas * 100 : 0;
   const lv = budgetLevel({ alert: BUDGET_MERAH }, pct);
-  const warna = BUDGET_WARNA[lv];
+  const warna = BUDGET_WARNA[lv], teks = BUDGET_TEKS[lv];
   const sisa = batas - spent;
   const arc = 'M10 60 A50 50 0 0 1 110 60';
   body.innerHTML = `
@@ -2614,7 +2615,7 @@ function renderBudgetPage(list) {
           <h2 class="bgt-big">${format(Math.abs(sisa))}</h2>
           <p class="bgt-cap">dari ${list.length} budget aktif</p>
         </div>
-        <span class="bgt-badge" style="color: ${warna}; background: color-mix(in srgb, ${warna} 12%, transparent);"><i class="fa ${lv === 0 ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${pct >= 100 ? 'Melebihi' : BUDGET_STATUS[lv]}</span>
+        <span class="bgt-badge" style="color: ${teks}; background: color-mix(in srgb, ${warna} 12%, transparent);"><i class="fa ${lv === 0 ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${pct >= 100 ? 'Melebihi' : BUDGET_STATUS[lv]}</span>
       </div>
       <div class="bgt-gauge">
         <svg viewBox="0 0 120 68"><path d="${arc}" fill="none" stroke="var(--border-color)" stroke-width="12" stroke-linecap="round"/>${pct > 0 ? `<path d="${arc}" fill="none" stroke="${warna}" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="${Math.min(pct, 100)} 100"/>` : ''}</svg>
@@ -2728,7 +2729,7 @@ function removeBudgetForm() {
 function showToast(msg, lv) {
   const el = document.createElement('div');
   el.className = 'toast';
-  el.style.background = ['#4d7c0f', '#eab308', '#be123c'][lv] || '#be123c';
+  el.style.background = ['var(--pos)', 'var(--warn)', 'var(--neg)'][lv] || 'var(--neg)';
   if (lv === 1) el.style.color = '#000';
   el.innerText = msg;
   document.body.appendChild(el);
