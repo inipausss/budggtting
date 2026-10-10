@@ -168,7 +168,7 @@ try { themePref = localStorage.getItem(THEME_KEY) || (localStorage.getItem('them
 const CUSTOM_KEY = 'budggt_theme_custom';
 let themeCustom = { dark: true, accent: '#a78bfa', bg: null };
 try { Object.assign(themeCustom, JSON.parse(localStorage.getItem(CUSTOM_KEY) || '{}')); } catch (e) {}
-const CUSTOM_VARS = ['--primary', '--primary-hover', '--bg-main', '--app-bg', '--card-bg', '--border-color', '--circle-bg', '--circle-icon', '--text-main', '--text-muted', '--hero'];
+const CUSTOM_VARS = ['--pos', '--neg', '--warn', '--primary', '--primary-hover', '--bg-main', '--app-bg', '--card-bg', '--border-color', '--circle-bg', '--circle-icon', '--text-main', '--text-muted', '--hero'];
 const CUSTOM_AKSEN = ['#ccff00', '#fbbf24', '#fb923c', '#f87171', '#f472b6', '#c084fc', '#a78bfa', '#60a5fa', '#22d3ee', '#4ade80'];
 const CUSTOM_BG = {
   true:  ['#0f1115', '#000000', '#0b1020', '#17110d', '#0d1a14', '#1a0f1a'],
@@ -192,9 +192,13 @@ function customVars() {
   return {
     '--primary': a, '--primary-hover': mix(a, 85, '#000'), '--app-bg': bg,
     '--bg-main': d ? mix(bg, 55, '#000') : mix(bg, 97, '#000'),
-    '--card-bg': d ? mix(bg, 92, '#fff') : mix(bg, 40, '#fff'),
-    '--border-color': d ? mix(bg, 82, '#fff') : mix(bg, 88, '#000'),
-    '--circle-bg': d ? mix(bg, 86, '#fff') : mix(bg, 96, '#000'),
+    // permukaan netral (tanpa rona), lebih terang dari latar supaya kartu jelas terpisah; aksen hanya untuk hal penting
+    '--card-bg': d ? mix(bg, 89, '#fff') : mix(bg, 40, '#fff'),
+    '--border-color': d ? mix(bg, 80, '#fff') : mix(bg, 88, '#000'),
+    '--circle-bg': d ? mix(bg, 84, '#fff') : mix(bg, 96, '#000'),
+    '--pos': d ? mix(a, 25, '#6ee7a0') : mix(a, 25, '#15803d'),
+    '--neg': d ? mix('#fb7185', 85, a) : '#e11d48',
+    '--warn': d ? mix('#facc15', 85, a) : '#a16207',
     '--circle-icon': d ? '#e5e7eb' : '#334155',
     '--text-main': d ? '#f3f4f6' : '#0f172a', '--text-muted': d ? '#9ca3af' : '#64748b',
     '--hero': `linear-gradient(135deg, ${mix(a, 30, '#000')} 0%, ${mix(a, 62, '#000')} 55%, ${a} 100%)`
@@ -1971,8 +1975,12 @@ function saveProfile(e) {
 
 
 // ===== DONUT PENGELUARAN PER KATEGORI =====
-const CAT_PALETTE = ['#ccff00', '#f43f5e', '#38bdf8', '#f59e0b', '#a855f7', '#22c55e', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#eab308'];
-const CAT_LAINNYA = '#64748b';
+// palet donat: irisan terbesar = warna aksen tema, sisanya tingkatan abu netral (tenang, tidak ramai)
+const CAT_ABU = ['#e4e4e7', '#c4c4cc', '#a1a1aa', '#8b8b94', '#75757e', '#686871', '#d4d4d8', '#9a9aa3'];
+function catPalette(n) {
+  return Array.from({ length: n }, (_, i) => i === 0 ? accent() : CAT_ABU[(i - 1) % CAT_ABU.length]);
+}
+const CAT_LAINNYA = '#52525b';
 const CAT_TOP = 3; // di halaman Laporan hanya 5 teratas, sisanya digabung
 
 function catData(key) {
@@ -1991,8 +1999,9 @@ function catData(key) {
       total += n;
     });
   const list = [...map.values()].sort((a, b) => b.jumlah - a.jumlah);
+  const pal = catPalette(list.length);
   list.forEach((c, i) => {
-    c.warna = CAT_PALETTE[i % CAT_PALETTE.length];
+    c.warna = pal[i];
     c.pct = total > 0 ? c.jumlah / total * 100 : 0;
   });
   return { list, total };
