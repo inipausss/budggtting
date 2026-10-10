@@ -490,6 +490,19 @@
     </div>
   </div>
 
+  <div id="modalKat" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Kategori Baru</h3>
+        <button onclick="toggleModal('modalKat')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <input id="katNama" class="input-field" placeholder="Nama kategori (cth: Jajan)" maxlength="20" autocomplete="off">
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Pilih ikon</p>
+      <div id="katIcons" class="ic-grid"></div>
+      <button onclick="submitKat()" class="btn-primary">Simpan</button>
+    </div>
+  </div>
+
   <div id="modalAccount" class="modal hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
