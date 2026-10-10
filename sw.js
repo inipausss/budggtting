@@ -1,4 +1,4 @@
-const C = 'budggt-v12'; // naikkan (v12, v13...) kalau mau paksa refresh semua cache
+const C = 'budggt-v22'; // naikkan (v12, v13...) kalau mau paksa refresh semua cache
 const OCR = 'budggt-ocr'; // aset pembaca struk (~10 MB) disimpan terpisah supaya tidak diunduh ulang tiap versi naik
 const isOcr = u => /tesseract|tessdata/i.test(u);
 const F = ['./', './index.html', './style.css', './script.js', './gas-shim.js', './manifest.json', './icon-192.png', './icon-512.png'];
