@@ -1637,57 +1637,136 @@ function showUndo(msg, onUndo) {
   setTimeout(() => el.remove(), 6000);
 }
 
-// SCANNER STRUK AI
+// ===== SCANNER STRUK: OCR di HP dulu (gratis, foto tidak dikirim ke mana pun); AI hanya kalau OCR gagal dan kamu setuju =====
+// ponytail: parser berbasis kata kunci "TOTAL" + angka; akurasi bergantung kualitas foto. Kalau sering meleset, tambahkan kata kunci toko di STRUK_KAT.
+const STRUK_KAT = [ // urutan = prioritas; [kategori, kata kunci]
+  ['Kesehatan', /apotek|apotik|kimia farma|guardian|k-?24|klinik|rumah sakit|\brs\b|dokter|century/],
+  ['Transport', /spbu|pertamina|shell|\bbp\b|bensin|pertalite|pertamax|parkir|\btol\b|grab|gojek|bluebird|\bkai\b|damri/],
+  ['Tagihan', /\bpln\b|listrik|pdam|indihome|telkom|pulsa|token|bpjs/],
+  ['Hiburan', /bioskop|cinema|\bxxi\b|cgv|netflix|spotify|timezone/],
+  ['Makanan', /resto|cafe|kafe|kopi|coffee|warung|bakso|mie |ayam|nasi|kfc|mcd|burger|pizza|starbucks|bakery|roti|geprek|sate|sushi|boba|chatime|food|dapur/],
+  ['Belanja', /indomaret|alfamart|alfa |superindo|hypermart|lotte|carrefour|transmart|giant|ranch|mart\b|minimarket|toserba|swalayan/]
+];
+const BULAN_ID = { jan: 1, feb: 2, mar: 3, apr: 4, mei: 5, jun: 6, jul: 7, agu: 8, ags: 8, aug: 8, sep: 9, okt: 10, oct: 10, nov: 11, des: 12, dec: 12 };
+
+// "45.000,00" / "1,250,000" / "Rp 12.500" -> angka bulat; null kalau bukan nominal
+function angkaStruk(tok) {
+  const n = Number(tok.replace(/[.,]\d{2}$/, '').replace(/\D/g, '')); // ",00" di belakang = desimal, dibuang
+  return n > 0 && n < 1e9 ? n : null;
+}
+
+function parseStruk(text, hariIni) {
+  const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const low = lines.map(l => l.toLowerCase());
+  const nums = l => (l.match(/\d[\d.,]*/g) || []).map(angkaStruk).filter(n => n && n >= 100);
+  const buruk = /tunai|cash|kembali|change|diskon|disc|ppn|pajak|tax|hemat|poin|point|voucher/;
+
+  // 1) baris "TOTAL" (grand total / total bayar / total belanja); angka di baris itu atau baris berikutnya
+  let jumlah = null;
+  for (const re of [/grand\s*total|total\s*(bayar|belanja|tagihan|pembayaran)|total\s*akhir|netto/, /(^|[^a-z])total([^a-z]|$)/, /tagihan|jumlah|amount/]) {
+    for (let i = 0; i < lines.length && !jumlah; i++) {
+      if (!re.test(low[i]) || buruk.test(low[i]) || /sub\s*total|subtotal|item|qty/.test(low[i])) continue;
+      const n = nums(lines[i]).pop() || nums(lines[i + 1] || '').pop();
+      if (n) jumlah = n;
+    }
+    if (jumlah) break;
+  }
+  // 2) tidak ada kata TOTAL: nominal terbesar yang berformat ribuan (bukan nomor telepon/NPWP) dan bukan uang tunai/kembalian
+  if (!jumlah) {
+    const k = [];
+    lines.forEach((l, i) => { if (!buruk.test(low[i])) (l.match(/\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?/g) || []).forEach(t => { const n = angkaStruk(t); if (n) k.push(n); }); });
+    jumlah = k.length ? Math.max(...k) : null;
+  }
+  if (!jumlah) return null;
+
+  // tanggal: dd/mm/yyyy, dd-mm-yy, yyyy-mm-dd, atau "12 Okt 2026"; tidak valid atau di masa depan -> hari ini
+  const hari = hariIni || todayStr();
+  let tanggal = hari;
+  const body = low.join(' ');
+  const cek = (y, m, d) => {
+    y = y < 100 ? 2000 + y : y;
+    const t = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    return y >= 2000 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= new Date(y, m, 0).getDate() && t <= hari ? t : null;
+  };
+  let m;
+  if ((m = body.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))) tanggal = cek(+m[1], +m[2], +m[3]) || tanggal;
+  else if ((m = body.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))) tanggal = cek(+m[3], +m[2], +m[1]) || tanggal;
+  else if ((m = body.match(/\b(\d{1,2})\s*(jan|feb|mar|apr|mei|jun|jul|agu|ags|aug|sep|okt|oct|nov|des|dec)[a-z]*\.?\s*(\d{2,4})\b/))) tanggal = cek(+m[3], BULAN_ID[m[2]], +m[1]) || tanggal;
+
+  // kategori dari nama toko / isi struk, lalu dicocokkan ke kategori yang sudah ada di app
+  const hit = STRUK_KAT.find(([, re]) => re.test(body));
+  return { jumlah, tanggal, kategori: hit ? hit[0] : 'Lainnya' };
+}
+
+let tessMuat = null;
+function muatTesseract() {
+  if (window.Tesseract) return Promise.resolve();
+  return tessMuat || (tessMuat = new Promise((ok, gagal) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    s.onload = ok;
+    s.onerror = () => { tessMuat = null; gagal(new Error('pembaca struk belum terunduh (butuh internet sekali)')); };
+    document.head.appendChild(s);
+  }));
+}
+
+function gambarKeCanvas(img, lebar, kontras) {
+  const k = Math.min(1, lebar / img.width);
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const ctx = c.getContext('2d');
+  if (kontras) ctx.filter = 'grayscale(1) contrast(1.4)'; // struk thermal pudar lebih mudah dibaca
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+
+async function ocrStruk(canvas) {
+  await muatTesseract();
+  const w = await Tesseract.createWorker('ind');
+  try { return (await w.recognize(canvas)).data.text; } finally { await w.terminate(); }
+}
+
+function isiHasilScan(res) {
+  document.getElementById("jumlah").value = res.jumlah ? formatRupiahInput(res.jumlah) : '';
+  document.getElementById("kategori").value = matchKategori(res.kategori) || '';
+  document.getElementById("jenis").value = "Pengeluaran";
+  onJenisChange();
+  if (res.tanggal) document.getElementById("tanggal").value = res.tanggal;
+  trxDateLabel();
+}
+
 function handleReceipt(e) {
   const file = e.target.files[0];
+  e.target.value = ''; // foto yang sama boleh dipilih lagi
   if (!file) return;
-  
-  let activeBtnId = e.target.id === 'scanCamera' ? 'btnCam' : 'btnGal';
-  const btn = document.getElementById(activeBtnId);
-  
-  let originalHTML = '';
-  if (btn) {
-    originalHTML = btn.innerHTML;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
-    btn.disabled = true;
-  }
+
+  const btn = document.getElementById(e.target.id === 'scanCamera' ? 'btnCam' : 'btnGal');
+  const html0 = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>'; btn.disabled = true; }
+  const selesai = () => { if (btn) { btn.innerHTML = html0; btn.disabled = false; } };
+  if (!window.Tesseract) showToast('Menyiapkan pembaca struk... pertama kali butuh internet', 1);
 
   const reader = new FileReader();
-  reader.onload = function(evt) {
+  reader.onload = evt => {
     const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 800;
-      let scaleSize = MAX_WIDTH / img.width;
-      if (scaleSize > 1) scaleSize = 1;
-      canvas.width = img.width * scaleSize;
-      canvas.height = img.height * scaleSize;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
-      const base64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+    img.onload = async () => {
+      let alasan = 'total belanja tidak terbaca';
+      try {
+        const res = parseStruk(await ocrStruk(gambarKeCanvas(img, 1600, true)));
+        if (res) { isiHasilScan(res); selesai(); return; }
+      } catch (err) { alasan = err.message; }
+      selesai();
 
+      let cfg = {};
+      try { cfg = JSON.parse(localStorage.getItem('budggt_cfg')) || {}; } catch (x) {}
+      if (!(cfg.url && cfg.token)) { alert('Struk belum terbaca (' + alasan + '). Coba foto lebih terang dan lurus, atau isi manual.'); return; }
+      if (!confirm('Struk belum terbaca di HP (' + alasan + '). Coba dengan AI? Foto akan dikirim ke Google Gemini.')) return;
+
+      if (btn) { btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>'; btn.disabled = true; }
+      const base64 = gambarKeCanvas(img, 800, false).toDataURL('image/jpeg', 0.6).split(',')[1];
       google.script.run
-        .withSuccessHandler(res => {
-          if (btn) {
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
-          }
-          if (!res) return;
-          document.getElementById("jumlah").value = res.jumlah ? formatRupiahInput(res.jumlah) : '';
-          document.getElementById("kategori").value = res.kategori || '';
-          document.getElementById("jenis").value = "Pengeluaran";
-                    onJenisChange();
-          if (res.tanggal) document.getElementById("tanggal").value = res.tanggal;
-          trxDateLabel();
-        })
-        .withFailureHandler(err => {
-          if (btn) {
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
-          }
-          alert("Gagal memproses struk: " + err.message);
-        })
+        .withSuccessHandler(res => { selesai(); if (res) isiHasilScan(res); })
+        .withFailureHandler(er => { selesai(); alert("Gagal memproses struk: " + er.message); })
         .parseReceiptWithGemini(base64, daftarKategori());
     };
     img.src = evt.target.result;
