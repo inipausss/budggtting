@@ -1170,7 +1170,7 @@
 
   /* tema gelap: kartu dibatasi garis rambut + kilau atas, bukan tanpa garis */
   body.dark-mode :is(.list-card, .acc-card, .trx-card-item, .calendar-card, .category-bar-item, .stat-tile, .badge, .icon-btn, .lvl-chip) {
-    border-color: color-mix(in srgb, var(--text-main) 8%, transparent);
+    border-color: color-mix(in srgb, var(--text-main) 13%, transparent);
     box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-main) 5%, transparent);
   }
 
