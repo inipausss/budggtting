@@ -80,7 +80,7 @@
     <div class="top-actions">
       <button class="lvl-chip" id="lvlChip" title="Level" onclick="openPage('profile')">Lv 1</button>
       <button class="icon-btn" title="Tagihan" onclick="openPage('bills')" style="position: relative;"><i class="fa fa-bell"></i><span id="billDot" class="bill-dot hidden"></span></button>
-      <button class="icon-btn" title="Pengaturan" onclick="toggleModal('modalSettings')">
+      <button class="icon-btn" title="Menu" onclick="bukaMenuGear(this)">
         <i class="fa fa-gear"></i>
       </button>
     </div>
@@ -184,11 +184,10 @@
   </main>
 
   <main id="accounts" class="page hidden">
-    <div class="section-title-row" style="margin-bottom: 20px;">
-      <h2 style="font-size: 1.4rem; font-weight: 600;">Dompet Saya</h2>
-      <div style="display: flex; gap: 8px;">
-        <button onclick="openTransfer()" class="btn-sec" style="width: auto; padding: 8px 14px; font-size: 0.85rem;"><i class="fa fa-right-left"></i> Pindah</button>
-      </div>
+    <div class="greeting-section" style="position: relative;">
+      <h1>Dompet</h1>
+      <p>Semua rekening dan tabunganmu</p>
+      <button onclick="openTransfer()" class="btn-sec" style="position: absolute; right: 0; top: 4px; width: auto; padding: 8px 14px; font-size: 0.85rem;"><i class="fa fa-right-left"></i> Pindah</button>
     </div>
     <div id="accountGrid"></div>
   </main>
@@ -410,6 +409,17 @@
       </div>
       <p id="backupInfo" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;"></p>
     </div>
+    </div>
+  </div>
+
+  <div id="modalCard" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Tampilan Kartu</h3>
+        <button onclick="toggleModal('modalCard')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Kartu saldo di Beranda dan Dompet</p>
+      <div id="cardBox"></div>
     </div>
   </div>
 
