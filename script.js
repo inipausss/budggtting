@@ -316,8 +316,8 @@ function customVars() {
     '--card-bg': d ? mix(bg, 89, '#fff') : mix(bg, 40, '#fff'),
     '--border-color': d ? mix(bg, 80, '#fff') : mix(bg, 88, '#000'),
     '--circle-bg': d ? mix(bg, 84, '#fff') : mix(bg, 96, '#000'),
-    '--pos': d ? mix(a, 25, '#6ee7a0') : mix(a, 25, '#15803d'),
-    '--neg': d ? mix('#fb7185', 85, a) : '#e11d48',
+    '--pos': d ? '#4caf50' : '#15803d',
+    '--neg': d ? '#f44336' : '#dc2626',
     '--warn': d ? mix('#facc15', 85, a) : '#a16207',
     '--circle-icon': d ? '#e5e7eb' : '#334155',
     '--text-main': d ? '#f3f4f6' : '#0f172a', '--text-muted': d ? '#9ca3af' : '#64748b',
@@ -457,7 +457,7 @@ function openPage(id) {
   const targetPage = document.getElementById(id);
   if (targetPage) targetPage.classList.remove("hidden");
   
-  const activeBtn = document.getElementById('btn-' + id);
+  const activeBtn = document.getElementById('btn-' + (id === 'trxAll' ? 'dashboard' : id));
   if (activeBtn) activeBtn.classList.add("active");
   
   // halaman Budget tampil penuh: tanpa top bar dan nav bawah
@@ -467,6 +467,8 @@ function openPage(id) {
 
   // Laporan selalu terbuka di Ringkasan, bulan berjalan
   if (id === 'analytics') { recapMonth = currentMonthKey(); setReportTab('ringkasan'); }
+  // Semua Transaksi (dari "Lihat semua" di Beranda): bulan berjalan
+  if (id === 'trxAll') { recapMonth = currentMonthKey(); renderFullTransactions(); window.scrollTo({ top: 0 }); }
 }
 
 // RENDER SELURUH UI DARI DATA LOKAL
@@ -2099,7 +2101,7 @@ function saveProfile(e) {
 const CAT_RONA = [200, 350, 160, 35, 270, 90, 320, 12, 230, 55];
 const catGelap = () => document.body.classList.contains('dark-mode');
 function catPalette(n) {
-  const [sat, lt] = catGelap() ? [42, 40] : [58, 46];
+  const [sat, lt] = catGelap() ? [62, 50] : [70, 46];
   return Array.from({ length: n }, (_, i) => `hsl(${CAT_RONA[i % CAT_RONA.length]}, ${sat}%, ${lt}%)`);
 }
 const catLainnya = () => catGelap() ? '#52525b' : '#94a3b8';
