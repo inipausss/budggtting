@@ -343,6 +343,7 @@ function applyTheme(pref) {
   document.body.classList.toggle('dark-mode', th.dark);
   const cv = id === 'kustom' ? customVars() : {};
   CUSTOM_VARS.forEach(v => cv[v] ? document.body.style.setProperty(v, cv[v]) : document.body.style.removeProperty(v));
+  if (typeof applyCard === 'function') applyCard();
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = getComputedStyle(document.body).getPropertyValue('--app-bg').trim() || meta.content;
   const nm = document.getElementById('themeName');
@@ -392,6 +393,105 @@ function renderThemePicker() {
       <div style="display: flex; flex-wrap: wrap; gap: 10px;">${CUSTOM_BG[c.dark].map(b => sw(b, themePref === 'kustom' && bgNow.toLowerCase() === b, `setCustom('bg', '${b}')`)).join('')}${picker(bgNow, 'bg')}</div>
     </div>`;
   box.innerHTML = row('auto', 'Ikuti sistem', 'fa-mobile-screen') + lbl('Tema terang') + grup(false) + lbl('Tema gelap') + grup(true) + lbl('Warna sendiri') + editor;
+}
+
+// ===== TAMPILAN KARTU (gradien kartu saldo) =====
+// ponytail: satu variabel CSS --hero dipakai kartu Beranda & Dompet; mode 'tema' = ikut tema (tidak menimpa apa pun)
+const CARD_KEY = 'budggt_card';
+// gradien "mesh" ala wallpaper macOS: beberapa cahaya radial di atas warna dasar; semuanya cukup gelap agar teks putih terbaca
+const mesh = (base, a, b, c) => `radial-gradient(at 18% 12%, ${a} 0, transparent 55%), radial-gradient(at 88% 22%, ${b} 0, transparent 55%), radial-gradient(at 55% 98%, ${c} 0, transparent 60%), ${base}`;
+const CARD_PRESET = [
+  { id: 'bigsur',    nama: 'Big Sur',    bg: mesh('#3a2a78', '#ff7eb3', '#7a6cff', '#ff9d5c') },
+  { id: 'monterey',  nama: 'Monterey',   bg: mesh('#2b2d8f', '#b46cff', '#3aa0ff', '#ff6fa8') },
+  { id: 'ventura',   nama: 'Ventura',    bg: mesh('#1c2a6b', '#ff9a5a', '#e0409a', '#3b6bff') },
+  { id: 'sonoma',    nama: 'Sonoma',     bg: mesh('#1f5a4a', '#c5d95a', '#2fb5a0', '#2a6fb0') },
+  { id: 'sequoia',   nama: 'Sequoia',    bg: mesh('#0e2a30', '#2f7d6e', '#1d4f6e', '#6aa86a') },
+  { id: 'tahoe',     nama: 'Tahoe',      bg: mesh('#0f3a63', '#38b6ff', '#1c6ad0', '#5fe0d0') },
+  { id: 'catalina',  nama: 'Catalina',   bg: mesh('#17304f', '#3aa0d8', '#6b5bd6', '#e58a6a') },
+  { id: 'mojave',    nama: 'Mojave',     bg: mesh('#15122e', '#6a3fd0', '#2d3a9c', '#b04a8f') },
+  { id: 'monterey2', nama: 'Fajar',      bg: mesh('#5a1f4a', '#ff8a5c', '#ffb36b', '#c23a7a') },
+  { id: 'aurora',    nama: 'Aurora',     bg: mesh('#0c2b3a', '#2fe0a8', '#3a7bff', '#8a4bff') },
+  { id: 'rosegold',  nama: 'Rose Gold',  bg: mesh('#4a2a3a', '#e8a090', '#c06a8a', '#f0c27a') },
+  { id: 'graphite',  nama: 'Grafit',     bg: mesh('#1c1c20', '#5a5f6a', '#34373f', '#7c8190') },
+  { id: 'emasmewah', nama: 'Champagne',  bg: mesh('#241a0c', '#d4af6a', '#8a6a2a', '#f0d68a') },
+  { id: 'samudra',   nama: 'Samudra',    bg: mesh('#06222e', '#0f8a9a', '#124a7a', '#3acfc0') }
+];
+let cardCfg = { mode: 'tema', id: 'bigsur', c: ['#5b3fd0', '#c13b9a', '#ff8a5c'], ang: 135 };
+try { Object.assign(cardCfg, JSON.parse(localStorage.getItem(CARD_KEY) || '{}')); } catch (e) {}
+
+function cardBg() {
+  if (cardCfg.mode === 'preset') return (CARD_PRESET.find(p => p.id === cardCfg.id) || CARD_PRESET[0]).bg;
+  if (cardCfg.mode === 'kustom') return `linear-gradient(${cardCfg.ang}deg, ${cardCfg.c.join(', ')})`;
+  return '';
+}
+function applyCard() {
+  const v = cardBg();
+  if (v) document.body.style.setProperty('--hero', v);
+  else if (themePref !== 'kustom') document.body.style.removeProperty('--hero'); // tema kustom mengisi --hero sendiri (lihat applyTheme)
+}
+function simpanCard(render = true) {
+  try { localStorage.setItem(CARD_KEY, JSON.stringify(cardCfg)); } catch (e) {}
+  applyTheme(themePref); // menerapkan ulang --hero dari tema lalu menimpanya dengan pilihan kartu
+  if (render) renderCardPicker();
+}
+function pickCard(mode, id) { cardCfg.mode = mode; if (id) cardCfg.id = id; simpanCard(); }
+function setCardCustom(i, v, render) {
+  if (i === 'ang') cardCfg.ang = Number(v); else cardCfg.c[i] = v;
+  cardCfg.mode = 'kustom'; simpanCard(!!render);
+}
+function openCard() { renderCardPicker(); toggleModal('modalCard'); }
+
+function renderCardPicker() {
+  const box = document.getElementById('cardBox');
+  if (!box) return;
+  const on = (m, id) => cardCfg.mode === m && (!id || cardCfg.id === id);
+  const tile = (bg, nama, aktif, fn) => `<button type="button" class="cp-tile${aktif ? ' on' : ''}" style="background: ${bg};" onclick="${fn}"><span>${nama}</span>${aktif ? '<i class="fa fa-circle-check"></i>' : ''}</button>`;
+  const lbl = t => `<p style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin: 18px 0 8px;">${t}</p>`;
+  const picker = i => `<label class="cp-col" style="background: ${cardCfg.c[i]};"><input type="color" value="${cardCfg.c[i]}" oninput="setCardCustom(${i}, this.value, false); this.parentNode.style.background = this.value" onchange="setCardCustom(${i}, this.value, true)"></label>`;
+  box.innerHTML = `
+    <div class="main-card" style="margin-bottom: 4px; padding: 18px;">
+      <div class="card-top-tag" style="margin-bottom: 10px; min-height: 0;"><span class="tag-pill"><i class="fa fa-bolt"></i> Pratinjau</span></div>
+      <h2 class="balance-value" style="font-size: 1.5rem;">Rp 12.500.000</h2>
+      <div class="flow-row" style="margin-top: 14px;">
+        <div class="flow-col" style="padding: 10px 12px;"><p style="margin-bottom: 6px;">Pemasukan</p><h4>Rp 8.000.000</h4></div>
+        <div class="flow-col" style="padding: 10px 12px;"><p style="margin-bottom: 6px;">Pengeluaran</p><h4>Rp 3.200.000</h4></div>
+      </div>
+    </div>
+    ${lbl('Ikuti tema')}
+    <div class="cp-grid">${tile('var(--card-bg)', 'Sesuai tema', on('tema'), "pickCard('tema')")}</div>
+    ${lbl('Gradien siap pakai')}
+    <div class="cp-grid">${CARD_PRESET.map(p => tile(p.bg, p.nama, on('preset', p.id), `pickCard('preset', '${p.id}')`)).join('')}</div>
+    ${lbl('Buat sendiri')}
+    <div style="padding: 14px; border-radius: 16px; background: var(--circle-bg); border: 2px solid ${on('kustom') ? 'var(--primary)' : 'var(--border-color)'};">
+      <div style="height: 54px; border-radius: 12px; margin-bottom: 14px; background: linear-gradient(${cardCfg.ang}deg, ${cardCfg.c.join(', ')});"></div>
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">${[0, 1, 2].map(picker).join('')}<span style="font-size: 0.75rem; color: var(--text-muted);">Ketuk lingkaran untuk memilih warna</span></div>
+      <label style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 12px;">Arah <input type="range" min="0" max="360" step="15" value="${cardCfg.ang}" oninput="setCardCustom('ang', this.value, false)" onchange="setCardCustom('ang', this.value, true)" style="flex: 1;"> ${cardCfg.ang}°</label>
+    </div>`;
+}
+
+// ===== menu roda gigi: Pengaturan, Tema, Kartu =====
+function tutupMenuGear() {
+  const m = document.getElementById('gearMenu');
+  if (m) m.remove();
+  document.removeEventListener('pointerdown', gearLuar, true);
+}
+function gearLuar(e) { const m = document.getElementById('gearMenu'); if (m && !m.contains(e.target)) tutupMenuGear(); }
+function bukaMenuGear(btn) {
+  if (document.getElementById('gearMenu')) return tutupMenuGear();
+  const m = document.createElement('div');
+  m.id = 'gearMenu'; m.className = 'dd-menu gm';
+  [['fa-gear', 'Pengaturan', "toggleModal('modalSettings')"], ['fa-palette', 'Tema', 'openTheme()'], ['fa-credit-card', 'Kartu', 'openCard()']].forEach(([ic, t, fn]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'dd-opt'; b.innerHTML = `<span style="display: flex; align-items: center; gap: 12px;"><i class="fa ${ic}" style="width: 18px; text-align: center; color: var(--text-muted);"></i>${t}</span>`;
+    b.onclick = () => { tutupMenuGear(); new Function(fn)(); };
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect();
+  m.style.minWidth = '190px';
+  m.style.top = (r.bottom + 8) + 'px';
+  m.style.left = Math.max(12, Math.min(r.right - m.offsetWidth, innerWidth - m.offsetWidth - 12)) + 'px';
+  document.addEventListener('pointerdown', gearLuar, true);
 }
 
 applyTheme(themePref); // sedini mungkin supaya tidak berkedip
@@ -450,12 +550,16 @@ function renderBalanceDisplay() {
 }
 
 // NAVIGASI HALAMAN
+const URUTAN_TAB = ['dashboard', 'accounts', 'analytics', 'profile'];
 function openPage(id) {
-  document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
+  // arah geser: ke tab di kanan -> masuk dari kanan, ke kiri -> dari kiri; selain antar-tab tetap naik dari bawah
+  const dari = (document.querySelector('.page:not(.hidden)') || {}).id;
+  const arah = URUTAN_TAB.includes(dari) && URUTAN_TAB.includes(id) && dari !== id ? (URUTAN_TAB.indexOf(id) > URUTAN_TAB.indexOf(dari) ? 'slide-r' : 'slide-l') : '';
+  document.querySelectorAll(".page").forEach(p => { p.classList.add("hidden"); p.classList.remove('slide-l', 'slide-r'); });
   document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
   
   const targetPage = document.getElementById(id);
-  if (targetPage) targetPage.classList.remove("hidden");
+  if (targetPage) { if (arah) targetPage.classList.add(arah); targetPage.classList.remove("hidden"); }
   
   const activeBtn = document.getElementById('btn-' + (id === 'trxAll' ? 'dashboard' : id));
   if (activeBtn) activeBtn.classList.add("active");
@@ -688,21 +792,22 @@ function walletStats() {
 function walletHeroHtml() {
   const s = walletStats();
   const naik = s.delta >= 0;
-  const tile = (lbl, val, go) => `<div class="wh-tile${go ? ' go' : ''}"${go ? ` onclick="${go}"` : ''}><p>${lbl}</p><b>${format(val)}</b></div>`;
+  const tile = (ic, lbl, val) => `<div class="flow-col"><p><span class="flow-ic"><i class="fa ${ic}"></i></span> ${lbl}</p><h4>${format(val)}</h4></div>`;
+  const link = (lbl, val, go) => `<button type="button" class="wl-link" onclick="${go}"><span>${lbl}</span><b>${format(val)}</b><i class="fa fa-chevron-right"></i></button>`;
+  // sengaja memakai kelas & susunan yang sama dengan kartu di Beranda supaya ukuran dan posisinya identik
   return `
-    <div class="wallet-hero">
-      <p class="wh-label">Saldo Tersedia (IDR)</p>
-      <h2 class="wh-total">${format(s.saldo)}</h2>
-      <div class="wh-delta">
-        <span class="wh-pill"><i class="fa ${naik ? 'fa-arrow-up' : 'fa-arrow-down'}"></i> ${naik ? '+' : '-'}${Math.abs(s.pct).toFixed(1)}%</span>
-        <span class="wh-sub">(${naik ? '+' : '-'}${format(Math.abs(s.delta))}) 30 hari terakhir</span>
+    <div class="main-card">
+      <div class="card-top-tag"><span class="tag-pill"><i class="fa fa-wallet"></i> Saldo Tersedia</span></div>
+      <div class="balance-row"><h2 class="balance-value">${format(s.saldo)}</h2></div>
+      <div class="saldo-chip" style="cursor: default;"><i class="fa ${naik ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i> <span>${naik ? '+' : '-'}${Math.abs(s.pct).toFixed(1)}% · 30 hari terakhir</span></div>
+      <div class="flow-row">
+        ${tile('fa-gem', 'Kekayaan', s.kekayaan)}
+        ${tile('fa-piggy-bank', 'Tabungan', s.tabungan)}
       </div>
-      <div class="wh-grid">
-        ${tile('Kekayaan Bersih', s.kekayaan)}
-        ${tile('Utang / Minus', s.utang, "openPage('debts')")}
-        ${tile('Tabungan Aktif', s.tabungan)}
-        ${tile('Tagihan Mendatang', s.tagihan, "openPage('bills')")}
-      </div>
+    </div>
+    <div class="wl-links">
+      ${link('Utang / Minus', s.utang, "openPage('debts')")}
+      ${link('Tagihan Mendatang', s.tagihan, "openPage('bills')")}
     </div>`;
 }
 
