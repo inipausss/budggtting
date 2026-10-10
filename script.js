@@ -1710,6 +1710,24 @@ function muatTesseract() {
   }));
 }
 
+// unduh pembaca struk di latar belakang sekali saja (saat online, bukan hemat data / seluler), supaya scan pertama pun sudah bisa offline
+function siapkanOcr() {
+  const kon = navigator.connection || {};
+  let siap = false;
+  try { siap = localStorage.getItem('budggt_ocr') === '1'; } catch (e) {}
+  if (siap || !navigator.onLine || kon.saveData || kon.type === 'cellular') return;
+  setTimeout(async () => {
+    try {
+      await muatTesseract();
+      const w = await Tesseract.createWorker('ind'); // mengunduh mesin + data bahasa ke cache
+      await w.terminate();
+      localStorage.setItem('budggt_ocr', '1');
+    } catch (e) {}
+  }, 4000);
+}
+window.addEventListener('load', siapkanOcr);
+window.addEventListener('online', siapkanOcr);
+
 function gambarKeCanvas(img, lebar, kontras) {
   const k = Math.min(1, lebar / img.width);
   const c = document.createElement('canvas');
@@ -1744,18 +1762,25 @@ function handleReceipt(e) {
   const html0 = btn ? btn.innerHTML : '';
   if (btn) { btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>'; btn.disabled = true; }
   const selesai = () => { if (btn) { btn.innerHTML = html0; btn.disabled = false; } };
-  if (!window.Tesseract) showToast('Menyiapkan pembaca struk... pertama kali butuh internet', 1);
+  if (!window.Tesseract && navigator.onLine) showToast('Menyiapkan pembaca struk... pertama kali butuh internet', 1);
 
   const reader = new FileReader();
   reader.onload = evt => {
     const img = new Image();
     img.onload = async () => {
-      let alasan = 'total belanja tidak terbaca';
+      let alasan = 'total belanja tidak terbaca', rusak = false;
       try {
         const res = parseStruk(await ocrStruk(gambarKeCanvas(img, 1600, true)));
         if (res) { isiHasilScan(res); selesai(); return; }
-      } catch (err) { alasan = err.message; }
+      } catch (err) { alasan = err.message; rusak = true; }
       selesai();
+
+      // offline: AI tidak mungkin, jadi jangan ditawarkan
+      if (!navigator.onLine) {
+        alert(rusak ? 'Pembaca struk belum terunduh. Sambungkan internet sekali (sebaiknya Wi-Fi), lalu coba lagi. Setelah itu bisa dipakai offline.'
+                    : 'Struk belum terbaca (' + alasan + '). Coba foto lebih terang dan lurus, atau isi manual.');
+        return;
+      }
 
       let cfg = {};
       try { cfg = JSON.parse(localStorage.getItem('budggt_cfg')) || {}; } catch (x) {}
