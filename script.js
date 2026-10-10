@@ -1975,12 +1975,14 @@ function saveProfile(e) {
 
 
 // ===== DONUT PENGELUARAN PER KATEGORI =====
-// palet donat: irisan terbesar = warna aksen tema, sisanya tingkatan abu netral (tenang, tidak ramai)
-const CAT_ABU = ['#e4e4e7', '#c4c4cc', '#a1a1aa', '#8b8b94', '#75757e', '#686871', '#d4d4d8', '#9a9aa3'];
+// palet donat: warna-warni tapi dalam/kalem; mode gelap lebih redam, mode terang sedikit lebih segar
+const CAT_RONA = [200, 350, 160, 35, 270, 90, 320, 12, 230, 55];
+const catGelap = () => document.body.classList.contains('dark-mode');
 function catPalette(n) {
-  return Array.from({ length: n }, (_, i) => i === 0 ? accent() : CAT_ABU[(i - 1) % CAT_ABU.length]);
+  const [sat, lt] = catGelap() ? [42, 40] : [58, 46];
+  return Array.from({ length: n }, (_, i) => `hsl(${CAT_RONA[i % CAT_RONA.length]}, ${sat}%, ${lt}%)`);
 }
-const CAT_LAINNYA = '#52525b';
+const catLainnya = () => catGelap() ? '#52525b' : '#94a3b8';
 const CAT_TOP = 3; // di halaman Laporan hanya 5 teratas, sisanya digabung
 
 function catData(key) {
@@ -2011,7 +2013,7 @@ function catRowHtml(c) {
   const pct = c.pct >= 1 ? Math.round(c.pct) + '%' : '<1%';
   return `
     <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
-      <span style="min-width: 46px; text-align: center; background: ${c.warna}; color: #000; font-size: 0.72rem; font-weight: 600; padding: 6px 0; border-radius: 6px;">${pct}</span>
+      <span style="min-width: 46px; text-align: center; background: ${c.warna}; color: #fff; font-size: 0.72rem; font-weight: 600; padding: 6px 0; border-radius: 6px;">${pct}</span>
       <div style="flex: 1;">
         <span style="font-size: 0.9rem; font-weight: 500;">${c.nama}</span>
         ${c.n ? `<p style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">${c.n} transaksi</p>` : ''}
@@ -2032,7 +2034,7 @@ function renderFlowChart() {
     const jumlah = rest.reduce((s, c) => s + c.jumlah, 0);
     rows = list.slice(0, CAT_TOP).concat([{
       nama: 'Lainnya (' + rest.length + ' kategori)',
-      jumlah, warna: CAT_LAINNYA, pct: total > 0 ? jumlah / total * 100 : 0
+      jumlah, warna: catLainnya(), pct: total > 0 ? jumlah / total * 100 : 0
     }]);
   }
 
