@@ -1417,14 +1417,76 @@ function submitEditAccount() {
 const KATEGORI_NETRAL = ['Transfer', 'Koreksi Saldo', KAT_SETOR, KAT_TARIK, KAT_UTANG, KAT_PIUTANG]; // tidak dihitung sebagai pemasukan/pengeluaran
 function netral(t) { return KATEGORI_NETRAL.includes(t.kategori); }
 
+// ===== DROPDOWN: menu inline di bawah kolom, menggantikan popup bawaan HP untuk semua <select> =====
+// ponytail: <select> aslinya tetap ada (nilai, onchange, required tetap jalan) tapi tidak bisa disentuh; tombol transparan di atasnya membuka menu kita
+let ddMenu = null;
+function tutupDropdown() {
+  if (!ddMenu) return;
+  ddMenu.remove(); ddMenu = null;
+  document.removeEventListener('pointerdown', ddLuar, true);
+  window.removeEventListener('scroll', tutupDropdown, true);
+}
+function ddLuar(e) { if (ddMenu && !ddMenu.contains(e.target) && !e.target.classList.contains('dd-hit')) tutupDropdown(); }
+
+function bukaDropdown(sel) {
+  const sudahTerbuka = ddMenu && ddMenu._sel === sel;
+  tutupDropdown();
+  if (sudahTerbuka) return;
+  const m = document.createElement('div');
+  m.className = 'dd-menu'; m._sel = sel;
+  [...sel.options].forEach((o, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'dd-opt' + (i === sel.selectedIndex ? ' on' : ''); b.textContent = o.text;
+    b.onclick = () => { sel.selectedIndex = i; sel.dispatchEvent(new Event('change', { bubbles: true })); tutupDropdown(); };
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  const r = sel.getBoundingClientRect();
+  m.style.minWidth = r.width + 'px';
+  m.style.left = Math.max(12, Math.min(r.left, innerWidth - m.offsetWidth - 12)) + 'px';
+  const h = m.offsetHeight, bawah = innerHeight - r.bottom - 12;
+  m.style.top = (bawah >= h || bawah >= r.top ? r.bottom + 6 : Math.max(12, r.top - h - 6)) + 'px'; // muat di bawah, kalau tidak di atas
+  if (bawah < h && bawah < r.top) m.style.maxHeight = Math.max(160, r.top - 24) + 'px';
+  else if (bawah < h) m.style.maxHeight = Math.max(160, bawah) + 'px';
+  ddMenu = m;
+  const on = m.querySelector('.on'); if (on) on.scrollIntoView({ block: 'nearest' });
+  document.addEventListener('pointerdown', ddLuar, true);
+  window.addEventListener('scroll', tutupDropdown, true);
+}
+
+function pakaiDropdown(sel) {
+  if (sel.dataset.dd || sel.classList.contains('hidden')) return;
+  sel.dataset.dd = '1';
+  const wrap = document.createElement('span');
+  wrap.className = 'dd';
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(sel);
+  const hit = document.createElement('button');
+  hit.type = 'button'; hit.className = 'dd-hit'; hit.setAttribute('aria-label', 'Pilih');
+  hit.onclick = () => bukaDropdown(sel);
+  wrap.appendChild(hit);
+}
+document.querySelectorAll('select').forEach(pakaiDropdown);
+
 // ===== Halaman Catat Transaksi (layar penuh): kategori berikon + numpad sendiri =====
 // ponytail: #jenis/#kategori/#jumlah tetap elemen form biasa (disembunyikan), jadi submit, scan struk, Pindah, dan "tambah di tanggal ini" tidak diubah
 const KAT_MASUK = ['Gaji', 'Bonus', 'Bisnis', 'Investasi', 'Hadiah', 'Lainnya'];
 const KAT_WARNA = ['#f97316', '#8b5cf6', '#0ea5e9', '#3b82f6', '#22c55e', '#ec4899', '#14b8a6', '#ef4444'];
 const katWarna = k => KAT_WARNA[[...k].reduce((a, c) => a + c.charCodeAt(0), 0) % KAT_WARNA.length];
-let trxKatBaru = false; // true = pengguna mengetik kategori sendiri
+let trxKatEdit = false; // mode "Atur": tiap kategori punya tombol hapus
 
-function trxCats(j) {
+// kategori buatan sendiri / yang disembunyikan disimpan sebagai catatan {nama, jenis, ikon, hidden} (ikut backup)
+const katRecs = () => globalData.kategori || [];
+const katTersembunyi = (k, j) => katRecs().some(r => r.hidden && r.jenis === j && r.nama.toLowerCase() === (k || '').trim().toLowerCase());
+function setKatRec(rec) {
+  const l = (globalData.kategori = globalData.kategori || []);
+  const i = l.findIndex(r => r.jenis === rec.jenis && r.nama.toLowerCase() === rec.nama.toLowerCase());
+  if (i > -1) l[i] = Object.assign({}, l[i], rec); else l.push(Object.assign({ ikon: '', hidden: false }, rec));
+  localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
+  google.script.run.withFailureHandler(err => alert('Gagal simpan kategori: ' + err.message)).setKategori(i > -1 ? l[i] : l[l.length - 1]);
+}
+
+function trxCats(j, termasukHidden) {
   const inc = j === 'Pemasukan';
   const out = new Map();
   const add = k => { k = (k || '').trim(); if (k && !out.has(k.toLowerCase())) out.set(k.toLowerCase(), k); };
@@ -1434,43 +1496,80 @@ function trxCats(j) {
     budgetList().forEach(b => b.cats.forEach(add));
   }
   (globalData.transactions || []).forEach(t => { if (!netral(t) && (t.jenis === 'Pemasukan') === inc) add(t.kategori); });
-  return [...out.values()];
+  katRecs().forEach(r => { if (r.jenis === j) add(r.nama); });
+  return [...out.values()].filter(k => termasukHidden || !katTersembunyi(k, j));
 }
 
 function renderTrxCats() {
   const j = document.getElementById('jenis').value;
-  const kat = document.getElementById('kategori');
-  if (j === 'Transfer') { kat.classList.add('hidden'); return; }
-  const cur = kat.value.trim().toLowerCase();
+  if (j === 'Transfer') return;
+  const cur = document.getElementById('kategori').value.trim().toLowerCase();
   const list = trxCats(j);
-  if (cur && !trxKatBaru && !list.some(k => k.toLowerCase() === cur)) list.push(kat.value.trim()); // mis. hasil scan struk
+  if (cur && !list.some(k => k.toLowerCase() === cur)) list.push(document.getElementById('kategori').value.trim()); // mis. hasil scan struk
   document.getElementById('tpCats').innerHTML = list.map(k => `
-    <button type="button" class="tc ${!trxKatBaru && k.toLowerCase() === cur ? 'on' : ''}" style="--c:${katWarna(k)}" onclick="pickTrxKat('${jsq(k)}')">
+    <button type="button" class="tc ${k.toLowerCase() === cur ? 'on' : ''}" style="--c:${katWarna(k)}" ${trxKatEdit ? '' : `onclick="pickTrxKat('${jsq(k)}')"`}>
+      ${trxKatEdit ? `<span class="x" onclick="hapusKat('${jsq(k)}')"><i class="fa fa-xmark"></i></span>` : ''}
       <span class="ic"><i class="fa ${katIkon(k)}"></i></span><span class="nm">${esc(k)}</span>
     </button>`).join('') + `
-    <button type="button" class="tc ${trxKatBaru ? 'on' : ''}" style="--c:#64748b" onclick="newTrxKat()">
+    <button type="button" class="tc" style="--c:#64748b" onclick="newTrxKat()">
       <span class="ic"><i class="fa fa-plus"></i></span><span class="nm">Baru</span>
+    </button>
+    <button type="button" class="tc ${trxKatEdit ? 'on' : ''}" style="--c:#64748b" onclick="toggleKatEdit()">
+      <span class="ic"><i class="fa ${trxKatEdit ? 'fa-check' : 'fa-pen'}"></i></span><span class="nm">${trxKatEdit ? 'Selesai' : 'Atur'}</span>
     </button>`;
-  kat.classList.toggle('hidden', !trxKatBaru);
 }
 
 function pickTrxKat(k) {
   document.getElementById('kategori').value = k;
-  trxKatBaru = false;
   renderTrxCats();
 }
 
-function newTrxKat() {
-  trxKatBaru = true;
-  document.getElementById('kategori').value = '';
+function toggleKatEdit() { trxKatEdit = !trxKatEdit; renderTrxCats(); }
+
+// hapus = sembunyikan dari daftar; transaksi lama tetap utuh. Bisa diurungkan.
+function hapusKat(k) {
+  const j = document.getElementById('jenis').value;
+  setKatRec({ nama: k, jenis: j, hidden: true });
+  const kat = document.getElementById('kategori');
+  if (kat.value.trim().toLowerCase() === k.toLowerCase()) kat.value = '';
   renderTrxCats();
-  document.getElementById('kategori').focus();
+  showUndo('Kategori "' + k + '" dihapus', () => { setKatRec({ nama: k, jenis: j, hidden: false }); renderTrxCats(); });
+}
+
+// pilihan ikon untuk kategori baru
+const KAT_PILIHAN_IKON = ['fa-utensils', 'fa-mug-hot', 'fa-burger', 'fa-pizza-slice', 'fa-ice-cream', 'fa-cookie-bite', 'fa-cart-shopping', 'fa-bag-shopping', 'fa-shirt', 'fa-gift', 'fa-car-side', 'fa-motorcycle',
+  'fa-bus', 'fa-train', 'fa-plane', 'fa-gas-pump', 'fa-house', 'fa-couch', 'fa-bolt', 'fa-droplet', 'fa-wifi', 'fa-mobile-screen', 'fa-file-invoice', 'fa-heart-pulse',
+  'fa-pills', 'fa-tooth', 'fa-dumbbell', 'fa-film', 'fa-gamepad', 'fa-music', 'fa-book', 'fa-graduation-cap', 'fa-paw', 'fa-baby', 'fa-scissors', 'fa-wrench',
+  'fa-camera', 'fa-laptop', 'fa-money-bill-wave', 'fa-wallet', 'fa-piggy-bank', 'fa-chart-line', 'fa-briefcase', 'fa-store', 'fa-handshake', 'fa-star', 'fa-tag', 'fa-ellipsis',
+  'fa-umbrella-beach', 'fa-cake-candles', 'fa-hand-holding-heart', 'fa-building-columns', 'fa-credit-card', 'fa-coins', 'fa-seedling', 'fa-bicycle', 'fa-futbol', 'fa-spa', 'fa-soap', 'fa-gem'];
+let katIkonPilih = 'fa-tag';
+
+function renderKatIcons() {
+  document.getElementById('katIcons').innerHTML = KAT_PILIHAN_IKON.map(ic =>
+    `<button type="button" class="ic-opt ${ic === katIkonPilih ? 'on' : ''}" onclick="katIkonPilih='${ic}'; renderKatIcons()"><i class="fa ${ic}"></i></button>`).join('');
+}
+
+function newTrxKat() {
+  katIkonPilih = 'fa-tag';
+  document.getElementById('katNama').value = '';
+  renderKatIcons();
+  toggleModal('modalKat');
+}
+
+function submitKat() {
+  const nama = document.getElementById('katNama').value.trim().replace(/\s+/g, ' ');
+  if (!nama) { alert('Isi nama kategori'); return; }
+  const j = document.getElementById('jenis').value;
+  const kenal = trxCats(j, true).find(k => k.toLowerCase() === nama.toLowerCase()) || nama; // pakai penulisan yang sudah ada
+  setKatRec({ nama: kenal, jenis: j, ikon: katIkonPilih, hidden: false });
+  toggleModal('modalKat');
+  pickTrxKat(kenal);
 }
 
 function setTrxJenis(j) {
   document.getElementById('jenis').value = j;
   document.getElementById('kategori').value = ''; // kategori Pengeluaran dan Pemasukan beda daftar
-  trxKatBaru = false;
+  trxKatEdit = false;
   onJenisChange();
 }
 
@@ -2087,7 +2186,11 @@ const BUDGET_MERAH = 80;   // batas peringatan bawaan (%)
 const BUDGET_WARNA = ['var(--pos)', 'var(--warn)', 'var(--neg)']; // hijau, kuning, merah
 const BUDGET_STATUS = ['Aman', 'Hati-hati', 'Hampir habis'];
 const KAT_IKON = { makanan: 'fa-utensils', belanja: 'fa-bag-shopping', transport: 'fa-car-side', tagihan: 'fa-file-invoice', hiburan: 'fa-film', kesehatan: 'fa-heart-pulse', investasi: 'fa-chart-line', lainnya: 'fa-ellipsis', gaji: 'fa-money-bill-wave', bonus: 'fa-star', bisnis: 'fa-store', hadiah: 'fa-gift' };
-const katIkon = k => KAT_IKON[(k || '').trim().toLowerCase()] || 'fa-tag';
+const katIkon = k => {
+  const key = (k || '').trim().toLowerCase();
+  const r = (globalData.kategori || []).find(x => x.ikon && x.nama.toLowerCase() === key); // ikon pilihan pengguna didahulukan
+  return (r && r.ikon) || KAT_IKON[key] || 'fa-tag';
+};
 const dstr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
 // budget lama {kategori, batas} dimigrasi di tempat ke format baru (id sama dengan yang dibuat gas-shim.js)
@@ -2254,7 +2357,8 @@ function katPengeluaran() {
   document.querySelectorAll('#kategoriList option').forEach(o => out.push(o.value));
   budgetList().forEach(b => out.push(...b.cats));
   (globalData.transactions || []).forEach(t => { if (!netral(t) && t.jenis === 'Pengeluaran') out.push(t.kategori); });
-  return out;
+  katRecs().forEach(r => { if (r.jenis === 'Pengeluaran') out.push(r.nama); });
+  return out.filter(k => !katTersembunyi(k, 'Pengeluaran'));
 }
 
 function renderBudgetChips() {
@@ -2730,7 +2834,8 @@ function daftarKategori() {
   document.querySelectorAll('#kategoriList option').forEach(o => add(o.value));
   budgetList().forEach(b => b.cats.forEach(add));
   (globalData.transactions || []).forEach(t => { if (!netral(t)) add(t.kategori); });
-  return [...set.values()];
+  katRecs().forEach(r => { if (r.jenis === 'Pengeluaran') add(r.nama); });
+  return [...set.values()].filter(k => !katTersembunyi(k, 'Pengeluaran'));
 }
 
 // Cocokkan kategori hasil scan ke kategori yang sudah dikenal (datalist, budget, transaksi)
@@ -2771,7 +2876,7 @@ function toggleModal(id) {
   if (el.classList.contains('hidden')) {
     el.classList.remove('hidden');
     el.style.display = 'flex';
-    if (id === 'modalTrx') { document.getElementById('tanggal').value = todayStr(); trxKatBaru = false; onJenisChange(); }
+    if (id === 'modalTrx') { document.getElementById('tanggal').value = todayStr(); trxKatEdit = false; onJenisChange(); }
   } else {
     if (el.classList.contains('closing')) return;
     el.classList.add('closing'); // animasi turun dulu (style.css), baru disembunyikan
