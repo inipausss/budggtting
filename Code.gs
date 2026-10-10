@@ -59,6 +59,8 @@ function backup(d) {
     (d.debts || []).map(function (x) {
       return [x.id, x.nama, x.tipe, Number(x.jumlah) || 0, Number(x.terbayar) || 0, x.jatuh || '', x.catatan || '', me];
     }), ['F']);
+  writeSheet('Categories', ['Nama', 'Jenis', 'Ikon', 'Tersembunyi', 'User Email'],
+    (d.kategori || []).map(function (k) { return [k.nama, k.jenis, k.ikon || '', k.hidden ? 1 : 0, me]; }));
   return { ok: true };
 }
 
@@ -98,6 +100,9 @@ function restore() {
           id: String(r[0]), nama: String(r[1]), tipe: r[2] === 'piutang' ? 'piutang' : 'utang', jumlah: Number(r[3]) || 0,
           terbayar: Number(r[4]) || 0, jatuh: r[5] ? String(r[5]) : '', catatan: r[6] ? String(r[6]) : ''
         };
+      }),
+      kategori: rows('Categories').map(function (r) {
+        return { nama: String(r[0]), jenis: r[1] === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran', ikon: r[2] ? String(r[2]) : '', hidden: r[3] === true || Number(r[3]) === 1 };
       }),
       bills: rows('Bills').map(function (r) {
         return {
