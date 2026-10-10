@@ -1302,3 +1302,16 @@
   .main-card .flow-col { padding: 10px 12px; border-radius: 18px; }
   .main-card .flow-col p { margin-bottom: 6px; }
   .main-card .flow-col h4 { font-size: 1rem; }
+
+  /* ===== konsistensi warna =====
+     aturan: aksen tema = garis/bar/pilihan/tombol; hijau & merah = arah uang; kuning/merah = peringatan budget.
+     wadah pengelompok (donat, daftar kategori, statistik, kalender) dibuat datar tanpa kotak; kartu hanya untuk item. */
+  body { --ink-accent: var(--primary); }
+  body:not(.dark-mode) { --ink-accent: color-mix(in srgb, var(--primary) 40%, #000); }
+  #catCard, #catLegend, #catDetailCard, #catDetailList, .rd-card, .calendar-card {
+    background: transparent; border-color: transparent; box-shadow: none; padding-left: 2px; padding-right: 2px;
+  }
+  .rd-card { padding-top: 6px; padding-bottom: 6px; margin-bottom: 26px; }
+  .calendar-card { padding-top: 8px; }
+  .top-r { border-top-color: color-mix(in srgb, var(--text-main) 9%, transparent); }
+  .toast { color: #fff; }
