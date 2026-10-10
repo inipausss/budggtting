@@ -2,7 +2,7 @@
 (function () {
   const DB = 'budggt_db', CFG = 'budggt_cfg';
   const $ = id => document.getElementById(id);
-  const empty = () => ({ accounts: [], transactions: [], budgets: [], bills: [], goals: [], debts: [] });
+  const empty = () => ({ accounts: [], transactions: [], budgets: [], bills: [], goals: [], debts: [], kategori: [] });
   const load = () => { try { return JSON.parse(localStorage.getItem(DB)) || empty(); } catch (e) { return empty(); } };
   const save = d => localStorage.setItem(DB, JSON.stringify(d));
   const cfg = () => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } };
@@ -37,7 +37,7 @@
         });
         return { id: a.id, nama: a.nama, jenis: a.jenis, nomor: a.nomor || '', saldoAkhir: s };
       });
-      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: (d.budgets || []).map(normB), bills: d.bills || [], goals: d.goals || [], debts: d.debts || [] };
+      return { user: 'Pengguna', accounts: d.accounts, accountSummary, transactions: d.transactions, budgets: (d.budgets || []).map(normB), bills: d.bills || [], goals: d.goals || [], debts: d.debts || [], kategori: d.kategori || [] };
     },
     addAccount(a) {
       const d = load();
@@ -145,6 +145,14 @@
       };
       const i = d.debts.findIndex(y => y.id === item.id);
       if (i > -1) d.debts[i] = item; else d.debts.push(item);
+      save(d);
+    },
+    setKategori(x) { // catatan kategori buatan sendiri / yang disembunyikan; kunci = jenis + nama
+      const d = load();
+      d.kategori = d.kategori || [];
+      const item = { nama: String(x.nama || '').trim(), jenis: x.jenis === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran', ikon: String(x.ikon || ''), hidden: !!x.hidden };
+      const i = d.kategori.findIndex(y => y.jenis === item.jenis && y.nama.toLowerCase() === item.nama.toLowerCase());
+      if (i > -1) d.kategori[i] = item; else d.kategori.push(item);
       save(d);
     },
     deleteDebt(id) {
