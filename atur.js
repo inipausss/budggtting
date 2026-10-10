@@ -50,7 +50,7 @@
     if (cur && !list.some(k => low(k) === cur)) list.push(katEl.value.trim()); // mis. hasil scan struk
     const edit = trxKatEdit;
     $('tpCats').innerHTML = list.map(k => `
-      <button type="button" class="tc ${low(k) === cur ? 'on' : ''}" style="--c:${warnaKat(k, j)}" onclick="${edit ? `bukaKatEdit('${jsq(k)}')` : `pickTrxKat('${jsq(k)}')`}">
+      <button type="button" class="tc ${low(k) === cur ? 'on' : ''}" style="--c:${warnaKat(k, j)}"${edit ? ` data-k="${esc(k)}"` : ''} onclick="${edit ? `bukaKatEdit('${jsq(k)}')` : `pickTrxKat('${jsq(k)}')`}">
         ${edit ? `<span class="x" onclick="event.stopPropagation(); hapusKat('${jsq(k)}')"><i class="fa fa-xmark"></i></span>` : ''}
         <span class="ic"><i class="fa ${katIkon(k)}"></i></span><span class="nm">${esc(k)}</span>
       </button>`).join('') + `
@@ -180,7 +180,9 @@
 
   // ===== pasang tampilan: lembar atur kategori + petunjuk =====
   const css = document.createElement('style');
-  css.textContent = '#modalKatEdit button:disabled{opacity:.35;pointer-events:none}';
+  css.textContent = '#modalKatEdit button:disabled{opacity:.35;pointer-events:none}' +
+    '.tc[data-k]{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}' +
+    '.tc.drag{position:relative;z-index:5;opacity:.92}.tc.drag .ic{transform:scale(1.15);box-shadow:0 8px 20px rgba(0,0,0,.5)}';
   document.head.appendChild(css);
 
   const m = document.createElement('div');
@@ -210,8 +212,66 @@
   hint.id = 'tpKatHint';
   hint.className = 'bf-hint hidden';
   hint.style.margin = '0 0 12px';
-  hint.textContent = 'Ketuk kategori untuk ubah nama, ikon, atau urutan.';
+  hint.textContent = 'Tahan lalu geser kategori untuk ubah urutan. Ketuk untuk ubah nama atau ikon.';
   $('tpCats').after(hint);
+
+  // ===== geser urutan: tahan ~0,3 detik lalu seret (hanya di mode Atur); geser biasa tetap menggulung deretan =====
+  const box = $('tpCats');
+  let dr = null, sup = false;
+  box.addEventListener('contextmenu', e => { if (trxKatEdit) e.preventDefault(); });
+  box.addEventListener('click', e => { if (sup) { e.stopPropagation(); e.preventDefault(); sup = false; } }, true); // tap setelah drag tidak membuka lembar atur
+  box.addEventListener('touchmove', e => { if (dr && dr.on) e.preventDefault(); }, { passive: false }); // saat drag, deretan jangan ikut menggulung
+
+  function place() {
+    const el = dr.el, x = dr.x;
+    const tiles = Array.from(box.querySelectorAll('.tc[data-k]'));
+    const hit = tiles.find(t => { if (t === el) return false; const r = t.getBoundingClientRect(); return x >= r.left && x <= r.right; });
+    if (hit) box.insertBefore(el, tiles.indexOf(hit) > tiles.indexOf(el) ? hit.nextSibling : hit);
+    el.style.transform = '';
+    const r = el.getBoundingClientRect();
+    el.style.transform = 'translateX(' + (x - (r.left + r.width / 2)) + 'px)'; // tile mengikuti jari
+  }
+  function auto() { // dekat tepi: deretan menggulung sendiri
+    if (!dr || !dr.on) return;
+    const r = box.getBoundingClientRect();
+    if (dr.x < r.left + 40) box.scrollLeft -= 8; else if (dr.x > r.right - 40) box.scrollLeft += 8;
+    place();
+    dr.raf = requestAnimationFrame(auto);
+  }
+  function onMove(e) {
+    if (!dr || e.pointerId !== dr.id) return;
+    if (!dr.on) { if (Math.abs(e.clientX - dr.x0) > 8 || Math.abs(e.clientY - dr.y0) > 8) endDr(false); return; } // gerak sebelum ditahan = gulung biasa
+    dr.x = e.clientX;
+    place();
+  }
+  function onUp(e) { if (dr && e.pointerId === dr.id) endDr(e.type === 'pointerup'); }
+  function endDr(simpan) {
+    if (!dr) return;
+    clearTimeout(dr.t); cancelAnimationFrame(dr.raf);
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.removeEventListener('pointercancel', onUp);
+    const d = dr; dr = null;
+    if (!d.on) return;
+    d.el.classList.remove('drag'); d.el.style.transform = '';
+    sup = true; setTimeout(() => { sup = false; }, 350);
+    if (simpan) simpanUrut($('jenis').value, Array.from(box.querySelectorAll('.tc[data-k]')).map(t => t.dataset.k));
+    renderTrxCats();
+  }
+  box.addEventListener('pointerdown', e => {
+    const el = trxKatEdit && !e.target.closest('.x') && e.target.closest('.tc[data-k]');
+    if (!el || dr) return;
+    dr = { el, id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, on: false };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+    dr.t = setTimeout(() => {
+      dr.on = true;
+      el.classList.add('drag');
+      if (navigator.vibrate) navigator.vibrate(12);
+      dr.raf = requestAnimationFrame(auto);
+    }, 280);
+  });
 
   syncDatalist();
   renderTrxCats();
