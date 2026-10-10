@@ -29,10 +29,14 @@
       color: var(--text-muted);
       cursor: pointer;
     }
+    /* segmen aktif: warna aksen tipis, bukan blok penuh (tema tetap kalem) */
     .seg-btn.active {
-      background: var(--primary);
-      color: #000;
+      background: color-mix(in srgb, var(--primary) 18%, var(--card-bg));
+      color: var(--text-main); font-weight: 600;
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent);
     }
+    .seg-btn.inc.active { background: color-mix(in srgb, var(--pos) 16%, var(--card-bg)); color: var(--pos); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pos) 40%, transparent); }
+    .seg-btn.exp.active { background: color-mix(in srgb, var(--neg) 16%, var(--card-bg)); color: var(--neg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--neg) 40%, transparent); }
     /* Kolom cari + chip filter Transaksi (select bawaan browser, digulir ke samping sampai tepi layar) */
     .search-wrap { position: relative; margin-bottom: 12px; }
     .search-wrap i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem; pointer-events: none; }
@@ -206,18 +210,37 @@
     <div id="recapView">
       <div id="recapSummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;"></div>
 
+      <div class="seg" id="recapJenisSeg">
+        <button type="button" class="seg-btn inc" id="rj-Pemasukan" onclick="setRecapJenis('Pemasukan')">Pemasukan</button>
+        <button type="button" class="seg-btn exp active" id="rj-Pengeluaran" onclick="setRecapJenis('Pengeluaran')">Pengeluaran</button>
+      </div>
+
       <div class="section-title-row" style="margin-bottom: 12px;">
-        <h3 class="section-title">Pengeluaran per Kategori</h3>
+        <h3 class="section-title" id="catTitle">Pengeluaran per Kategori</h3>
         <button id="catDetailBtn" onclick="openCatDetail()" class="btn-sec" style="width: auto; padding: 6px 14px; font-size: 0.8rem;">Lihat detail</button>
       </div>
       <div id="catCard" class="list-card" onclick="openCatDetail()" style="height: 240px; position: relative; cursor: pointer; margin-bottom: 8px;">
         <canvas id="chartFlow"></canvas>
         <div id="catCenter" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-          <p style="font-size: 0.72rem; font-weight: 500; color: var(--text-muted);">Pengeluaran</p>
+          <p id="catCenterLbl" style="font-size: 0.72rem; font-weight: 500; color: var(--text-muted);">Pengeluaran</p>
           <h3 id="catTotal" style="font-size: 0.95rem; font-weight: 700;"></h3>
         </div>
       </div>
       <div id="catLegend" class="list-card" style="margin-bottom: 20px;"></div>
+
+      <!-- detail statistik untuk jenis yang dipilih -->
+      <div class="list-card rd-card">
+        <div class="rd-head"><div><h3 class="rd-title">Perbandingan Bulanan</h3><p class="rd-sub" id="cmpSub"></p></div><span class="rd-badge" id="cmpBadge"></span></div>
+        <div class="rd-chart"><canvas id="chartCmp"></canvas></div>
+        <div class="rd-leg"><span><i class="rd-dot" id="cmpDotA"></i><span id="cmpLegA">Bulan ini</span></span><span><i class="rd-dot rd-dash"></i><span id="cmpLegB">Bulan lalu</span></span></div>
+      </div>
+      <div class="list-card rd-card">
+        <div class="rd-head"><div><h3 class="rd-title">Tren Saldo Bersih</h3><p class="rd-sub">Pemasukan dikurangi pengeluaran, kumulatif</p></div><span class="rd-badge" id="netBadge"></span></div>
+        <div class="rd-chart"><canvas id="chartNet"></canvas></div>
+      </div>
+      <div class="list-card rd-card" id="recapAvg"></div>
+      <div class="list-card rd-card" id="recapHeat"></div>
+      <div class="list-card rd-card" id="recapTop"></div>
 
       <div class="section-title-row" style="margin-bottom: 12px;">
         <h3 class="section-title">Tren 6 Bulan</h3>
@@ -333,7 +356,7 @@
   <main id="analyticsDetail" class="page hidden">
     <div class="section-title-row" style="margin-bottom: 8px; justify-content: flex-start; gap: 10px;">
       <button class="icon-btn" onclick="backToRecap()"><i class="fa fa-chevron-left"></i></button>
-      <h2 style="font-size: 1.4rem; font-weight: 600;">Detail Pengeluaran</h2>
+      <h2 id="catDetailTitle" style="font-size: 1.4rem; font-weight: 600;">Detail Pengeluaran</h2>
     </div>
     <p id="catDetailMonth" style="text-align: center; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-bottom: 12px;"></p>
     <div id="catDetailCard" class="list-card" style="height: 280px; position: relative; margin-bottom: 16px;">
