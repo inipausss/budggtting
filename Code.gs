@@ -66,7 +66,8 @@ function backup(d) {
     (d.kategori || []).map(function (k) {
       return [k.nama, k.jenis, k.ikon || '', k.hidden ? 1 : 0, me, typeof k.urut === 'number' ? k.urut : '', k.warna || ''];
     }));
-  return { ok: true };
+  // jumlah baris yang ditulis, ditampilkan di HP supaya kelihatan apa saja yang ikut ter-backup
+  return { ok: true, n: { rekening: accounts.length, transaksi: transactions.length, tagihan: (d.bills || []).length, utang: (d.debts || []).length, goal: (d.goals || []).length, budget: (d.budgets || []).length } };
 }
 
 function restore() {
