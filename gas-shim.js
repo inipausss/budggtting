@@ -266,17 +266,23 @@
   };
   window.backupNow = async () => {
     try {
-      await remote('backup', { data: load() });
+      const j = await remote('backup', { data: load() });
       const c = cfg(); c.last = new Date().toLocaleString('id-ID'); c.lastTs = Date.now();
       localStorage.setItem(CFG, JSON.stringify(c));
-      info(); alert('Backup berhasil'); if (window.renderBackupNag) renderBackupNag();
+      info();
+      const n = j.n; // tidak ada = Apps Script yang berjalan masih versi lama
+      alert(n ? 'Backup berhasil:\n' + n.transaksi + ' transaksi, ' + n.tagihan + ' tagihan, ' + n.rekening + ' rekening, ' + n.utang + ' utang, ' + n.goal + ' tabungan, ' + n.budget + ' budget'
+        : 'Backup berhasil, TAPI Apps Script masih versi lama. Di Apps Script: Deploy > Manage deployments > edit > Version: New version > Deploy.');
+      if (window.renderBackupNag) renderBackupNag();
     } catch (e) { alert('Backup gagal: ' + e.message); }
   };
   window.restoreNow = async () => {
     if (!confirm('Data di HP akan ditimpa dengan data dari Google Sheets. Lanjut?')) return;
     try {
       const j = await remote('restore');
-      save(j.data); loadData(); alert('Restore berhasil');
+      save(j.data); loadData();
+      const c = k => (j.data[k] || []).length;
+      alert('Restore berhasil:\n' + c('transactions') + ' transaksi, ' + c('bills') + ' tagihan, ' + c('accounts') + ' rekening, ' + c('debts') + ' utang, ' + c('goals') + ' tabungan, ' + c('budgets') + ' budget');
     } catch (e) { alert('Restore gagal: ' + e.message); }
   };
 
