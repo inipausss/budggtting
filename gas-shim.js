@@ -272,7 +272,7 @@
       info();
       const n = j.n; // tidak ada = Apps Script yang berjalan masih versi lama
       alert(n ? 'Backup berhasil:\n' + n.transaksi + ' transaksi, ' + n.tagihan + ' tagihan, ' + n.rekening + ' rekening, ' + n.utang + ' utang, ' + n.goal + ' tabungan, ' + n.budget + ' budget'
-        : 'Backup berhasil, TAPI Apps Script masih versi lama. Di Apps Script: Deploy > Manage deployments > edit > Version: New version > Deploy.');
+        : 'Backup berhasil, TAPI server yang menjawab masih versi lama.\nURL yang dipakai HP ini berakhir dengan:\n...' + String(c.url || '').slice(-12) + '\nCocokkan dengan akhir Web app URL di Apps Script (Manage deployments). Kalau beda, tempel URL yang benar lalu Simpan Pengaturan.');
       if (window.renderBackupNag) renderBackupNag();
     } catch (e) { alert('Backup gagal: ' + e.message); }
   };
