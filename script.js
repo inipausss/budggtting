@@ -406,7 +406,7 @@ function bukaMenuGear(btn) {
   if (document.getElementById('gearMenu')) return tutupMenuGear();
   const m = document.createElement('div');
   m.id = 'gearMenu'; m.className = 'dd-menu gm';
-  [['fa-gear', 'Pengaturan', "toggleModal('modalSettings')"], ['fa-palette', 'Tema', 'openTheme()'], ['fa-credit-card', 'Kartu', 'openCard()']].forEach(([ic, t, fn]) => {
+  [['fa-gear', 'Pengaturan', "toggleModal('modalSettings')"], ['fa-palette', 'Tema', 'openTheme()'], ['fa-credit-card', 'Kartu', 'openCard()'], ['fa-language', 'Bahasa', 'openBahasa()']].forEach(([ic, t, fn]) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'dd-opt'; b.innerHTML = `<span style="display: flex; align-items: center; gap: 12px;"><i class="fa ${ic}" style="width: 18px; text-align: center; color: var(--text-muted);"></i>${t}</span>`;
     b.onclick = () => { tutupMenuGear(); new Function(fn)(); };
@@ -1009,7 +1009,7 @@ function debtStatus(d) {
   if (diff < 0) return { label: 'Terlambat ' + (-diff) + ' hari', warna: 'var(--neg)' };
   if (diff === 0) return { label: 'Jatuh tempo hari ini', warna: 'var(--warn)' };
   if (diff <= TAGIHAN_SOON) return { label: diff + ' hari lagi', warna: 'var(--warn)' };
-  return { label: diff <= 30 ? diff + ' hari lagi' : 'Jatuh tempo ' + new Date(d.jatuh + 'T00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }), warna: 'var(--text-muted)' };
+  return { label: diff <= 30 ? diff + ' hari lagi' : 'Jatuh tempo ' + new Date(d.jatuh + 'T00:00').toLocaleDateString(LOCALE, { day: 'numeric', month: 'short', year: 'numeric' }), warna: 'var(--text-muted)' };
 }
 
 function debtCardHtml(d) {
@@ -1290,7 +1290,7 @@ function renderFullTransactions() {
   const hari = k => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(k || '')) return k || '-';
     const sel = dayIdx(todayStr()) - dayIdx(k);
-    return sel === 0 ? 'Hari ini' : sel === 1 ? 'Kemarin' : new Date(k + 'T00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+    return sel === 0 ? 'Hari ini' : sel === 1 ? 'Kemarin' : new Date(k + 'T00:00').toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short' });
   };
   const net = {};
   list.filter(t => !netral(t)).forEach(t => { net[t.tanggal] = (net[t.tanggal] || 0) + (t.jenis === 'Pemasukan' ? 1 : -1) * (Number(t.jumlah) || 0); });
@@ -1830,7 +1830,7 @@ function showAmt() {
 function trxDateLabel() {
   const v = document.getElementById('tanggal').value;
   document.getElementById('tpDate').textContent = !v ? '-' : v === todayStr() ? 'Hari ini'
-    : new Date(v + 'T00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    : new Date(v + 'T00:00').toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' });
 }
 
 // numpad: angka masuk ke #jumlah (hidden), tampilan besar ikut diperbarui
