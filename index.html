@@ -312,6 +312,24 @@
     <div id="budgetPageBody"></div>
   </main>
 
+  <main id="gaji" class="page hidden">
+    <div class="sub-head">
+      <button class="icon-btn" onclick="openPage('dashboard')"><i class="fa fa-chevron-left"></i></button>
+      <h2>Bagi Gaji</h2>
+      <span></span>
+    </div>
+    <label class="bf-lbl" style="margin-top: 0;">Gaji bulan ini</label>
+    <div class="bf-amount"><span>Rp</span><input type="text" inputmode="numeric" id="gajiInput" placeholder="0" oninput="this.value = formatRupiahInput(this.value); gajiHitung(true)"></div>
+
+    <div id="gajiBar" class="gj-bar"></div>
+    <p id="gajiTotal" class="gj-total"></p>
+    <div id="gajiBuckets"></div>
+    <div id="gajiRinci"></div>
+
+    <button type="button" class="btn-primary" style="margin-top: 28px;" onclick="gajiTerapkan()">Terapkan sebagai budget</button>
+    <p class="bf-hint" style="margin-top: 10px;">Budget bulanan dibuat atau diperbarui untuk kebutuhan pokok (per kategori) dan bebas. Tagihan, saving, dan dana darurat hanya panduan, tidak dibuat otomatis.</p>
+  </main>
+
   <main id="budgetForm" class="page hidden">
     <div class="sub-head">
       <button class="icon-btn" onclick="openPage('budgets')"><i class="fa fa-xmark"></i></button>
