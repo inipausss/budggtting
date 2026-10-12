@@ -406,7 +406,7 @@ function bukaMenuGear(btn) {
   if (document.getElementById('gearMenu')) return tutupMenuGear();
   const m = document.createElement('div');
   m.id = 'gearMenu'; m.className = 'dd-menu gm';
-  [['fa-gear', 'Pengaturan', "toggleModal('modalSettings')"], ['fa-palette', 'Tema', 'openTheme()'], ['fa-credit-card', 'Kartu', 'openCard()'], ['fa-language', 'Bahasa', 'openBahasa()'], ['fa-wand-magic-sparkles', 'Bagi Gaji', 'openGaji()']].forEach(([ic, t, fn]) => {
+  [['fa-gear', 'Pengaturan', "toggleModal('modalSettings')"], ['fa-palette', 'Tema', 'openTheme()'], ['fa-credit-card', 'Kartu', 'openCard()'], ['fa-language', 'Bahasa', 'openBahasa()']].forEach(([ic, t, fn]) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'dd-opt'; b.innerHTML = `<span style="display: flex; align-items: center; gap: 12px;"><i class="fa ${ic}" style="width: 18px; text-align: center; color: var(--text-muted);"></i>${t}</span>`;
     b.onclick = () => { tutupMenuGear(); new Function(fn)(); };
