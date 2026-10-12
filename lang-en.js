@@ -519,6 +519,26 @@
     'Tiap tgl {0}': 'Every {0}th',
     '{0} (30 hari)': '{0} (30 days)',
 
+    // ---------- bagi gaji ----------
+    'Bagi Gaji': 'Split Salary',
+    'Masukkan gajimu, Budggt. membaginya sesuai kebiasaanmu': 'Enter your salary and Budggt. splits it based on your habits',
+    'Gaji bulan ini (Rp)': "This month's salary (Rp)",
+    'Bagi': 'Split',
+    'Tagihan tetap': 'Fixed bills',
+    'Budget per kategori': 'Budget per category',
+    'Sisa belum dibagi': 'Not yet allocated',
+    'Kelebihan': 'Over-allocated',
+    'Terapkan sebagai budget': 'Apply as budgets',
+    'Budget bulanan per kategori dibuat atau diperbarui. Tagihan dan tabungan hanya panduan, tidak dibuat otomatis.': 'Monthly budgets per category are created or updated. Bills and savings are only a guide and are not created automatically.',
+    'Isi gaji lebih dari 0': 'Enter a salary greater than 0',
+    'Belum ada budget kategori untuk diterapkan': 'No category budgets to apply yet',
+    '{0} budget diterapkan': '{0} budgets applied',
+    'Gaji · {0}': 'Salary · {0}',
+    'Berdasarkan rata-rata {0} bulan terakhir.': 'Based on the average of the last {0} months.',
+    'Berdasarkan rata-rata {0} bulan terakhir dan pembagian terakhir yang kamu terapkan.': 'Based on the average of the last {0} months and the split you last applied.',
+    'Belum ada riwayat lengkap, jadi memakai pembagian standar. Makin lama dipakai, makin sesuai kebiasaanmu.': 'Not enough history yet, so a standard split is used. The longer you use it, the better it fits your habits.',
+    'Perhatian: total tagihan melebihi gaji.': 'Heads up: total bills exceed your salary.',
+
     // ---------- atur kategori ----------
     'Atur Kategori': 'Manage Categories',
     'Ikon': 'Icon',
