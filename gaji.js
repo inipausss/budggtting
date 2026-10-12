@@ -1,148 +1,126 @@
-// ===== BAGI GAJI =====
-// Input gaji -> app membagi otomatis: tagihan tetap dulu, lalu kategori & tabungan sesuai kebiasaanmu.
-// Belajar dari: (1) rata-rata 3 bulan terakhir yang sudah lewat, (2) pembagian terakhir yang kamu terapkan (disimpan di budggt_gaji).
-// Terapkan = membuat/memperbarui budget bulanan "Gaji · <kategori>" lewat jalur yang sama dengan form Budget.
-// File ini hanya memakai fungsi script.js saat berjalan (globalData, netral, format, esc, renderBudgets, showToast, toggleModal).
-// ponytail: ratio = rata-rata pengeluaran kategori / rata-rata pemasukan; belum memisah bulan "tidak biasa" (outlier).
+// ===== BAGI GAJI (halaman penuh #gaji) =====
+// Rumus dasar: 50% kebutuhan pokok, 30% saving, 15% dana darurat, 5% bebas. Persennya bisa kamu ubah, dan pilihan terakhir diingat.
+// Belajar dari kebiasaan: isi "kebutuhan pokok" dibagi ke Makanan & Transport sesuai rata-rata 3 bulan terakhir
+// (dicampur dengan pembagian terakhir yang kamu terapkan); tagihan tetap diambil dari daftar Tagihan.
+// Markup di index.html (#gaji), gaya di style.css (.gj-*). Memakai fungsi script.js saat berjalan.
+// ponytail: kategori "kebutuhan" tetap Makanan & Transport; kategori lain ikut kelompok "bebas". Perlu daftar yang bisa diatur kalau kurang.
 const GAJI_KEY = 'budggt_gaji';
-const GAJI_DEFAULT = { Makanan: 0.25, Transport: 0.10, Belanja: 0.10, Hiburan: 0.05 }; // dipakai kalau belum ada riwayat
-const GAJI_TAB_DEFAULT = 0.20;
-const GAJI_MAKS_KAT = 6;
-let gajiRows = [], gajiTotal = 0, gajiInfo = '';
+const GAJI_BUCKET = [
+  { id: 'need', nama: 'Kebutuhan pokok', sub: 'Tagihan, makanan, transportasi', pct: 50, warna: '#3b82f6' },
+  { id: 'save', nama: 'Saving', sub: 'Tabungan & tujuan keuangan', pct: 30, warna: '#22c55e' },
+  { id: 'dar', nama: 'Dana darurat', sub: 'Cadangan untuk hal tak terduga', pct: 15, warna: '#f97316' },
+  { id: 'free', nama: 'Bebas dipakai', sub: 'Untuk apa saja', pct: 5, warna: '#a855f7' }
+];
+const GAJI_KEBUTUHAN = { Makanan: 0.6, Transport: 0.4 }; // bobot awal kalau belum ada riwayat
+const GAJI_BEBAS_CATS = ['Hiburan', 'Belanja', 'Lainnya'];
+let gajiPct = {}, gajiKat = []; // gajiKat: [{nama, jumlah}] kategori kebutuhan (bisa diedit)
 
 const gajiSimpan = () => { try { return JSON.parse(localStorage.getItem(GAJI_KEY) || '{}'); } catch (e) { return {}; } };
 const gajiAngka = v => Number(String(v).replace(/\D/g, '')) || 0;
+const gajiGaji = () => gajiAngka(document.getElementById('gajiInput').value);
+const gajiBulat = n => Math.round(n / 1000) * 1000;
 
-// rata-rata per bulan dari bulan-bulan lengkap terakhir (maks 3) yang punya pengeluaran
+// rata-rata pengeluaran per kategori dari maks 3 bulan lengkap terakhir
 function gajiRiwayat() {
   const now = currentMonthKey(), per = {};
   (globalData.transactions || []).forEach(t => {
-    const k = String(t.tanggal).slice(0, 7); if (k >= now) return;
-    (per[k] = per[k] || { cat: {}, masuk: 0, tab: 0, keluar: 0 });
-    const j = Number(t.jumlah) || 0;
-    if (t.kategori === KAT_SETOR) per[k].tab += j;
-    else if (netral(t)) return;
-    else if (t.jenis === 'Pemasukan') per[k].masuk += j;
-    else { per[k].cat[t.kategori] = (per[k].cat[t.kategori] || 0) + j; per[k].keluar += j; }
+    const k = String(t.tanggal).slice(0, 7);
+    if (k >= now || netral(t) || t.jenis !== 'Pengeluaran') return;
+    (per[k] = per[k] || {})[t.kategori] = ((per[k] || {})[t.kategori] || 0) + (Number(t.jumlah) || 0);
   });
-  const keys = Object.keys(per).filter(k => per[k].keluar > 0).sort().slice(-3);
-  const n = keys.length, r = { n, cat: {}, masuk: 0, tab: 0, keluar: 0 };
-  keys.forEach(k => { r.masuk += per[k].masuk / n; r.tab += per[k].tab / n; r.keluar += per[k].keluar / n; for (const c in per[k].cat) r.cat[c] = (r.cat[c] || 0) + per[k].cat[c] / n; });
+  const keys = Object.keys(per).sort().slice(-3), r = { n: keys.length, cat: {} };
+  keys.forEach(k => { for (const c in per[k]) r.cat[c] = (r.cat[c] || 0) + per[k][c] / keys.length; });
   return r;
 }
 
-function gajiHitung(gaji) {
-  const h = gajiRiwayat(), last = gajiSimpan().pct || {};
-  const tagihan = (globalData.bills || []).map(b => ({ tipe: 'tagihan', nama: b.nama, kat: b.kategori, jumlah: Number(b.jumlah) || 0, tgl: b.tanggal }));
-  const totTagihan = tagihan.reduce((s, b) => s + b.jumlah, 0);
-  // bagian kategori yang sudah tercakup tagihan (mis. Netflix di Hiburan) tidak dihitung dua kali
-  const sudah = {}; tagihan.forEach(b => { sudah[b.kat] = (sudah[b.kat] || 0) + b.jumlah; });
-  let rasio = {}, tabR;
-  if (h.n) {
-    const dasar = h.masuk > 0 ? h.masuk : h.keluar / 0.7;
-    for (const c in h.cat) { const sisa = Math.max(0, h.cat[c] - (sudah[c] || 0)); if (sisa > 0) rasio[c] = sisa / dasar; }
-    tabR = h.tab > 0 ? h.tab / dasar : GAJI_TAB_DEFAULT;
-  } else { rasio = Object.assign({}, GAJI_DEFAULT); tabR = GAJI_TAB_DEFAULT; }
-  // belajar dari pembagian terakhir: rata-rata riwayat dan pilihanmu
-  for (const c in rasio) if (last[c] != null) rasio[c] = (rasio[c] + last[c]) / 2;
-  if (last.__tab != null) tabR = (tabR + last.__tab) / 2;
-  // ambil kategori terbesar, sisanya digabung "Lainnya"
-  let cats = Object.keys(rasio).sort((a, b) => rasio[b] - rasio[a]);
-  const gabung = {}; // nama baris -> kategori yang dicakup
-  cats.forEach(c => { gabung[c] = [c]; });
-  if (cats.length > GAJI_MAKS_KAT) {
-    const kept = cats.slice(0, GAJI_MAKS_KAT - 1), grup = cats.slice(GAJI_MAKS_KAT - 1).concat(kept.filter(c => c === 'Lainnya'));
-    cats = kept.filter(c => c !== 'Lainnya').concat('Lainnya');
-    rasio.Lainnya = grup.reduce((s, c) => s + rasio[c], 0);
-    gabung.Lainnya = grup;
-  }
-  const sisaGaji = Math.max(0, gaji - totTagihan);
-  let tab = Math.round(gaji * tabR / 1000) * 1000;
-  tab = Math.min(tab, sisaGaji);
-  const ruang = sisaGaji - tab; // untuk kategori
-  let want = cats.map(c => gaji * rasio[c]), sum = want.reduce((a, b) => a + b, 0);
-  const skala = sum > ruang ? ruang / sum : 1; // kalau kebutuhan melebihi gaji, kecilkan merata
-  gajiRows = tagihan.map(b => Object.assign({}, b)).concat(cats.map((c, i) => ({ tipe: 'kat', nama: c, cats: gabung[c], jumlah: Math.round(want[i] * skala / 1000) * 1000 })), [{ tipe: 'tab', nama: 'Tabungan', jumlah: tab }]);
-  gajiTotal = gaji;
-  gajiInfo = h.n ? `Berdasarkan rata-rata ${h.n} bulan terakhir${last.__tab != null ? ' dan pembagian terakhir yang kamu terapkan' : ''}.` : 'Belum ada riwayat lengkap, jadi memakai pembagian standar. Makin lama dipakai, makin sesuai kebiasaanmu.';
-  if (totTagihan > gaji) gajiInfo += ' Perhatian: total tagihan melebihi gaji.';
-}
-
-function gajiSisa() { return gajiTotal - gajiRows.reduce((s, r) => s + r.jumlah, 0); }
-
 function openGaji() {
-  if (!document.getElementById('modalGaji')) {
-    const m = document.createElement('div');
-    m.id = 'modalGaji'; m.className = 'modal hidden';
-    m.innerHTML = `<div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <h3 style="font-size: 1.15rem; font-weight: 600;">Bagi Gaji</h3>
-        <button onclick="toggleModal('modalGaji')" style="background:none; border:none; font-size: 1.4rem; color: #94a3b8; cursor: pointer;">&times;</button>
-      </div>
-      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Masukkan gajimu, Budggt. membaginya sesuai kebiasaanmu</p>
-      <div style="display: flex; gap: 8px;">
-        <input id="gajiInput" class="input-field" inputmode="numeric" placeholder="Gaji bulan ini (Rp)" style="flex: 1;" oninput="this.value = formatRupiahInput(this.value)">
-        <button type="button" class="btn-save" onclick="gajiMulai()" style="width: auto; padding: 0 18px;">Bagi</button>
-      </div>
-      <div id="gajiBox"></div>
-    </div>`;
-    document.body.appendChild(m);
-  }
   const s = gajiSimpan();
+  GAJI_BUCKET.forEach(b => { gajiPct[b.id] = (s.pct && s.pct[b.id] != null) ? s.pct[b.id] : b.pct; });
   document.getElementById('gajiInput').value = s.gaji ? formatRupiahInput(s.gaji) : '';
-  document.getElementById('gajiBox').innerHTML = '';
-  toggleModal('modalGaji');
+  document.getElementById('gajiBuckets').innerHTML = GAJI_BUCKET.map(b => `
+    <div class="gj-bk">
+      <span class="gj-dot" style="background: ${b.warna};"></span>
+      <div class="gj-nm"><b>${b.nama}</b><small>${b.sub}</small></div>
+      <div class="gj-pct"><input type="number" inputmode="decimal" min="0" max="100" id="gjp-${b.id}" value="${gajiPct[b.id]}" oninput="gajiUbahPct('${b.id}', this.value)"><span>%</span></div>
+      <span class="gj-amt" id="gja-${b.id}">Rp 0</span>
+    </div>`).join('');
+  openPage('gaji');
+  gajiHitung(true);
 }
 
-function gajiMulai() {
-  const g = gajiAngka(document.getElementById('gajiInput').value);
-  if (g <= 0) { alert('Isi gaji lebih dari 0'); return; }
-  gajiHitung(g); gajiGambar();
+function gajiUbahPct(id, v) { gajiPct[id] = Math.max(0, Number(v) || 0); gajiHitung(true); }
+
+// hitung ulang bucket; resetKat = bagi ulang isi kategori kebutuhan
+function gajiHitung(resetKat) {
+  const g = gajiGaji(), tot = GAJI_BUCKET.reduce((s, b) => s + (gajiPct[b.id] || 0), 0);
+  const amt = {}; GAJI_BUCKET.forEach(b => { amt[b.id] = gajiBulat(g * (gajiPct[b.id] || 0) / 100); document.getElementById('gja-' + b.id).textContent = format(amt[b.id]); });
+  document.getElementById('gajiBar').innerHTML = GAJI_BUCKET.map(b => `<i style="width: ${tot ? (gajiPct[b.id] || 0) / Math.max(tot, 100) * 100 : 0}%; background: ${b.warna};"></i>`).join('');
+  const tl = document.getElementById('gajiTotal');
+  tl.textContent = tot === 100 ? 'Total 100%' : `Total ${+tot.toFixed(1)}% (harus 100%)`;
+  tl.className = 'gj-total' + (tot === 100 ? '' : ' gj-warn');
+  gajiRinci(g, amt, resetKat);
 }
 
-function gajiGambar() {
-  const baris = (r, i) => {
-    const pct = gajiTotal ? Math.round(r.jumlah / gajiTotal * 100) : 0;
-    const kiri = r.tipe === 'tagihan' ? `<i class="fa fa-file-invoice" style="color: var(--text-muted);"></i> ${esc(r.nama)}<span style="color: var(--text-muted); font-size: 0.7rem;"> · Tiap tgl ${r.tgl}</span>` : r.tipe === 'tab' ? `<i class="fa fa-piggy-bank" style="color: var(--text-muted);"></i> Tabungan` : `<i class="fa fa-tag" style="color: var(--text-muted);"></i> ${esc(r.nama)}`;
-    const kanan = r.tipe === 'tagihan' ? `<strong style="font-size: 0.85rem;">${format(r.jumlah)}</strong>` : `<input class="input-field" inputmode="numeric" value="${formatRupiahInput(r.jumlah)}" style="width: 120px; padding: 6px 10px; text-align: right;" oninput="this.value = formatRupiahInput(this.value); gajiUbah(${i}, this.value)">`;
-    return `<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 0.85rem;"><span>${kiri}</span><span style="display: flex; align-items: center; gap: 8px;">${kanan}<span id="gajiPct${i}" style="color: var(--text-muted); font-size: 0.7rem; width: 30px; text-align: right;">${pct}%</span></span></div>`;
-  };
-  const urut = ['tagihan', 'kat', 'tab'], lbl = { tagihan: 'Tagihan tetap', kat: 'Budget per kategori', tab: 'Tabungan' };
-  let h = `<p style="font-size: 0.75rem; color: var(--text-muted); margin: 14px 0 4px;">${gajiInfo}</p>`;
-  urut.forEach(tp => {
-    const items = gajiRows.map((r, i) => [r, i]).filter(([r]) => r.tipe === tp);
-    if (!items.length) return;
-    h += `<p style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin: 14px 0 0;">${lbl[tp]}</p>` + items.map(([r, i]) => baris(r, i)).join('');
-  });
-  h += `<div style="display: flex; justify-content: space-between; margin: 14px 0; font-size: 0.85rem; font-weight: 600;"><span id="gajiSisaLbl">${gajiSisa() >= 0 ? 'Sisa belum dibagi' : 'Kelebihan'}</span><span id="gajiSisa">${format(Math.abs(gajiSisa()))}</span></div>
-    <button type="button" class="btn-save" onclick="gajiTerapkan()">Terapkan sebagai budget</button>
-    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 8px;">Budget bulanan per kategori dibuat atau diperbarui. Tagihan dan tabungan hanya panduan, tidak dibuat otomatis.</p>`;
-  document.getElementById('gajiBox').innerHTML = h;
+function gajiRinci(g, amt, resetKat) {
+  const tagihan = (globalData.bills || []).map(b => ({ nama: b.nama, jumlah: Number(b.jumlah) || 0, tgl: b.tanggal }));
+  const totT = tagihan.reduce((s, b) => s + b.jumlah, 0), pool = Math.max(0, amt.need - totT);
+  if (resetKat || !gajiKat.length) {
+    const h = gajiRiwayat(), last = gajiSimpan().share || {}, w = {};
+    Object.keys(GAJI_KEBUTUHAN).forEach(c => { w[c] = h.cat[c] || 0; });
+    const sw = Object.values(w).reduce((a, b) => a + b, 0);
+    Object.keys(GAJI_KEBUTUHAN).forEach(c => {
+      let share = sw > 0 ? w[c] / sw : GAJI_KEBUTUHAN[c];
+      if (last[c] != null) share = (share + last[c]) / 2; // belajar dari pembagian terakhir
+      w[c] = share;
+    });
+    gajiKat = Object.keys(w).map(c => ({ nama: c, jumlah: gajiBulat(pool * w[c]) }));
+    gajiRinci.info = sw > 0 ? `Porsi makanan dan transport mengikuti rata-rata ${h.n} bulan terakhir${Object.keys(last).length ? ' dan pembagian terakhirmu' : ''}.` : 'Belum ada riwayat pengeluaran lengkap, jadi memakai porsi standar. Makin lama dipakai, makin sesuai kebiasaanmu.';
+  }
+  const goals = (globalData.goals || []).map(x => ({ nama: x.nama, sisa: Math.max(0, (Number(x.target) || 0) - (Number(x.terkumpul) || 0)) })).filter(x => x.sisa > 0);
+  const sumSisa = goals.reduce((s, x) => s + x.sisa, 0);
+  const baris = (nama, kanan, sub) => `<div class="gj-row"><span>${nama}${sub ? `<small>${sub}</small>` : ''}</span>${kanan}</div>`;
+  let h = '';
+  h += `<h3 class="gj-h"><span class="gj-dot" style="background: #3b82f6;"></span> Kebutuhan pokok <b>${format(amt.need)}</b></h3>`;
+  h += tagihan.length ? tagihan.map(b => baris(esc(b.nama), `<strong>${format(b.jumlah)}</strong>`, 'Tiap tgl ' + b.tgl)).join('') : `<p class="bf-hint">Belum ada tagihan. Tambahkan di menu Tagihan supaya ikut dihitung.</p>`;
+  h += gajiKat.map((k, i) => baris(esc(k.nama), `<input class="gj-in" inputmode="numeric" value="${formatRupiahInput(k.jumlah)}" oninput="this.value = formatRupiahInput(this.value); gajiUbahKat(${i}, this.value)">`)).join('');
+  h += `<div class="gj-row gj-sisa"><span>Belum dibagi</span><strong id="gajiSisaKat">${format(0)}</strong></div>`;
+  if (totT > amt.need && g > 0) h += `<p class="bf-hint gj-warn">Total tagihan (${format(totT)}) melebihi jatah kebutuhan pokok. Naikkan persen kebutuhan atau kurangi persen lainnya.</p>`;
+  h += `<p class="bf-hint">${gajiRinci.info || ''}</p>`;
+  h += `<h3 class="gj-h"><span class="gj-dot" style="background: #22c55e;"></span> Saving <b>${format(amt.save)}</b></h3>`;
+  h += goals.length ? goals.map(x => baris(esc(x.nama), `<strong>${format(gajiBulat(amt.save * x.sisa / sumSisa))}</strong>`, 'Sesuai sisa target')).join('') : `<p class="bf-hint">Belum ada savings goal. Buat di menu Dompet supaya saving punya tujuan.</p>`;
+  h += `<h3 class="gj-h"><span class="gj-dot" style="background: #f97316;"></span> Dana darurat <b>${format(amt.dar)}</b></h3>`;
+  h += `<p class="bf-hint">Umumnya dikumpulkan sampai 3 sampai 6 kali pengeluaran bulanan, lalu persennya bisa dialihkan ke saving.</p>`;
+  h += `<h3 class="gj-h"><span class="gj-dot" style="background: #a855f7;"></span> Bebas dipakai <b>${format(amt.free)}</b></h3>`;
+  h += `<p class="bf-hint">Dibuat sebagai satu budget untuk ${GAJI_BEBAS_CATS.join(', ')}.</p>`;
+  document.getElementById('gajiRinci').innerHTML = h;
+  gajiSisaKat(pool);
+  gajiRinci.pool = pool; gajiRinci.amt = amt;
 }
 
-function gajiUbah(i, v) {
-  gajiRows[i].jumlah = gajiAngka(v);
-  const p = document.getElementById('gajiPct' + i); if (p) p.textContent = (gajiTotal ? Math.round(gajiRows[i].jumlah / gajiTotal * 100) : 0) + '%';
-  const s = gajiSisa();
-  document.getElementById('gajiSisa').textContent = format(Math.abs(s));
-  document.getElementById('gajiSisaLbl').textContent = s >= 0 ? 'Sisa belum dibagi' : 'Kelebihan';
+function gajiSisaKat(pool) {
+  const s = (pool != null ? pool : gajiRinci.pool) - gajiKat.reduce((a, k) => a + k.jumlah, 0), el = document.getElementById('gajiSisaKat');
+  el.textContent = (s < 0 ? '-' : '') + format(Math.abs(s)); el.className = s < 0 ? 'gj-warn' : '';
 }
+function gajiUbahKat(i, v) { gajiKat[i].jumlah = gajiAngka(v); gajiSisaKat(); }
 
 function gajiTerapkan() {
-  const kat = gajiRows.filter(r => r.tipe === 'kat' && r.jumlah > 0);
-  if (!kat.length) { alert('Belum ada budget kategori untuk diterapkan'); return; }
-  const list = (globalData.budgets = globalData.budgets || []), pct = {};
-  kat.forEach(r => {
-    const item = { id: 'gaji_' + r.nama.toLowerCase().replace(/\W+/g, '_'), nama: 'Gaji · ' + r.nama, batas: r.jumlah, periode: 'bulanan', cats: r.cats || [r.nama], alert: 80 };
-    const i = list.findIndex(x => x.id === item.id);
+  const g = gajiGaji(), tot = GAJI_BUCKET.reduce((s, b) => s + (gajiPct[b.id] || 0), 0);
+  if (g <= 0) { alert('Isi gaji lebih dari 0'); return; }
+  if (tot !== 100) { alert('Total persen harus 100'); return; }
+  const amt = gajiRinci.amt, list = (globalData.budgets = globalData.budgets || []), share = {};
+  const kumpul = gajiKat.filter(k => k.jumlah > 0).map(k => ({ id: 'gaji_' + k.nama.toLowerCase().replace(/\W+/g, '_'), nama: 'Gaji · ' + k.nama, batas: k.jumlah, cats: [k.nama] }));
+  if (amt.free > 0) kumpul.push({ id: 'gaji_bebas', nama: 'Gaji · Bebas', batas: amt.free, cats: GAJI_BEBAS_CATS.slice() });
+  if (!kumpul.length) { alert('Belum ada budget untuk diterapkan'); return; }
+  kumpul.forEach(b => {
+    const item = Object.assign({ periode: 'bulanan', alert: 80 }, b), i = list.findIndex(x => x.id === item.id);
     if (i > -1) list[i] = item; else list.push(item);
     google.script.run.withFailureHandler(err => alert('Gagal simpan budget: ' + err.message)).setBudget(item);
-    pct[r.nama] = r.jumlah / gajiTotal;
   });
-  const tab = gajiRows.find(r => r.tipe === 'tab'); if (tab) pct.__tab = tab.jumlah / gajiTotal;
-  try { localStorage.setItem(GAJI_KEY, JSON.stringify({ gaji: gajiTotal, pct })); } catch (e) {}
+  const sk = gajiKat.reduce((a, k) => a + k.jumlah, 0);
+  gajiKat.forEach(k => { share[k.nama] = sk ? k.jumlah / sk : 0; });
+  try { localStorage.setItem(GAJI_KEY, JSON.stringify({ gaji: g, pct: gajiPct, share })); } catch (e) {}
   localStorage.setItem('budggt_local_cache', JSON.stringify(globalData));
   renderBudgets();
-  toggleModal('modalGaji');
-  showToast(kat.length + ' budget diterapkan', 1);
+  openPage('budgets');
+  showToast(kumpul.length + ' budget diterapkan', 1);
 }
