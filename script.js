@@ -17,7 +17,7 @@ function inMonth(list, key) {
 
 function monthLabel(key) {
   const [y, m] = key.split('-');
-  return BULAN[Number(m) - 1] + ' ' + y;
+  return tr(BULAN[Number(m) - 1]) + ' ' + y;
 }
 
 // ===== LAPORAN (Ringkasan + Transaksi, satu state bulan bersama) =====
@@ -201,7 +201,7 @@ function renderRecapDetails() {
   harian.forEach((v, i) => { const l = lv(v); cells += `<div class="heat-c" style="background: ${warnaLv(l)}; color: ${l >= 3 ? '#fff' : 'var(--text-main)'};"><span>${i + 1}</span>${v > 0 ? `<em>${formatShort(v)}</em>` : ''}</div>`; });
   document.getElementById('recapHeat').innerHTML = `
     <h3 class="rd-title">Peta Aktivitas</h3>
-    <div class="heat-h">${['S', 'S', 'R', 'K', 'J', 'S', 'M'].map(d => `<span>${d}</span>`).join('')}</div>
+    <div class="heat-h">${['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map(d => `<span>${tr(d)[0]}</span>`).join('')}</div>
     <div class="heat">${cells}</div>
     <div class="heat-leg">Sedikit ${[1, 2, 3, 4].map(l => `<i style="background: ${warnaLv(l)};"></i>`).join('')} Banyak</div>`;
 
@@ -2295,7 +2295,7 @@ function renderTrend() {
     const d = new Date(y, m - 1 - i, 1);
     const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     const s = monthTotals(key);
-    labels.push(BULAN[d.getMonth()].slice(0, 3) + ' ' + String(d.getFullYear()).slice(2));
+    labels.push(tr(BULAN[d.getMonth()]).slice(0, 3) + ' ' + String(d.getFullYear()).slice(2));
     inc.push(s.inc);
     exp.push(s.exp);
   }
@@ -2335,8 +2335,7 @@ function renderCalendar(transactions) {
   const year = now.getFullYear();
   const month = now.getMonth();
   
-  const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-  titleEl.innerText = `${monthNames[month]} ${year}`;
+  titleEl.innerText = `${tr(BULAN[month]).toUpperCase()} ${year}`;
 
   let dailyMap = {};
   (transactions || []).filter(t => !netral(t)).forEach(t => {
@@ -2455,7 +2454,7 @@ function budgetRange(b) {
 }
 
 function budgetRangeLabel(b) {
-  const f = d => d.getDate() + ' ' + BULAN[d.getMonth()].slice(0, 3);
+  const f = d => d.getDate() + ' ' + tr(BULAN[d.getMonth()]).slice(0, 3);
   const [s, e] = budgetRange(b);
   return f(s) + ' – ' + f(e);
 }
@@ -2895,7 +2894,7 @@ function renderDay() {
   if (!box || !dayKey) return;
 
   const [y, m, d] = dayKey.split('-').map(Number);
-  document.getElementById('dayTitle').innerText = HARI[new Date(y, m - 1, d).getDay()] + ', ' + d + ' ' + BULAN[m - 1];
+  document.getElementById('dayTitle').innerText = tr(HARI[new Date(y, m - 1, d).getDay()]) + ', ' + d + ' ' + tr(BULAN[m - 1]);
 
   const list = (globalData.transactions || []).filter(t => t.tanggal === dayKey);
   let inc = 0, exp = 0;
