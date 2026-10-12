@@ -491,7 +491,7 @@ function openPage(id) {
   if (activeBtn) activeBtn.classList.add("active");
   
   // halaman Budget tampil penuh: tanpa top bar dan nav bawah
-  const fokus = id === 'budgets' || id === 'budgetForm';
+  const fokus = id === 'budgets' || id === 'budgetForm' || id === 'gaji';
   document.body.classList.toggle('focus-page', fokus);
   if (fokus) window.scrollTo({ top: 0 });
 
