@@ -33,6 +33,9 @@ const _exact = new Map(), _pola = [];
   });
 })();
 
+// bagian dinamis ({0}) ikut diterjemahkan bila cocok kamus; daftar "a, b" dipecah per item
+function trBagian(g) { const r = tr(g); return r !== g ? r : g.split(', ').map(tr).join(', '); }
+
 function tr(s) { // terjemahkan satu teks; tidak ada di kamus = apa adanya
   const core = s.trim();
   if (!core || bahasaAktif === 'id') return s;
@@ -40,7 +43,7 @@ function tr(s) { // terjemahkan satu teks; tidak ada di kamus = apa adanya
   if (r === undefined) {
     for (const p of _pola) {
       const m = core.match(p.re);
-      if (m) { r = p.out.replace(/\{(\d+)\}/g, (_, i) => m[p.g[i]] === undefined ? '' : m[p.g[i]]); break; }
+      if (m) { r = p.out.replace(/\{(\d+)\}/g, (_, i) => m[p.g[i]] === undefined ? '' : trBagian(m[p.g[i]])); break; }
     }
   }
   return r === undefined ? s : s.replace(core, () => r);
