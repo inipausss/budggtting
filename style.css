@@ -300,13 +300,19 @@
   }
 
   .menu-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
     gap: 10px;
     margin-bottom: 28px;
+    overflow-x: auto; /* menu bisa digeser ke samping kalau item lebih dari 4 */
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
+  .menu-grid::-webkit-scrollbar { display: none; }
 
   .menu-item {
+    flex: 0 0 20%; /* 4 item penuh + sebagian item ke-5 mengintip sebagai petunjuk geser */
+    scroll-snap-align: start;
     display: flex;
     flex-direction: column;
     align-items: center;
