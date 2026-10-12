@@ -1321,3 +1321,25 @@
   .calendar-card { padding-top: 8px; }
   .top-r { border-top-color: color-mix(in srgb, var(--text-main) 9%, transparent); }
   .toast { color: #fff; }
+
+  /* ===== Bagi Gaji (halaman #gaji) ===== */
+  .gj-bar { display: flex; height: 12px; border-radius: 8px; overflow: hidden; margin: 22px 0 8px; background: var(--circle-bg); }
+  .gj-bar i { display: block; height: 100%; }
+  .gj-total { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
+  .gj-warn { color: var(--neg); }
+  .gj-bk { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; }
+  .gj-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+  .gj-nm { flex: 1; min-width: 0; }
+  .gj-nm b { display: block; font-size: 0.9rem; font-weight: 600; }
+  .gj-nm small { display: block; font-size: 0.72rem; color: var(--text-muted); }
+  .gj-pct { display: flex; align-items: center; gap: 4px; color: var(--text-muted); }
+  .gj-pct input { width: 54px; padding: 8px 6px; text-align: center; font-size: 0.95rem; background: var(--circle-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); }
+  .gj-amt { min-width: 92px; text-align: right; font-size: 0.85rem; font-weight: 600; }
+  .gj-h { display: flex; align-items: center; gap: 10px; margin: 30px 0 6px; font-size: 0.95rem; font-weight: 600; }
+  .gj-h b { margin-left: auto; font-weight: 600; }
+  .gj-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
+  .gj-row small { display: block; font-size: 0.7rem; color: var(--text-muted); }
+  .gj-in { width: 130px; padding: 8px 12px; text-align: right; font-size: 0.9rem; background: var(--circle-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); }
+  .gj-sisa { color: var(--text-muted); border-bottom: none; }
+  .gj-pct input::-webkit-outer-spin-button, .gj-pct input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .gj-pct input { -moz-appearance: textfield; appearance: textfield; }
