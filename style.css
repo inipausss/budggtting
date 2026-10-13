@@ -1322,24 +1322,45 @@
   .top-r { border-top-color: color-mix(in srgb, var(--text-main) 9%, transparent); }
   .toast { color: #fff; }
 
-  /* ===== Bagi Gaji (halaman #gaji) ===== */
-  .gj-bar { display: flex; height: 12px; border-radius: 8px; overflow: hidden; margin: 22px 0 8px; background: var(--circle-bg); }
+  /* ===== Bagi Gaji (halaman #gaji, 3 langkah) ===== */
+  .gj-steps { display: flex; gap: 6px; margin: -8px 0 26px; }
+  .gj-steps i { flex: 1; height: 4px; border-radius: 4px; background: var(--circle-bg); }
+  .gj-steps i.on, .gj-steps i.done { background: var(--primary); }
+  .gj-steps i.done { opacity: 0.5; }
+  .gj-q { font-size: 1.35rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
+  #gajiBody .bf-amount { margin-top: 18px; }
+  .gj-chip { display: inline-block; margin-top: 14px; padding: 10px 14px; font-size: 0.8rem; color: var(--text-main); background: var(--circle-bg); border: 1px solid var(--border-color); border-radius: 14px; cursor: pointer; }
+  .gj-bar { display: flex; height: 12px; border-radius: 8px; overflow: hidden; margin: 18px 0 8px; background: var(--circle-bg); }
   .gj-bar i { display: block; height: 100%; }
-  .gj-total { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
+  .gj-total { font-size: 0.8rem; margin-bottom: 8px; font-weight: 500; }
+  .gj-ok { color: var(--pos); }
   .gj-warn { color: var(--neg); }
-  .gj-bk { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; }
   .gj-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+  .gj-bk { display: flex; align-items: center; gap: 12px; padding: 16px; margin-top: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; }
   .gj-nm { flex: 1; min-width: 0; }
-  .gj-nm b { display: block; font-size: 0.9rem; font-weight: 600; }
-  .gj-nm small { display: block; font-size: 0.72rem; color: var(--text-muted); }
-  .gj-pct { display: flex; align-items: center; gap: 4px; color: var(--text-muted); }
-  .gj-pct input { width: 54px; padding: 8px 6px; text-align: center; font-size: 0.95rem; background: var(--circle-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); }
-  .gj-amt { min-width: 92px; text-align: right; font-size: 0.85rem; font-weight: 600; }
-  .gj-h { display: flex; align-items: center; gap: 10px; margin: 30px 0 6px; font-size: 0.95rem; font-weight: 600; }
-  .gj-h b { margin-left: auto; font-weight: 600; }
-  .gj-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
+  .gj-nm b { display: block; font-size: 0.92rem; font-weight: 600; }
+  .gj-nm small { display: block; font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+  .gj-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .gj-side strong { font-size: 0.9rem; font-weight: 600; }
+  .gj-step { display: flex; align-items: center; gap: 4px; }
+  .gj-step button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--circle-bg); color: var(--text-main); font-size: 1.1rem; line-height: 1; cursor: pointer; }
+  .gj-step button:active { background: var(--primary); color: #000; }
+  .gj-step span { min-width: 44px; text-align: center; font-size: 0.95rem; font-weight: 600; }
+  .gj-card { margin-top: 12px; padding: 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; }
+  .gj-ch { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; }
+  .gj-ch b { font-weight: 600; }
+  .gj-pc { color: var(--text-muted); font-size: 0.78rem; }
+  .gj-ch strong { margin-left: auto; font-weight: 600; }
+  .gj-card .bf-hint { margin-top: 10px; }
+  .gj-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border-color); font-size: 0.84rem; }
   .gj-row small { display: block; font-size: 0.7rem; color: var(--text-muted); }
+  .gj-ch + .gj-row, .gj-ch + .gj-det { margin-top: 8px; }
+  .gj-det summary { list-style: none; cursor: pointer; }
+  .gj-det summary::-webkit-details-marker { display: none; }
+  .gj-det summary .gj-row::after { content: "\203A"; color: var(--text-muted); margin-left: 4px; transition: transform 0.2s; }
+  .gj-det[open] summary .gj-row::after { transform: rotate(90deg); }
+  .gj-det > .gj-row { padding-left: 12px; }
   .gj-in { width: 130px; padding: 8px 12px; text-align: right; font-size: 0.9rem; background: var(--circle-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); }
   .gj-sisa { color: var(--text-muted); border-bottom: none; }
-  .gj-pct input::-webkit-outer-spin-button, .gj-pct input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .gj-pct input { -moz-appearance: textfield; appearance: textfield; }
+  .gj-foot { position: sticky; bottom: 0; margin: 28px -4px 0; padding: 14px 4px max(14px, env(safe-area-inset-bottom, 0px)); background: linear-gradient(to top, var(--app-bg) 70%, transparent); }
+  .gj-foot .btn-primary:disabled { opacity: 0.4; cursor: default; }
