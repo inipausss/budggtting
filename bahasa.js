@@ -29,8 +29,9 @@ const _exact = new Map(), _pola = [];
     if (!/\{\d+\}/.test(k)) { _exact.set(k.trim(), kamus[k]); return; }
     const label = [], bagian = k.trim().split(/\{(\d+)\}/); // ganjil = label placeholder
     const re = bagian.map((b, i) => i % 2 ? (label.push(b), '([\\s\\S]+?)') : b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('');
-    _pola.push({ re: new RegExp('^' + re + '$'), out: kamus[k], g: Object.fromEntries(label.map((l, i) => [l, i + 1])) });
+    _pola.push({ re: new RegExp('^' + re + '$'), out: kamus[k], g: Object.fromEntries(label.map((l, i) => [l, i + 1])), lit: k.replace(/\{\d+\}/g, '').length });
   });
+  _pola.sort((a, b) => b.lit - a.lit); // pola yang paling spesifik (teks tetap terpanjang) dicoba lebih dulu
 })();
 
 // bagian dinamis ({0}) ikut diterjemahkan bila cocok kamus; daftar "a, b" dipecah per item
