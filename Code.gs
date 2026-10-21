@@ -1,11 +1,17 @@
-// Rahasia disimpan di Project Settings > Script Properties: TOKEN dan GEMINI_API_KEY (jangan ditulis di kode)
+// Rahasia disimpan di Project Settings > Script Properties: TOKEN, GEMINI_API_KEY, dan TOKEN_<profil> per orang (jangan ditulis di kode)
+// Profil kosong = pakai TOKEN dan tab Accounts, Transactions, dst. Profil "anisah" = pakai TOKEN_anisah dan tab anisah_Accounts, dst.
+var PFX = '';
+function tab(n) { return PFX + n; }
 
 function doGet() { return ContentService.createTextOutput('OK'); }
 
 function doPost(e) {
   try {
     var b = JSON.parse(e.postData.contents);
-    var token = PropertiesService.getScriptProperties().getProperty('TOKEN');
+    var profil = String(b.profil || '').trim().toLowerCase();
+    if (profil && !/^[a-z0-9]{1,20}$/.test(profil)) return out({ ok: false, error: 'Profil hanya huruf kecil dan angka (maks 20)' });
+    PFX = profil ? profil + '_' : '';
+    var token = PropertiesService.getScriptProperties().getProperty(profil ? 'TOKEN_' + profil : 'TOKEN');
     if (!token || b.token !== token) return out({ ok: false, error: 'Token salah' });
     if (b.action === 'backup') return out(backup(b.data));
     if (b.action === 'restore') return out(restore());
@@ -22,7 +28,7 @@ function out(o) {
 
 function writeSheet(name, head, rows, textCols) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(name) || ss.insertSheet(name);
+  var sh = ss.getSheetByName(tab(name)) || ss.insertSheet(tab(name));
   sh.clearContents();
   // kolom teks: nomor rekening tidak kehilangan angka 0, bulan lunas ("2026-10") tidak diubah jadi tanggal
   (textCols || []).forEach(function (c) { sh.getRange(c + ':' + c).setNumberFormat('@'); });
@@ -73,7 +79,7 @@ function backup(d) {
 function restore() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), tz = Session.getScriptTimeZone();
   function rows(n) {
-    var s = ss.getSheetByName(n);
+    var s = ss.getSheetByName(tab(n));
     return s && s.getLastRow() > 1 ? s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues() : [];
   }
   var accRows = rows('Accounts');
@@ -96,7 +102,7 @@ function restore() {
         return { id: r[0], nama: String(r[1]), target: Number(r[2]) || 0, terkumpul: Number(r[3]) || 0, kunci: r[4] === true || Number(r[4]) === 1 };
       }),
       budgets: (function () {
-        var sh = ss.getSheetByName('Budgets');
+        var sh = ss.getSheetByName(tab('Budgets'));
         var legacy = sh && String(sh.getRange(1, 1).getValue()) === 'Kategori'; // format lama: Kategori | Batas
         return rows('Budgets').map(function (r) {
           if (legacy) return { kategori: String(r[0]), batas: Number(r[1]) || 0 };
