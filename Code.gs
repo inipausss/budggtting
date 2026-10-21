@@ -12,7 +12,7 @@ function doPost(e) {
     if (profil && !/^[a-z0-9]{1,20}$/.test(profil)) return out({ ok: false, error: 'Profil hanya huruf kecil dan angka (maks 20)' });
     PFX = profil ? profil + '_' : '';
     var token = PropertiesService.getScriptProperties().getProperty(profil ? 'TOKEN_' + profil : 'TOKEN');
-    if (!token || b.token !== token) return out({ ok: false, error: 'Token salah' });
+    if (!token || b.token !== token) return out({ ok: false, error: 'Token salah (profil: ' + (profil || 'kosong') + (token ? '' : ', TOKEN_' + profil + ' belum diisi di Script Properties') + ')' });
     if (b.action === 'backup') return out(backup(b.data));
     if (b.action === 'restore') return out(restore());
     if (b.action === 'scan') return out({ ok: true, data: scan(b.image) });
