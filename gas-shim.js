@@ -276,6 +276,27 @@
       if (window.renderBackupNag) renderBackupNag();
     } catch (e) { alert('Backup gagal: ' + e.message); }
   };
+  // backup otomatis: sekali per hari, saat app dibuka / kembali ke layar depan (HP tidak bisa dijadwalkan jam 00.01 saat app tertutup)
+  // ponytail: butuh app dibuka minimal sekali sehari; gagal (offline, token) cukup toast kecil, dicoba lagi 10 menit kemudian
+  let autoSibuk = 0;
+  const autoBackup = async () => {
+    const c = cfg();
+    if (!c.url || !c.token || Date.now() - autoSibuk < 600000) return;
+    if (c.lastTs && new Date(c.lastTs).toDateString() === new Date().toDateString()) return;
+    const d = load();
+    if (!d.accounts.length && !d.transactions.length) return; // kosong: server menolak, jangan ganggu
+    autoSibuk = Date.now();
+    try {
+      await remote('backup', { data: d });
+      const k = cfg(); k.last = new Date().toLocaleString('id-ID'); k.lastTs = Date.now();
+      localStorage.setItem(CFG, JSON.stringify(k));
+      info();
+      if (window.renderBackupNag) renderBackupNag();
+      if (window.showToast) showToast('Backup otomatis berhasil', 0);
+    } catch (e) { if (window.showToast) showToast('Backup otomatis gagal: ' + e.message, 1); }
+  };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') autoBackup(); });
+
   window.restoreNow = async () => {
     if (!confirm('Data di HP akan ditimpa dengan data dari Google Sheets. Lanjut?')) return;
     try {
@@ -293,6 +314,7 @@
     info();
     $('cfgProfil').value = c.profil || '';
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+    setTimeout(autoBackup, 3000); // beri waktu script.js selesai memuat data
 
     // muat atur.js (atur kategori, hapus rekening aman) SETELAH script.js selesai, supaya index.html tidak perlu diubah
     const s = document.createElement('script');
