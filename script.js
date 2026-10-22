@@ -522,6 +522,8 @@ function renderAllLocalUI() {
   renderLevel();
   renderDebts();
   renderBackupNag();
+  gajiNag();
+  wrapNag();
 
   // Laporan (ringkasan + daftar transaksi) ikut segar kalau sedang dibuka
   const an = document.getElementById('analytics');
