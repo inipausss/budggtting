@@ -262,6 +262,7 @@ function openWrap(key) {
   wrapR = wrapHitung(key || wrapKey());
   if (!wrapR.count) { showToast('Belum ada transaksi untuk dirangkum', 1); return; }
   wrapS = WRAP_SLIDE.map(f => f(wrapR)).filter(Boolean);
+  wrapSet('budggt_wrap', wrapR.key); wrapNag(); // sudah dilihat: titik "Baru" dan banner hilang
   wrapEl().classList.add('on'); document.body.style.overflow = 'hidden';
   wrapGo(0);
 }
@@ -291,3 +292,31 @@ function wrapHitungNaik(body) {
   wrapAnim = requestAnimationFrame(tick);
 }
 document.addEventListener('keydown', ev => { const e = document.getElementById('wrap'); if (e && e.classList.contains('on') && ev.key === 'Escape') tutupWrap(); });
+
+// ----- pengingat: titik "Baru" di ikon Wrap + banner Dashboard tgl 1-10, selama Wrap bulan lalu belum dibuka -----
+// ponytail: dipanggil dari renderAllLocalUI (script.js) setelah gajiNag(); hanya terlihat saat app dibuka, tanpa notifikasi push.
+const wrapGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+const wrapSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const wrapBaru = () => { const p = prevKey(currentMonthKey()); return wrapBulanAda(p) && wrapGet('budggt_wrap') !== p ? p : ''; }; // bulan lalu yang belum dilihat
+(function () {
+  const s = document.createElement('style');
+  s.textContent = '.w-dot { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid var(--card-bg, #fff); animation: wdot 1.6s ease-in-out infinite; }' +
+    '@keyframes wdot { 50% { transform: scale(1.35); } } @media (prefers-reduced-motion: reduce) { .w-dot { animation: none; } }';
+  document.head.appendChild(s);
+})();
+function wrapNag() {
+  const dash = document.getElementById('dashboard');
+  if (!dash) return;
+  const p = wrapBaru(), icon = document.querySelector('[onclick="openWrap()"] .menu-circle');
+  if (icon) { icon.style.position = 'relative'; const d = icon.querySelector('.w-dot'); if (p && !d) icon.insertAdjacentHTML('beforeend', '<span class="w-dot"></span>'); else if (!p && d) d.remove(); }
+  let el = document.getElementById('wrapNag');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'wrapNag'; el.className = 'list-card nag hidden';
+    el.innerHTML = '<p id="wrapNagText"></p><div style="display:flex;align-items:center;gap:8px;flex:none;"><button type="button" class="wl-btn p" onclick="openWrap()">Lihat</button><button type="button" class="icon-btn" style="width:32px;height:32px;" title="Nanti saja" onclick="wrapTunda()"><i class="fa fa-xmark"></i></button></div>';
+  }
+  const g = document.getElementById('gajiNag'), b = document.getElementById('backupNag');
+  if (g) g.before(el); else if (b) b.after(el); else dash.prepend(el); // Wrap tampil di atas banner Bagi Gaji
+  document.getElementById('wrapNagText').textContent = p ? 'Wrap ' + monthLabel(p) + ' kamu sudah siap 🎁' : '';
+  el.classList.toggle('hidden', !(p && new Date().getDate() <= 10 && wrapGet('budggt_wrap_tunda') !== p));
+}
+function wrapTunda() { wrapSet('budggt_wrap_tunda', prevKey(currentMonthKey())); wrapNag(); }
