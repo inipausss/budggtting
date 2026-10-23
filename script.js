@@ -52,9 +52,7 @@ function setReportTab(tab) {
   reportTab = tab === 'transaksi' ? 'transaksi' : 'ringkasan';
   const isRingkasan = reportTab === 'ringkasan';
   const rv = document.getElementById('recapView');
-  const tv = document.getElementById('trxView');
   if (rv) rv.classList.toggle('hidden', !isRingkasan);
-  if (tv) tv.classList.toggle('hidden', isRingkasan);
   const sr = document.getElementById('seg-ringkasan');
   const st = document.getElementById('seg-transaksi');
   if (sr) sr.classList.toggle('active', isRingkasan);
@@ -2737,7 +2735,7 @@ function renderBills() {
         <button type="button" class="wl-btn" onclick="openBill('${b.id}')"><i class="fa fa-pen"></i> Ubah</button>
         <button type="button" class="wl-btn d" onclick="removeBill('${b.id}')"><i class="fa fa-trash"></i> Hapus</button>
       </div>
-    </div>    </div>`).join('');
+    </div>`).join('');
 }
 
 // Ringkasan di dashboard + titik merah di lonceng
