@@ -150,6 +150,10 @@
          <div class="menu-circle t-purple"><i class="fa fa-gift"></i></div>
          <span class="menu-label">Wrap</span>
        </button>
+      <button class="menu-item" onclick="openTanya()">
+        <div class="menu-circle t-blue"><i class="fa fa-comments"></i></div>
+        <span class="menu-label">Tanya</span>
+      </button>
     </div>
 
        <div class="section-title-row">
@@ -436,6 +440,20 @@
       </div>
       <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Kartu saldo di Beranda dan Dompet</p>
       <div id="cardBox"></div>
+    </div>
+  </div>
+
+  <div id="modalTanya" class="modal hidden">
+    <div class="modal-content tq-sheet">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="font-size: 1.15rem; font-weight: 600;">Tanya Budggt</h3>
+        <span><button onclick="tanyaHapus()" class="tq-x" title="Hapus riwayat"><i class="fa fa-trash-can"></i></button><button onclick="toggleModal('modalTanya')" class="tq-x" style="font-size: 1.4rem;">&times;</button></span>
+      </div>
+      <div id="tanyaBox" class="tq-box"></div>
+      <div class="tq-row">
+        <input id="tqInput" class="input-field" maxlength="500" placeholder="Tulis pertanyaan..." onkeydown="if (event.key === 'Enter') tanyaKirim()">
+        <button class="btn-primary tq-send" onclick="tanyaKirim()"><i class="fa fa-paper-plane"></i></button>
+      </div>
     </div>
   </div>
 
@@ -739,6 +757,7 @@
 <script src="kartu.js"></script>
 <script src="gaji.js"></script>
 <script src="wrap.js"></script>
+<script src="tanya.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
