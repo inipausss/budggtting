@@ -447,10 +447,10 @@
     <div class="modal-content tq-sheet">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 style="font-size: 1.15rem; font-weight: 600;">Tanya Budggt</h3>
-        <span><button onclick="tanyaHapus()" class="tq-x" title="Hapus riwayat"><i class="fa fa-trash-can"></i></button><button onclick="toggleModal('modalTanya')" class="tq-x" style="font-size: 1.4rem;">&times;</button></span>
+        <span><button onclick="tanyaCatatan(true)" class="tq-x" title="Catatan Budggt"><i class="fa fa-note-sticky"></i></button><button onclick="tanyaHapus()" class="tq-x" title="Hapus riwayat"><i class="fa fa-trash-can"></i></button><button onclick="toggleModal('modalTanya')" class="tq-x" style="font-size: 1.4rem;">&times;</button></span>
       </div>
       <div id="tanyaBox" class="tq-box"></div>
-      <div class="tq-row">
+      <div class="tq-row" id="tqRow">
         <input id="tqInput" class="input-field" maxlength="500" placeholder="Tulis pertanyaan..." onkeydown="if (event.key === 'Enter') tanyaKirim()">
         <button class="btn-primary tq-send" onclick="tanyaKirim()"><i class="fa fa-paper-plane"></i></button>
       </div>
