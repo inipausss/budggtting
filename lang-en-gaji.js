@@ -2,6 +2,10 @@
 // ponytail: kunci yang sudah ada di lang-en.js tidak ditimpa (Object.assign dibalik), jadi terjemahan lama tetap menang.
 (function () {
   const baru = {
+    'Tanya': 'Ask', 'Tanya Budggt': 'Ask Budggt', 'Hapus riwayat': 'Clear history', 'Tulis pertanyaan...': 'Type a question...', 'Gagal': 'Failed',
+    'Tanya apa saja soal uangmu, atau soal keuangan secara umum.': 'Ask anything about your money, or about personal finance in general.',
+    'Kenapa bulan ini boros?': 'Why am I overspending this month?', 'Sisa budget bulan ini berapa?': 'How much budget is left this month?',
+    'Bandingkan dengan bulan lalu': 'Compare with last month', 'Kalau aku nabung Rp500.000 per bulan, aman nggak?': 'If I save Rp500,000 a month, will I be okay?',
     'Santai': 'Relaxed', 'Normal': 'Normal', 'Ketat': 'Strict',
     'Lanjut': 'Next', 'Pakai saran': 'Use suggestion', 'Lihat rencana': 'See plan', 'Terapkan sebagai budget': 'Apply as budgets',
     'Kebutuhan pokok': 'Essentials', 'Tagihan, makanan, transportasi': 'Bills, food, transport', 'Saving': 'Saving',
