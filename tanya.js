@@ -1,4 +1,4 @@
-// ===== TANYA BUDGGT, tahap 1: data lokal untuk chatbot (belum ada tampilan / Gemini) =====
+// ===== TANYA BUDGGT: data lokal untuk chatbot + lembar chat; Gemini dipanggil lewat google.script.run.tanya (lihat gas-shim.js / Code.gs) =====
 // Prinsip: app yang menghitung, Gemini hanya menjelaskan. Yang keluar dari HP cuma ringkasan + beberapa transaksi hasil cari.
 // Dipakai dari script.js: globalData, inMonth, netral, monthTotals, budgetList, spentFor, billList, billStatus, currentMonthKey, todayStr
 
@@ -59,6 +59,61 @@ function tanyaSimulasi(x) {
   return { bulanDipakai: b.length, rataPemasukan: inc, rataPengeluaran: exp, sisaSebelum: inc - exp, sisaSesudah: inc - exp - x, aman: inc - exp - x >= 0 };
 }
 
+// hasil "cari" per kata kunci + selisih terlama -> terbaru, supaya perbandingan harga dihitung di app
+function tanyaHasilCari(kata, dariBulan) {
+  const perKata = {}, selisih = {};
+  [].concat(kata).slice(0, 4).forEach(k => {
+    const r = tanyaCari(k, dariBulan);
+    perKata[k] = r;
+    if (r.length > 1) selisih[k] = tanyaSelisih(r.slice(-1), r.slice(0, 1)); // dari yang terlama ke yang terbaru
+  });
+  return { perKata, selisihTerlamaKeTerbaru: selisih };
+}
+
+// ===== tampilan: lembar chat (#modalTanya di index.html, gaya .tq-* di style.css) =====
+// ponytail: riwayat hanya di HP ini (30 pesan terakhir), tidak ikut backup
+const TANYA_KEY = 'budggt_tanya', TANYA_NOTE = 'budggt_tanya_note';
+const TANYA_CHIP = ['Kenapa bulan ini boros?', 'Sisa budget bulan ini berapa?', 'Bandingkan dengan bulan lalu', 'Kalau aku nabung Rp500.000 per bulan, aman nggak?'];
+let tanyaLog = [], tanyaSibuk = false;
+try { tanyaLog = JSON.parse(localStorage.getItem(TANYA_KEY) || '[]'); } catch (e) {}
+
+const tanyaApi = p => new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no).tanya(p));
+const tanyaSimpan = () => { try { localStorage.setItem(TANYA_KEY, JSON.stringify(tanyaLog.slice(-30))); } catch (e) {} };
+
+function openTanya() { renderTanya(); toggleModal('modalTanya'); }
+function tanyaHapus() { tanyaLog = []; tanyaSimpan(); renderTanya(); }
+
+function renderTanya() {
+  const box = document.getElementById('tanyaBox');
+  if (!box) return;
+  const bub = m => `<div class="tq-b ${m.dari}${m.err ? ' err' : ''}" translate="no">${esc(m.teks).replace(/\n/g, '<br>')}</div>`;
+  box.innerHTML = (tanyaLog.length
+    ? tanyaLog.map(bub).join('')
+    : `<p class="tq-intro">${t('Tanya apa saja soal uangmu, atau soal keuangan secara umum.')}</p>
+       <div class="tq-chips">${TANYA_CHIP.map(c => `<button type="button" class="tq-chip" onclick="tanyaKirim(this.innerText)">${t(c)}</button>`).join('')}</div>`)
+    + (tanyaSibuk ? '<div class="tq-b a tq-wait"><i></i><i></i><i></i></div>' : '');
+  box.scrollTop = box.scrollHeight;
+}
+
+async function tanyaKirim(teks) {
+  const inp = document.getElementById('tqInput');
+  teks = String(teks == null ? inp.value : teks).trim().slice(0, 500);
+  if (!teks || tanyaSibuk) return;
+  inp.value = '';
+  const riwayat = tanyaLog.filter(m => !m.err).slice(-6);
+  tanyaLog.push({ dari: 'u', teks }); tanyaSibuk = true; renderTanya();
+  try {
+    const p = { pertanyaan: teks, riwayat, catatan: localStorage.getItem(TANYA_NOTE) || '', data: tanyaRingkas(), bahasa: bahasaAktif };
+    let r = await tanyaApi(p);
+    if (r.aksi === 'cari') r = await tanyaApi(Object.assign({}, p, { hasil: tanyaHasilCari(r.kata, r.dariBulan) }));
+    else if (r.aksi === 'simulasi') r = await tanyaApi(Object.assign({}, p, { hasil: { simulasi: tanyaSimulasi(r.jumlah) } }));
+    tanyaLog.push({ dari: 'a', teks: r.teks || '...' });
+  } catch (e) {
+    tanyaLog.push({ dari: 'a', err: 1, teks: t('Gagal') + ': ' + (e && e.message || e) });
+  }
+  tanyaSibuk = false; tanyaSimpan(); renderTanya();
+}
+
 // cek cepat: node tanya.js
 if (typeof module !== 'undefined' && require.main === module) {
   const assert = require('assert');
@@ -87,5 +142,19 @@ if (typeof module !== 'undefined' && require.main === module) {
   const s = tanyaSimulasi(1000000); // hanya September yang ada datanya
   assert.equal(s.bulanDipakai, 1); assert.equal(s.sisaSebelum, 3972000); assert.equal(s.aman, true);
   assert.equal(tanyaSimulasi(4000000).aman, false);
-  console.log('tanya.js ok');
+  // alur chat: cari -> hasil dihitung di app -> jawab
+  const el = { tqInput: { value: 'harga kopi naik?' }, tanyaBox: { innerHTML: '', scrollTop: 0, scrollHeight: 0 } };
+  global.document = { getElementById: id => el[id] };
+  global.localStorage = { getItem: () => null, setItem: (k, v) => { el.saved = v; } };
+  global.esc = x => String(x).replace(/</g, '&lt;'); global.t = x => x; global.bahasaAktif = 'id';
+  const kirim = []; let n = 0;
+  global.google = { script: { run: { withSuccessHandler(ok) { return { withFailureHandler(no) { return { tanya(p) { kirim.push(p); n++; Promise.resolve().then(() => n === 1 ? ok({ aksi: 'cari', kata: ['kopi'], dariBulan: '2026-09' }) : n === 2 ? ok({ aksi: 'jawab', teks: 'Naik Rp4.000' }) : no(new Error('offline'))); } }; } }; } } } };
+  (async () => {
+    await tanyaKirim();
+    assert.equal(kirim.length, 2); assert.equal(kirim[1].hasil.selisihTerlamaKeTerbaru.kopi.selisih, 4000);
+    assert.equal(tanyaLog.at(-1).teks, 'Naik Rp4.000'); assert.equal(tanyaSibuk, false); assert(el.saved.includes('Naik'));
+    await tanyaKirim('tes lagi'); assert(tanyaLog.at(-1).err); assert.equal(kirim[2].riwayat.length, 2);
+    await tanyaKirim('   '); assert.equal(kirim.length, 3); // kosong diabaikan
+    console.log('tanya.js ok');
+  })();
 }
