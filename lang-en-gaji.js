@@ -2,7 +2,12 @@
 // ponytail: kunci yang sudah ada di lang-en.js tidak ditimpa (Object.assign dibalik), jadi terjemahan lama tetap menang.
 (function () {
   const baru = {
-    'Tanya': 'Ask', 'Tanya Budggt': 'Ask Budggt', 'Hapus riwayat': 'Clear history', 'Tulis pertanyaan...': 'Type a question...', 'Gagal': 'Failed',
+    'Tanya': 'Ask', 'Catatan Budggt': 'Budggt notes', 'Catatan disimpan': 'Notes saved',
+    'Catatan ini ikut dikirim ke Gemini tiap kamu bertanya, supaya jawabannya kenal kamu. Tulis seperlunya, satu fakta per baris.': 'These notes are sent to Gemini with every question so answers fit you. Keep it short, one fact per line.',
+    'Contoh: Lagi nabung DP rumah': 'Example: Saving for a house down payment',
+    'Tulis "ingat bahwa ..." untuk menyimpan catatan tentang dirimu.': 'Type "remember that ..." to save a note about yourself.',
+    'Oke, sudah saya catat.': 'Okay, noted.', 'Catatan sudah penuh, rapikan dulu lewat ikon catatan.': 'Notes are full, tidy them up using the notes icon first.',
+    'Tanya Budggt': 'Ask Budggt', 'Hapus riwayat': 'Clear history', 'Tulis pertanyaan...': 'Type a question...', 'Gagal': 'Failed',
     'Tanya apa saja soal uangmu, atau soal keuangan secara umum.': 'Ask anything about your money, or about personal finance in general.',
     'Kenapa bulan ini boros?': 'Why am I overspending this month?', 'Sisa budget bulan ini berapa?': 'How much budget is left this month?',
     'Bandingkan dengan bulan lalu': 'Compare with last month', 'Kalau aku nabung Rp500.000 per bulan, aman nggak?': 'If I save Rp500,000 a month, will I be okay?',
