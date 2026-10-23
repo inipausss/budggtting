@@ -234,12 +234,6 @@
     letter-spacing: -0.5px;
   }
 
-  .balance-subtext {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    margin: 6px 0 20px 0;
-  }
-
   .flow-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -356,43 +350,6 @@
     border: 1px solid var(--border-color);
     padding: 16px;
     margin-bottom: 12px;
-  }
-
-  .trx-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .trx-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .trx-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .trx-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: var(--circle-bg);
-    border: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    color: var(--circle-icon);
-  }
-
-  .trx-nominal {
-    font-weight: 500;
-    font-size: 0.95rem;
   }
 
   /* Bottom Nav */
@@ -520,39 +477,6 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     cursor: pointer;
-  }
-
-  /* Styling untuk Progress Bar Kategori */
-  .category-bar-item {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    margin-bottom: 10px;
-  }
-
-  .category-bar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-
-  .category-bar-track {
-    width: 100%;
-    height: 8px;
-    background: var(--circle-bg);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .category-bar-fill {
-    height: 100%;
-    background: var(--primary);
-    border-radius: 4px;
-    transition: width 0.4s ease;
   }
 
   /* Kalender Finansial Bulanan */
@@ -820,12 +744,6 @@
   }
   .wh-label { font-size: 0.8rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); }
   .wh-total { font-size: clamp(1.6rem, 9vw, 2.2rem); font-weight: 700; letter-spacing: -1px; margin: 6px 0 12px; word-break: break-word; }
-  .wh-delta { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
-  .wh-pill {
-    display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 20px;
-    font-size: 0.8rem; font-weight: 600; background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-  .wh-sub { font-size: 0.75rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); }
   .wh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
   .wh-tile { background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 18px; padding: 12px 14px; min-width: 0; }
   .wh-tile p { font-size: 0.72rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); margin-bottom: 6px; }
@@ -893,7 +811,6 @@
 
   /* kartu & daftar */
   .list-card, .acc-card, .trx-card-item { padding: 20px; margin-bottom: 16px; }
-  .trx-item { padding: 16px 0; }
   .calendar-card { padding: 24px; }
   .cal-grid { gap: 8px; }
   .menu-grid { gap: 12px; }
@@ -904,9 +821,6 @@
   .wallet-hero { padding: 32px 24px 24px; margin-bottom: 40px; }
   .wh-label { font-size: 0.85rem; font-weight: 400; }
   .wh-total { font-weight: 600; margin: 8px 0 18px; }
-  .wh-pill { font-weight: 500; }
-  .wh-sub { font-weight: 400; }
-  .wh-delta { margin-bottom: 26px; }
   .wh-grid { gap: 12px; }
   .wh-tile { padding: 16px 18px; }
   .wh-tile p { font-size: 0.75rem; font-weight: 400; margin-bottom: 8px; }
@@ -925,7 +839,7 @@
   .acc-card.open .acc-details { padding-top: 16px; max-height: 240px; }
 
   /* tema gelap: kartu tanpa garis, dibedakan lewat warna latar saja */
-  body.dark-mode :is(.list-card, .acc-card, .trx-card-item, .calendar-card, .category-bar-item, .stat-tile, .badge, .icon-btn, .lvl-chip) { border-color: transparent; }
+  body.dark-mode :is(.list-card, .acc-card, .trx-card-item, .calendar-card, .stat-tile, .badge, .icon-btn, .lvl-chip) { border-color: transparent; }
 
   /* ===== Tipografi & spacing: bold hanya untuk angka utama, label dibuat ringan, ruang antar elemen dilonggarkan ===== */
   /* ponytail: sebagian besar style ada inline di JS/HTML, jadi dirapikan lewat selector atribut; kalau nanti inline-nya dipindah ke class, blok ini bisa dihapus */
@@ -962,11 +876,7 @@
   #recapSummary, #daySummary { gap: 14px !important; margin-bottom: 20px !important; }
   .calendar-card { padding: 24px 20px; margin-bottom: 36px; }
   .cal-grid { gap: 8px; }
-
-  .trx-item { padding: 16px 0; }
   .trx-card-item, .acc-card { padding: 20px; margin-bottom: 14px; }
-  .trx-nominal { font-weight: 600; }
-  .category-bar-item { padding: 18px 20px; margin-bottom: 14px; }
 
   .nav-tab span { font-weight: 500; }
   .btn-primary { font-weight: 600; padding: 16px; }
@@ -981,9 +891,6 @@
   .wallet-hero { padding: 32px 22px 24px; margin-bottom: 40px; }
   .wh-label { font-weight: 400; }
   .wh-total { font-weight: 500; letter-spacing: -0.03em; margin: 8px 0 18px; }
-  .wh-pill { font-weight: 600; }
-  .wh-sub { font-weight: 400; }
-  .wh-delta { margin-bottom: 26px; }
   .wh-grid { gap: 12px; }
   .wh-tile { padding: 16px 18px; }
   .wh-tile p { font-weight: 400; margin-bottom: 8px; }
@@ -1168,14 +1075,14 @@
   }
 
   /* angka rapi (lebar sama) dan lebih rapat */
-  .balance-value, .wh-total, .wh-tile b, .flow-col h4, .wl-bal, .trx-nominal, .tp-amt b, .bgt-big, .stat-tile b { font-variant-numeric: tabular-nums; }
+  .balance-value, .wh-total, .wh-tile b, .flow-col h4, .wl-bal, .tp-amt b, .bgt-big, .stat-tile b { font-variant-numeric: tabular-nums; }
   .balance-value, .wh-total, .tp-amt b { letter-spacing: -0.04em; }
 
   /* kartu hero: kilau tipis di tepi atas + bayangan dalam */
   .main-card, .wallet-hero { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 20px 40px -14px rgba(0, 0, 0, 0.5); }
 
   /* tema gelap: kartu dibatasi garis rambut + kilau atas, bukan tanpa garis */
-  body.dark-mode :is(.list-card, .acc-card, .trx-card-item, .calendar-card, .category-bar-item, .stat-tile, .badge, .icon-btn, .lvl-chip) {
+  body.dark-mode :is(.list-card, .acc-card, .trx-card-item, .calendar-card, .stat-tile, .badge, .icon-btn, .lvl-chip) {
     border-color: color-mix(in srgb, var(--text-main) 13%, transparent);
     box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-main) 5%, transparent);
   }
@@ -1322,7 +1229,7 @@
   .top-r { border-top-color: color-mix(in srgb, var(--text-main) 9%, transparent); }
   .toast { color: #fff; }
 
-  /* ===== Bagi Gaji (halaman #gaji, 3 langkah) ===== */
+  /* ===== Bagi Gaji (halaman #gaji, 5 langkah) ===== */
   .gj-steps { display: flex; gap: 6px; margin: -8px 0 26px; }
   .gj-steps i { flex: 1; height: 4px; border-radius: 4px; background: var(--circle-bg); }
   .gj-steps i.on, .gj-steps i.done { background: var(--primary); }
