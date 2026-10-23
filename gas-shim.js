@@ -235,7 +235,8 @@
       save(d);
     },
     
-      async parseReceiptWithGemini(img) { return (await remote('scan', { image: img })).data; } // butuh internet
+      async parseReceiptWithGemini(img) { return (await remote('scan', { image: img })).data; }, // butuh internet
+      async tanya(p) { return (await remote('ask', p)).data; } // Tanya Budggt, butuh internet
   };
 
   function runner(ok, fail) {
