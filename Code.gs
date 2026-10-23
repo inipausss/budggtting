@@ -16,6 +16,7 @@ function doPost(e) {
     if (b.action === 'backup') return out(backup(b.data));
     if (b.action === 'restore') return out(restore());
     if (b.action === 'scan') return out({ ok: true, data: scan(b.image) });
+    if (b.action === 'ask') return out({ ok: true, data: ask(b) });
     return out({ ok: false, error: 'Aksi tidak dikenal' });
   } catch (err) {
     return out({ ok: false, error: String(err.message || err) });
@@ -153,4 +154,40 @@ function scan(base64Image) {
     kategori: p.kategori || 'Lainnya',
     tanggal: p.tanggal || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd')
   };
+}
+
+// ===== Tanya Budggt: Gemini menjelaskan, hitungan dilakukan app. Dipanggil 1x, atau 2x bila Gemini minta 'cari'/'simulasi' (b.hasil terisi di panggilan kedua) =====
+function ask(b) {
+  var key = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' + key;
+  var cut = function (s, n) { return String(s || '').slice(0, n); };
+  var en = b.bahasa === 'en';
+  var sys = 'Kamu Budggt, asisten keuangan pribadi di dalam aplikasi budgeting. Jawab singkat (maks 6 kalimat), ramah, dalam bahasa ' + (en ? 'Inggris' : 'Indonesia') + '. ' +
+    'Boleh menjawab pertanyaan keuangan umum (menabung, investasi dasar, istilah). Di luar keuangan, tolak sopan dalam satu kalimat. ' +
+    'Data pengguna ada di DATA dan HASIL. Pakai angkanya apa adanya, JANGAN menghitung ulang total sendiri, sebut dasarnya (bulan / jumlah transaksi). Jangan mengarang data yang tidak ada. ' +
+    'Untuk hal yang berubah-ubah (harga, bunga, kurs hari ini) katakan kamu tidak punya data terkini. Untuk keputusan besar, ingatkan ini saran umum. Tulis uang seperti Rp1.250.000. ' +
+    'Balas HANYA JSON: {"aksi":"jawab|cari|simulasi","teks":"","kata":[],"dariBulan":"YYYY-MM","jumlah":0}. ' +
+    'aksi jawab: isi teks. aksi cari: untuk pertanyaan tentang harga / transaksi tertentu yang tidak terjawab dari DATA; isi kata (1-4 kata kunci beserta sinonim) dan dariBulan. ' +
+    'aksi simulasi: untuk "kalau aku sisihkan X per bulan"; isi jumlah (angka rupiah). Jika HASIL sudah ada, wajib aksi jawab.';
+  var isi = JSON.stringify({
+    pertanyaan: cut(b.pertanyaan, 500),
+    riwayat: (b.riwayat || []).slice(-6).map(function (m) { return { dari: m.dari, teks: cut(m.teks, 500) }; }),
+    catatanPengguna: cut(b.catatan, 1500),
+    DATA: b.data, HASIL: b.hasil
+  });
+  if (isi.length > 20000) throw new Error('Data terlalu besar');
+  var res = UrlFetchApp.fetch(url, {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    payload: JSON.stringify({
+      systemInstruction: { parts: [{ text: sys }] },
+      contents: [{ role: 'user', parts: [{ text: isi }] }],
+      generationConfig: { temperature: 0.4, response_mime_type: 'application/json' }
+    })
+  });
+  var j = JSON.parse(res.getContentText());
+  if (j.error) throw new Error(j.error.message);
+  if (!j.candidates || !j.candidates.length) throw new Error('Tidak ada jawaban');
+  var p = JSON.parse(j.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/g, '').trim());
+  var aksi = b.hasil || ['cari', 'simulasi'].indexOf(p.aksi) < 0 ? 'jawab' : p.aksi; // ponytail: maks 2 putaran; panggilan kedua selalu jawab
+  return { aksi: aksi, teks: String(p.teks || ''), kata: (p.kata || []).slice(0, 4), dariBulan: p.dariBulan || '', jumlah: Number(p.jumlah) || 0 };
 }
