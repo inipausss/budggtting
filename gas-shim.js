@@ -12,6 +12,9 @@
     nama: b.nama || String(b.kategori || '').trim(), batas: Number(b.batas) || 0, periode: 'bulanan',
     cats: b.kategori ? [String(b.kategori).trim()] : [], alert: 80
   };
+  // catatan Tanya Budggt tersimpan di localStorage sendiri; ikut backup/restore lewat dua fungsi ini
+  const NOTE = 'budggt_tanya_note';
+  const dataBackup = () => Object.assign(load(), { catatan: localStorage.getItem(NOTE) || '' });
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2));
 
   // ===== logika kategori: dipakai api di bawah DAN atur.js, supaya data di layar dan di penyimpanan selalu sama =====
@@ -267,7 +270,7 @@
   };
   window.backupNow = async () => {
     try {
-      const j = await remote('backup', { data: load() });
+      const j = await remote('backup', { data: dataBackup() });
       const c = cfg(); c.last = new Date().toLocaleString('id-ID'); c.lastTs = Date.now();
       localStorage.setItem(CFG, JSON.stringify(c));
       info();
@@ -284,7 +287,7 @@
     const c = cfg();
     if (!c.url || !c.token || Date.now() - autoSibuk < 600000) return;
     if (c.lastTs && new Date(c.lastTs).toDateString() === new Date().toDateString()) return;
-    const d = load();
+    const d = dataBackup();
     if (!d.accounts.length && !d.transactions.length) return; // kosong: server menolak, jangan ganggu
     autoSibuk = Date.now();
     try {
@@ -302,6 +305,8 @@
     if (!confirm('Data di HP akan ditimpa dengan data dari Google Sheets. Lanjut?')) return;
     try {
       const j = await remote('restore');
+      if (typeof j.data.catatan === 'string') localStorage.setItem(NOTE, j.data.catatan);
+      delete j.data.catatan;
       save(j.data); loadData();
       const c = k => (j.data[k] || []).length;
       alert('Restore berhasil:\n' + c('transactions') + ' transaksi, ' + c('bills') + ' tagihan, ' + c('accounts') + ' rekening, ' + c('debts') + ' utang, ' + c('goals') + ' tabungan, ' + c('budgets') + ' budget');
