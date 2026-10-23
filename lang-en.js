@@ -516,7 +516,6 @@
     'Terima dari {0}': 'Receive from {0}',
     'Pinjam dari {0}': 'Borrowed from {0}',
     'cth: Makan di luar (boleh dikosongkan)': 'e.g. Eating out (can be left empty)',
-    'Tiap tgl {0}': 'Day {0} each month',
     '{0} (30 hari)': '{0} (30 days)',
 
     // ---------- bagi gaji ----------
@@ -526,7 +525,6 @@
     'Terapkan sebagai budget': 'Apply as budgets',
     'Berapa gaji yang kamu terima?': 'How much salary did you receive?',
     'Pakai gaji terakhir tercatat · {0}': 'Use last recorded salary · {0}',
-    'Budggt. membagi gajimu ke kebutuhan pokok, saving, dana darurat, dan uang bebas dengan rumus 50/30/15/5. Persennya bisa kamu ubah di langkah berikutnya.': 'Budggt. splits your salary into essentials, saving, emergency fund and free money using the 50/30/15/5 formula. You can change the percentages in the next step.',
     'Atur pembagiannya': 'Adjust the split',
     'Gaji {0}. Ketuk tanda + atau − untuk menggeser persen.': 'Salary {0}. Tap + or − to shift the percentages.',
     'Total 100%': 'Total 100%',
@@ -548,7 +546,6 @@
     'Sesuai sisa target': 'Based on remaining target',
     'Tiap tgl {0}': 'Day {0} each month',
     'Belum ada tagihan. Tambahkan di menu Tagihan supaya ikut dihitung.': 'No bills yet. Add them in the Bills menu so they are counted.',
-    'Total tagihan ({0}) melebihi jatah kebutuhan pokok. Kembali dan naikkan persen kebutuhan.': 'Total bills ({0}) exceed the essentials share. Go back and raise the essentials percentage.',
     'Porsi makanan dan transport mengikuti rata-rata {0} bulan terakhir.': 'Food and transport shares follow the average of the last {0} months.',
     'Porsi makanan dan transport mengikuti rata-rata {0} bulan terakhir dan pembagian terakhirmu.': 'Food and transport shares follow the average of the last {0} months and your last split.',
     'Belum ada riwayat pengeluaran lengkap, jadi memakai porsi standar. Makin lama dipakai, makin sesuai kebiasaanmu.': 'Not enough spending history yet, so standard shares are used. The longer you use it, the better it fits your habits.',
