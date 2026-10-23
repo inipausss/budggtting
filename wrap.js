@@ -74,12 +74,12 @@ function wrapTipe(r) {
 function wrapSaran(r) {
   const tips = [], rp = n => format(gajiBulat(n));
   const cat = r.cats.filter(c => !(r.jebol && r.jebol.cats.includes(c.nama.trim().toLowerCase()))).slice(0, 4).map(c => ({ c, pot: c.nama in GAJI_KEBUTUHAN ? 0.1 : 0.2 })).sort((a, b) => b.c.jumlah * b.pot - a.c.jumlah * a.pot)[0];
-  if (cat) tips.push({ j: 'Kurangi ' + cat.c.nama + ' ' + Math.round(cat.pot * 100) + '%', i: 'Dari ' + rp(cat.c.jumlah) + ' jadi sekitar ' + rp(cat.c.jumlah * (1 - cat.pot)) + ' per bulan.', h: cat.c.jumlah * cat.pot });
-  if (r.jebol) tips.push({ j: 'Jaga "' + r.jebol.nama + '" di batasnya', i: 'Bulan ini lewat ' + rp(r.jebol.lebih) + ' dari batas ' + rp(r.jebol.lim) + '.', h: r.jebol.lebih });
-  if (r.nExp >= 5 && r.weekendShare >= 0.5) tips.push({ j: 'Rem di akhir pekan', i: Math.round(r.weekendShare * 100) + '% pengeluaranmu terjadi Jumat sampai Minggu. Pasang batas harian khusus akhir pekan.', h: r.total * r.weekendShare * 0.2 });
-  if (r.total > 0 && r.tanpaJajan < 5 && r.aktif) tips.push({ j: 'Tambah hari tanpa jajan', i: 'Baru ' + r.tanpaJajan + ' hari tanpa pengeluaran. Coba satu hari per minggu.', h: r.total / r.aktif * 4 });
-  if (r.nExp >= 5 && r.biggest && r.biggest.jumlah / r.total >= 0.25) tips.push({ j: 'Beri jeda untuk pembelian besar', i: (r.biggest.keterangan || r.biggest.kategori) + ' (' + rp(r.biggest.jumlah) + ') memakan ' + Math.round(r.biggest.jumlah / r.total * 100) + '% bulanmu. Tunggu 3 hari sebelum membeli.', h: 0 });
-  if (r.rate !== null && r.rate < 0) tips.push({ j: 'Tutup defisit dulu', i: 'Pengeluaran melebihi pemasukan ' + rp(r.total - r.inc) + '. Targetkan pengeluaran tidak melewati pemasukan.', h: r.total - r.inc });
+  if (cat) tips.push({ j: gT('Kurangi {0} {1}%', t(cat.c.nama), Math.round(cat.pot * 100)), i: gT('Dari {0} jadi sekitar {1} per bulan.', rp(cat.c.jumlah), rp(cat.c.jumlah * (1 - cat.pot))), h: cat.c.jumlah * cat.pot });
+  if (r.jebol) tips.push({ j: gT('Jaga "{0}" di batasnya', r.jebol.nama), i: gT('Bulan ini lewat {0} dari batas {1}.', rp(r.jebol.lebih), rp(r.jebol.lim)), h: r.jebol.lebih });
+  if (r.nExp >= 5 && r.weekendShare >= 0.5) tips.push({ j: t('Rem di akhir pekan'), i: gT('{0}% pengeluaranmu terjadi Jumat sampai Minggu. Pasang batas harian khusus akhir pekan.', Math.round(r.weekendShare * 100)), h: r.total * r.weekendShare * 0.2 });
+  if (r.total > 0 && r.tanpaJajan < 5 && r.aktif) tips.push({ j: t('Tambah hari tanpa jajan'), i: gT('Baru {0} hari tanpa pengeluaran. Coba satu hari per minggu.', r.tanpaJajan), h: r.total / r.aktif * 4 });
+  if (r.nExp >= 5 && r.biggest && r.biggest.jumlah / r.total >= 0.25) tips.push({ j: t('Beri jeda untuk pembelian besar'), i: gT('{0} ({1}) memakan {2}% bulanmu. Tunggu 3 hari sebelum membeli.', r.biggest.keterangan || t(r.biggest.kategori), rp(r.biggest.jumlah), Math.round(r.biggest.jumlah / r.total * 100)), h: 0 });
+  if (r.rate !== null && r.rate < 0) tips.push({ j: t('Tutup defisit dulu'), i: gT('Pengeluaran melebihi pemasukan {0}. Targetkan pengeluaran tidak melewati pemasukan.', rp(r.total - r.inc)), h: r.total - r.inc });
   tips.sort((a, b) => b.h - a.h);
   const pakai = tips.slice(0, 3);
   return { tips: pakai, hemat: pakai.reduce((s, t) => s + t.h, 0) };
@@ -88,7 +88,7 @@ function wrapSaran(r) {
 // ----- slide: tiap fungsi mengembalikan { g: [warna glow 1, glow 2], html } atau null kalau datanya tidak ada (slide dilewati) -----
 // wA(i): elemen masuk bertahap. wN: angka yang dihitung naik. .w-bar i[--w]: batang tumbuh. .w-ring[--t]: cincin terisi.
 const wA = (i, c = '') => `class="w-a ${c}" style="--d:${i * 0.16}s"`;
-const wN = (v, f = 'rp') => `<b class="w-n" data-v="${Math.round(v)}" data-f="${f}">0</b>`;
+const wN = (v, f = 'rp', suf = '') => `<b class="w-n" data-v="${Math.round(v)}" data-f="${f}" data-s="${esc(suf)}">0</b>`;
 const wTag = (n, t) => `<span ${wA(0, 'w-tag')}><i></i>${n} · ${t}</span>`;
 const wTgl = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' }); };
 const WG = ['#6366f1', '#06b6d4', '#f97316', '#ec4899', '#22c55e'];
@@ -98,7 +98,7 @@ const WRAP_SLIDE = [
     ${wTag('00', 'WRAP')}
     <h1 ${wA(1, 'w-xl')}>${esc(monthLabel(r.key))}</h1>
     <p ${wA(2)}>kamu, dirangkum.</p>
-    <div ${wA(4, 'w-card w-row')}><span>Tercatat</span><strong>${wN(r.count, 'int')} transaksi</strong></div>
+    <div ${wA(4, 'w-card w-row')}><span>Tercatat</span><strong>${wN(r.count, 'int', ' ' + t('transaksi'))}</strong></div>
     <p ${wA(6, 'w-sm')}>Ketuk untuk lanjut →</p>` }),
 
   r => ({ g: ['var(--primary)', WG[4]], html: `
@@ -139,7 +139,7 @@ const WRAP_SLIDE = [
     <p ${wA(1)}>Hari paling boros</p>
     <h1 ${wA(2, 'w-xl')}>${esc(wTgl(r.boroshari.tgl))}</h1>
     <h1 ${wA(3, 'w-big w-ac')}>${wN(r.boroshari.jumlah)}</h1>
-    <div ${wA(5, 'w-card w-row')}><span>Hari tanpa pengeluaran</span><strong>${wN(r.tanpaJajan, 'int')} hari</strong></div>` };
+    <div ${wA(5, 'w-card w-row')}><span>Hari tanpa pengeluaran</span><strong>${wN(r.tanpaJajan, 'int', ' ' + t('hari'))}</strong></div>` };
   },
 
   r => {
@@ -260,7 +260,7 @@ const wrapEl = () => document.getElementById('wrap') || (() => {
 
 function openWrap(key) {
   wrapR = wrapHitung(key || wrapKey());
-  if (!wrapR.count) { showToast('Belum ada transaksi untuk dirangkum', 1); return; }
+  if (!wrapR.count) { showToast(t('Belum ada transaksi untuk dirangkum'), 1); return; }
   wrapS = WRAP_SLIDE.map(f => f(wrapR)).filter(Boolean);
   wrapSet('budggt_wrap', wrapR.key); wrapNag(); // sudah dilihat: titik "Baru" dan banner hilang
   wrapEl().classList.add('on'); document.body.style.overflow = 'hidden';
@@ -286,7 +286,7 @@ function wrapHitungNaik(body) {
   const ns = [...body.querySelectorAll('.w-n')], t0 = performance.now() + 450, dur = 1100;
   const tick = now => {
     const p = Math.min(1, Math.max(0, (now - t0) / dur)), v = 1 - Math.pow(1 - p, 3);
-    ns.forEach(el => { const x = Math.round(el.dataset.v * v); el.textContent = el.dataset.f === 'int' ? x : format(x); });
+    ns.forEach(el => { const x = Math.round(el.dataset.v * v); el.textContent = (el.dataset.f === 'int' ? x : format(x)) + (el.dataset.s || ''); });
     if (p < 1) wrapAnim = requestAnimationFrame(tick);
   };
   wrapAnim = requestAnimationFrame(tick);
