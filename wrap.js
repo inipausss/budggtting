@@ -243,7 +243,7 @@ const WRAP_SLIDE = [
 
 let wrapR = null, wrapS = [], wrapI = 0, wrapAnim = 0;
 const wrapEl = () => document.getElementById('wrap') || (() => {
-  const e = document.createElement('div'); e.id = 'wrap'; e.setAttribute('translate', 'no');
+  const e = document.createElement('div'); e.id = 'wrap';
   e.innerHTML = '<div class="w-top"></div><button type="button" class="w-x" aria-label="Tutup">✕</button><div class="w-body"></div>';
   let t0 = 0;
   e.addEventListener('pointerdown', ev => { if (ev.target.closest('.w-x')) return; t0 = Date.now(); e.classList.add('pause'); });
