@@ -73,6 +73,8 @@ function backup(d) {
     (d.kategori || []).map(function (k) {
       return [k.nama, k.jenis, k.ikon || '', k.hidden ? 1 : 0, me, typeof k.urut === 'number' ? k.urut : '', k.warna || ''];
     }));
+  // Catatan Budggt (memori chat): satu sel teks, kolom A diformat teks supaya tidak dibaca sebagai rumus
+  writeSheet('Notes', ['Catatan'], [[String(d.catatan || '').slice(0, 1500)]], ['A']);
   // jumlah baris yang ditulis, ditampilkan di HP supaya kelihatan apa saja yang ikut ter-backup
   return { ok: true, n: { rekening: accounts.length, transaksi: transactions.length, tagihan: (d.bills || []).length, utang: (d.debts || []).length, goal: (d.goals || []).length, budget: (d.budgets || []).length } };
 }
@@ -118,6 +120,7 @@ function restore() {
           terbayar: Number(r[4]) || 0, jatuh: r[5] ? String(r[5]) : '', catatan: r[6] ? String(r[6]) : ''
         };
       }),
+      catatan: (function () { var s = ss.getSheetByName(tab('Notes')); return s ? String(s.getRange(2, 1).getValue()) : undefined; })(), // undefined = backup lama tanpa tab Notes
       kategori: rows('Categories').map(function (r) {
         var k = { nama: String(r[0]), jenis: r[1] === 'Pemasukan' ? 'Pemasukan' : 'Pengeluaran', ikon: r[2] ? String(r[2]) : '', hidden: r[3] === true || Number(r[3]) === 1 };
         if (typeof r[5] === 'number') k.urut = r[5];
@@ -164,7 +167,7 @@ function ask(b) {
   var en = b.bahasa === 'en';
   var sys = 'Kamu Budggt, asisten keuangan pribadi di dalam aplikasi budgeting. Jawab singkat (maks 6 kalimat), ramah, dalam bahasa ' + (en ? 'Inggris' : 'Indonesia') + '. ' +
     'Boleh menjawab pertanyaan keuangan umum (menabung, investasi dasar, istilah). Di luar keuangan, tolak sopan dalam satu kalimat. ' +
-    'Data pengguna ada di DATA dan HASIL. Pakai angkanya apa adanya, JANGAN menghitung ulang total sendiri, sebut dasarnya (bulan / jumlah transaksi). Jangan mengarang data yang tidak ada. ' +
+    'Data pengguna ada di DATA dan HASIL. Pakai angkanya apa adanya, JANGAN menjumlah banyak angka sendiri (selisih dua angka boleh), sebut dasarnya (bulan / jumlah transaksi). Jangan mengarang data yang tidak ada. ' +
     'Untuk hal yang berubah-ubah (harga, bunga, kurs hari ini) katakan kamu tidak punya data terkini. Untuk keputusan besar, ingatkan ini saran umum. Tulis uang seperti Rp1.250.000. ' +
     'Balas HANYA JSON: {"aksi":"jawab|cari|simulasi","teks":"","kata":[],"dariBulan":"YYYY-MM","jumlah":0}. ' +
     'aksi jawab: isi teks. aksi cari: untuk pertanyaan tentang harga / transaksi tertentu yang tidak terjawab dari DATA; isi kata (1-4 kata kunci beserta sinonim) dan dariBulan. ' +
