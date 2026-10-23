@@ -1,7 +1,7 @@
-const C = 'budggt-v29'; // naikkan (v12, v13...) kalau mau paksa refresh semua cache
+const C = 'budggt-v31'; // naikkan (v12, v13...) kalau mau paksa refresh semua cache
 const OCR = 'budggt-ocr'; // aset pembaca struk (~10 MB) disimpan terpisah supaya tidak diunduh ulang tiap versi naik
 const isOcr = u => /tesseract|tessdata/i.test(u);
-const F = ['./', './index.html', './style.css', './script.js', './gas-shim.js', './atur.js', './lang-en.js', './bahasa.js', './kartu.js', './gaji.js', './manifest.json', './icon-192.png', './icon-512.png'];
+const F = ['./', './index.html', './style.css', './script.js', './gas-shim.js', './atur.js', './lang-en.js', './lang-en-gaji.js', './bahasa.js', './kartu.js', './gaji.js', './wrap.js', './tanya.js', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
