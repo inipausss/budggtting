@@ -74,22 +74,41 @@ function tanyaHasilCari(kata, dariBulan) {
 // ponytail: riwayat hanya di HP ini (30 pesan terakhir), tidak ikut backup
 const TANYA_KEY = 'budggt_tanya', TANYA_NOTE = 'budggt_tanya_note';
 const TANYA_CHIP = ['Kenapa bulan ini boros?', 'Sisa budget bulan ini berapa?', 'Bandingkan dengan bulan lalu', 'Kalau aku nabung Rp500.000 per bulan, aman nggak?'];
-let tanyaLog = [], tanyaSibuk = false;
+let tanyaLog = [], tanyaSibuk = false, tanyaMode = ''; // tanyaMode 'catatan' = layar Catatan Budggt
+const TANYA_MAX = 1500; // panjang catatan; ikut dikirim tiap pertanyaan, jadi dijaga pendek
 try { tanyaLog = JSON.parse(localStorage.getItem(TANYA_KEY) || '[]'); } catch (e) {}
 
 const tanyaApi = p => new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no).tanya(p));
 const tanyaSimpan = () => { try { localStorage.setItem(TANYA_KEY, JSON.stringify(tanyaLog.slice(-30))); } catch (e) {} };
 
-function openTanya() { renderTanya(); toggleModal('modalTanya'); }
+const tanyaNote = () => { try { return localStorage.getItem(TANYA_NOTE) || ''; } catch (e) { return ''; } };
+function openTanya() { tanyaMode = ''; renderTanya(); toggleModal('modalTanya'); }
+function tanyaCatatan(buka) { tanyaMode = buka ? 'catatan' : ''; renderTanya(); }
+function tanyaSimpanCatatan() {
+  const v = document.getElementById('tqNote').value.trim().slice(0, TANYA_MAX);
+  try { localStorage.setItem(TANYA_NOTE, v); } catch (e) {}
+  tanyaCatatan(false); showToast(t('Catatan disimpan'), 0);
+}
+// "ingat bahwa ..." menambah satu baris catatan tanpa memanggil Gemini (ponytail: hanya pola ini, bukan tebakan bahasa bebas)
+const TANYA_INGAT = /^\s*(?:tolong\s+)?(?:ingat|ingatlah|remember)\s+(?:bahwa|that)\s+(.+)/i;
 function tanyaHapus() { tanyaLog = []; tanyaSimpan(); renderTanya(); }
 
 function renderTanya() {
   const box = document.getElementById('tanyaBox');
   if (!box) return;
+  const row = document.getElementById('tqRow');
+  if (row) row.style.display = tanyaMode ? 'none' : '';
+  if (tanyaMode) {
+    box.innerHTML = `<p class="tq-intro">${t('Catatan ini ikut dikirim ke Gemini tiap kamu bertanya, supaya jawabannya kenal kamu. Tulis seperlunya, satu fakta per baris.')}</p>
+      <textarea id="tqNote" class="input-field" rows="9" maxlength="${TANYA_MAX}" placeholder="${t('Contoh: Lagi nabung DP rumah')}">${esc(tanyaNote())}</textarea>
+      <div class="tq-row"><button class="btn-sec" style="flex: 1;" onclick="tanyaCatatan(false)">${t('Batal')}</button><button class="btn-primary" style="flex: 1;" onclick="tanyaSimpanCatatan()">${t('Simpan')}</button></div>`;
+    return;
+  }
   const bub = m => `<div class="tq-b ${m.dari}${m.err ? ' err' : ''}" translate="no">${esc(m.teks).replace(/\n/g, '<br>')}</div>`;
   box.innerHTML = (tanyaLog.length
     ? tanyaLog.map(bub).join('')
     : `<p class="tq-intro">${t('Tanya apa saja soal uangmu, atau soal keuangan secara umum.')}</p>
+       <p class="tq-intro">${t('Tulis "ingat bahwa ..." untuk menyimpan catatan tentang dirimu.')}</p>
        <div class="tq-chips">${TANYA_CHIP.map(c => `<button type="button" class="tq-chip" onclick="tanyaKirim(this.innerText)">${t(c)}</button>`).join('')}</div>`)
     + (tanyaSibuk ? '<div class="tq-b a tq-wait"><i></i><i></i><i></i></div>' : '');
   box.scrollTop = box.scrollHeight;
@@ -101,9 +120,17 @@ async function tanyaKirim(teks) {
   if (!teks || tanyaSibuk) return;
   inp.value = '';
   const riwayat = tanyaLog.filter(m => !m.err).slice(-6);
+  const ingat = TANYA_INGAT.exec(teks);
+  if (ingat) {
+    const baru = (tanyaNote() ? tanyaNote() + '\n' : '') + '- ' + ingat[1].trim();
+    const ok = baru.length <= TANYA_MAX;
+    if (ok) try { localStorage.setItem(TANYA_NOTE, baru); } catch (e) {}
+    tanyaLog.push({ dari: 'u', teks }, ok ? { dari: 'a', teks: t('Oke, sudah saya catat.') } : { dari: 'a', err: 1, teks: t('Catatan sudah penuh, rapikan dulu lewat ikon catatan.') });
+    tanyaSimpan(); renderTanya(); return;
+  }
   tanyaLog.push({ dari: 'u', teks }); tanyaSibuk = true; renderTanya();
   try {
-    const p = { pertanyaan: teks, riwayat, catatan: localStorage.getItem(TANYA_NOTE) || '', data: tanyaRingkas(), bahasa: bahasaAktif };
+    const p = { pertanyaan: teks, riwayat, catatan: tanyaNote(), data: tanyaRingkas(), bahasa: bahasaAktif };
     let r = await tanyaApi(p);
     if (r.aksi === 'cari') r = await tanyaApi(Object.assign({}, p, { hasil: tanyaHasilCari(r.kata, r.dariBulan) }));
     else if (r.aksi === 'simulasi') r = await tanyaApi(Object.assign({}, p, { hasil: { simulasi: tanyaSimulasi(r.jumlah) } }));
@@ -145,7 +172,7 @@ if (typeof module !== 'undefined' && require.main === module) {
   // alur chat: cari -> hasil dihitung di app -> jawab
   const el = { tqInput: { value: 'harga kopi naik?' }, tanyaBox: { innerHTML: '', scrollTop: 0, scrollHeight: 0 } };
   global.document = { getElementById: id => el[id] };
-  global.localStorage = { getItem: () => null, setItem: (k, v) => { el.saved = v; } };
+  const ls = {}; global.localStorage = { getItem: k => ls[k] || null, setItem: (k, v) => { ls[k] = v; el.saved = v; } }; global.showToast = () => {};
   global.esc = x => String(x).replace(/</g, '&lt;'); global.t = x => x; global.bahasaAktif = 'id';
   const kirim = []; let n = 0;
   global.google = { script: { run: { withSuccessHandler(ok) { return { withFailureHandler(no) { return { tanya(p) { kirim.push(p); n++; Promise.resolve().then(() => n === 1 ? ok({ aksi: 'cari', kata: ['kopi'], dariBulan: '2026-09' }) : n === 2 ? ok({ aksi: 'jawab', teks: 'Naik Rp4.000' }) : no(new Error('offline'))); } }; } }; } } } };
@@ -155,6 +182,10 @@ if (typeof module !== 'undefined' && require.main === module) {
     assert.equal(tanyaLog.at(-1).teks, 'Naik Rp4.000'); assert.equal(tanyaSibuk, false); assert(el.saved.includes('Naik'));
     await tanyaKirim('tes lagi'); assert(tanyaLog.at(-1).err); assert.equal(kirim[2].riwayat.length, 2);
     await tanyaKirim('   '); assert.equal(kirim.length, 3); // kosong diabaikan
+    await tanyaKirim('ingat bahwa aku lagi nabung DP rumah'); await tanyaKirim('Remember that istri suka kopi');
+    assert.equal(kirim.length, 3); assert.equal(ls.budggt_tanya_note, '- aku lagi nabung DP rumah\n- istri suka kopi'); // tanpa panggilan Gemini
+    await tanyaKirim('ingat nggak pengeluaran kopi?'); assert.equal(kirim.length, 4); assert.equal(kirim[3].catatan, ls.budggt_tanya_note); // bukan perintah catat
+    el.tqNote = { value: '  fakta baru  ' }; tanyaSimpanCatatan(); assert.equal(ls.budggt_tanya_note, 'fakta baru');
     console.log('tanya.js ok');
   })();
 }
